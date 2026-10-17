@@ -70,7 +70,7 @@
       Timer, Play, Pause, Pencil, Target, Circle, CheckCircle2, Plus, User,
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
-      Download, RefreshCw, FileText, Check, Folder
+      Download, RefreshCw, FileText, Check, Folder, Smartphone, Copy, ExternalLink
     } from "lucide-react";
 
     // ---------------------------------------------------------------------------
@@ -883,6 +883,39 @@
       const scheduleInlineFileInputRef = useRef(null);
       const scheduleCameraInputRef = useRef(null);
 
+      // ---- Mobile QR Upload State ----
+      const [mobileSessionId] = useState(() => {
+        const stored = typeof window !== "undefined" && window.localStorage ? window.localStorage.getItem("hl:mobileSessionId") : null;
+        if (stored) return stored;
+        const newId = "hl_" + Math.random().toString(36).substring(2, 8);
+        try { window.localStorage.setItem("hl:mobileSessionId", newId); } catch (_) {}
+        return newId;
+      });
+      const [mobileSyncStatus, setMobileSyncStatus] = useState("waiting"); // "waiting", "received"
+      const [mobileSyncNotice, setMobileSyncNotice] = useState(null);
+      const [copiedMobileLink, setCopiedMobileLink] = useState(false);
+      const [mobileUploadPreview, setMobileUploadPreview] = useState(null);
+      const [mobileUploadFileName, setMobileUploadFileName] = useState("");
+      const [mobileUploadSending, setMobileUploadSending] = useState(false);
+      const [mobileUploadSuccess, setMobileUploadSuccess] = useState(false);
+      const mobileCameraInputRef = useRef(null);
+      const mobileGalleryInputRef = useRef(null);
+
+      const isLocalHost = typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:");
+      const mobileUploadUrl = (() => {
+        const isHttp = typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http");
+        // If on localhost or file://, mobile phone camera cannot access localhost IP directly without NAT/tunnels, so default to Vercel production deployment:
+        const host = (isHttp && !isLocalHost) ? window.location.origin : "https://habit-loop-flame.vercel.app";
+        const path = (isHttp && !isLocalHost) ? (window.location.pathname || "/") : "/";
+        return `${host}${path}?mobile_upload=1&session=${mobileSessionId}`;
+      })();
+      const desktopLocalTestUrl = (() => {
+        const isHttp = typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http");
+        const host = isHttp ? window.location.origin : "https://habit-loop-flame.vercel.app";
+        const path = isHttp ? (window.location.pathname || "/") : "/";
+        return `${host}${path}?mobile_upload=1&session=${mobileSessionId}`;
+      })();
+
       // ---- PaddleOCR-VL 1.6 & Local Model Selection State ----
       const [ocrEngine, setOcrEngine] = useState("paddleocr"); // "paddleocr" (default) or "local"
       const [sarvamApiKey, setSarvamApiKey] = useState(DEFAULT_SARVAM_KEY);
@@ -1055,10 +1088,17 @@
           }
 
           const urlParams = new URLSearchParams(window.location.search);
+          const isMobileUpload = urlParams.get("mobile_upload") === "1";
           const autoLoginParam = urlParams.get("autologin") === "1";
           const stageParam = urlParams.get("stage");
           const tabParam = urlParams.get("tab");
           const modalParam = urlParams.get("modal");
+
+          if (isMobileUpload) {
+            setStage("mobile-upload");
+            setBootstrapped(true);
+            return;
+          }
 
           if (savedUser || autoLoginParam) {
             const u = savedUser || {
@@ -1363,7 +1403,111 @@
         setScheduleScanError(null);
         setScheduleScanSuccessMsg(null);
         setScannedClassesPreview([]);
+        setMobileSyncStatus("waiting");
+        setMobileSyncNotice(null);
       }
+
+      function handleReceivedMobileImage(imgData, fileName) {
+        if (!imgData) return;
+        setScheduleUploadImg(imgData);
+        setScheduleUploadFileName(fileName || "mobile_timetable_scan.jpg");
+        setMobileSyncStatus("received");
+        setMobileSyncNotice("🎉 Timetable received from your mobile phone! Ready for PaddleOCR-VL 1.6 extraction.");
+        setShowScheduleUploadModal(true);
+      }
+
+      function handleMobileFileSelected(file) {
+        if (!file) return;
+        setMobileUploadFileName(file.name);
+        const reader = new FileReader();
+        reader.onload = () => {
+          setMobileUploadPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function sendMobileImageToDesktop(imgData, fileName) {
+        if (!imgData) return;
+        setMobileUploadSending(true);
+        const targetSession = new URLSearchParams(window.location.search).get("session") || mobileSessionId;
+
+        // 1. BroadcastChannel (instant for same browser / computer)
+        try {
+          if (typeof BroadcastChannel !== "undefined") {
+            const bc = new BroadcastChannel("habitloop_mobile_sync");
+            bc.postMessage({ session: targetSession, image: imgData, name: fileName });
+            bc.close();
+          }
+        } catch (_) {}
+
+        // 2. localStorage
+        try {
+          window.localStorage.setItem("hl_sync_" + targetSession, JSON.stringify({ image: imgData, name: fileName, ts: Date.now() }));
+        } catch (_) {}
+
+        // 3. Vercel Serverless Sync API (/api/sync)
+        try {
+          const syncRelayUrl = (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("127.0.0.1"))
+            ? `/api/sync?session=${targetSession}`
+            : `https://habit-loop-flame.vercel.app/api/sync?session=${targetSession}`;
+          await fetch(syncRelayUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session: targetSession, image: imgData, name: fileName }),
+          });
+        } catch (_) {}
+
+        setMobileUploadSending(false);
+        setMobileUploadSuccess(true);
+      }
+
+      // Listen for mobile transmissions via BroadcastChannel
+      useEffect(() => {
+        if (typeof BroadcastChannel === "undefined") return;
+        const bc = new BroadcastChannel("habitloop_mobile_sync");
+        bc.onmessage = (e) => {
+          if (e.data && e.data.session === mobileSessionId && e.data.image) {
+            handleReceivedMobileImage(e.data.image, e.data.name);
+          }
+        };
+        return () => bc.close();
+      }, [mobileSessionId]);
+
+      // Listen for mobile transmissions via storage event
+      useEffect(() => {
+        function onStorage(e) {
+          if (e.key === "hl_sync_" + mobileSessionId && e.newValue) {
+            try {
+              const data = JSON.parse(e.newValue);
+              if (data && data.image) {
+                handleReceivedMobileImage(data.image, data.name);
+              }
+            } catch (_) {}
+          }
+        }
+        window.addEventListener("storage", onStorage);
+        return () => window.removeEventListener("storage", onStorage);
+      }, [mobileSessionId]);
+
+      // Poll Vercel Serverless relay when upload modal is open
+      useEffect(() => {
+        if (!showScheduleUploadModal) return;
+        const syncRelayUrl = (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("127.0.0.1"))
+          ? `/api/sync?session=${mobileSessionId}`
+          : `https://habit-loop-flame.vercel.app/api/sync?session=${mobileSessionId}`;
+        const timer = setInterval(async () => {
+          try {
+            const res = await fetch(syncRelayUrl);
+            if (res.ok) {
+              const json = await res.json();
+              if (json && json.ready && json.data && json.data.image) {
+                handleReceivedMobileImage(json.data.image, json.data.name);
+              }
+            }
+          } catch (_) {}
+        }, 2000);
+        return () => clearInterval(timer);
+      }, [showScheduleUploadModal, mobileSessionId]);
 
       async function scanAndApplySchedule(useSampleFallback = false) {
         if (!scheduleUploadImg && !useSampleFallback) {
@@ -1848,6 +1992,193 @@
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700 }}>HabitLoop × Ramp</div>
             <div style={{ fontSize: 13, color: C.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
               <Loader2 size={14} className="spin" /> Loading your academic workstation…
+            </div>
+          </div>
+        );
+      }
+
+      if (stage === "mobile-upload") {
+        const querySession = new URLSearchParams(window.location.search).get("session") || mobileSessionId;
+        return (
+          <div className="rp-shell" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px" }}>
+            <div style={{ maxWidth: 460, width: "100%", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 16, padding: "26px 20px", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+              {/* Header */}
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: 12, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+                  <QrCode size={24} color={C.ramp} />
+                </div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700 }}>
+                  HabitLoop Mobile Scanner
+                </div>
+                <div style={{ fontSize: 13, color: C.textMuted, marginTop: 4 }}>
+                  Take a photo of your timetable to beam it directly to your laptop screen
+                </div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(63,214,196,0.12)", color: C.ramp, borderRadius: 12, padding: "4px 10px", fontSize: 11, fontWeight: 600, marginTop: 10 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.ramp, display: "inline-block" }}></span>
+                  Connected to Workstation ({querySession})
+                </div>
+              </div>
+
+              {/* Hidden Inputs */}
+              <input
+                ref={mobileCameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleMobileFileSelected(e.target.files[0]);
+                  }
+                }}
+              />
+              <input
+                ref={mobileGalleryInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleMobileFileSelected(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {!mobileUploadPreview ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+                  {/* Snap Camera Button */}
+                  <button
+                    type="button"
+                    onClick={() => mobileCameraInputRef.current?.click()}
+                    style={{
+                      background: C.ramp,
+                      border: "none",
+                      color: "#08211E",
+                      borderRadius: 12,
+                      padding: "16px 20px",
+                      fontSize: 15,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 10,
+                      boxShadow: "0 4px 18px rgba(63,214,196,0.3)",
+                    }}
+                  >
+                    <Camera size={20} /> Snap Timetable with Camera
+                  </button>
+
+                  {/* Choose from Gallery */}
+                  <button
+                    type="button"
+                    onClick={() => mobileGalleryInputRef.current?.click()}
+                    style={{
+                      background: C.panelAlt,
+                      border: `1px solid ${C.border}`,
+                      color: C.textPrimary,
+                      borderRadius: 12,
+                      padding: "14px 20px",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Folder size={18} color={C.boulder} /> Pick from Photos / Gallery
+                  </button>
+
+                  <div style={{ textAlign: "center", fontSize: 12, color: C.textMuted, marginTop: 4 }}>
+                    Ideal for classroom printouts, noticeboards, or screenshot exports
+                  </div>
+                </div>
+              ) : (
+                <div style={{ marginBottom: 16 }}>
+                  {/* Photo Preview */}
+                  <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, marginBottom: 14, background: "#000" }}>
+                    <img
+                      src={mobileUploadPreview}
+                      alt="Timetable Photo"
+                      style={{ width: "100%", maxHeight: 280, objectFit: "contain", display: "block" }}
+                    />
+                    <div style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,0.75)", color: "#fff", padding: "4px 8px", borderRadius: 4, fontSize: 11 }}>
+                      {mobileUploadFileName || "photo.jpg"}
+                    </div>
+                  </div>
+
+                  {/* Send Button */}
+                  <button
+                    type="button"
+                    onClick={() => sendMobileImageToDesktop(mobileUploadPreview, mobileUploadFileName)}
+                    disabled={mobileUploadSending}
+                    style={{
+                      width: "100%",
+                      background: mobileUploadSuccess ? "rgba(63,214,196,0.2)" : C.ramp,
+                      border: mobileUploadSuccess ? `1px solid ${C.ramp}` : "none",
+                      color: mobileUploadSuccess ? C.ramp : "#08211E",
+                      borderRadius: 10,
+                      padding: "14px 0",
+                      fontSize: 15,
+                      fontWeight: 700,
+                      cursor: mobileUploadSending ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      marginBottom: 10,
+                      boxShadow: mobileUploadSuccess ? "none" : "0 4px 16px rgba(63,214,196,0.3)",
+                    }}
+                  >
+                    {mobileUploadSending ? (
+                      <>
+                        <Loader2 size={18} className="rp-spin" /> Beaming to Desktop...
+                      </>
+                    ) : mobileUploadSuccess ? (
+                      <>
+                        <CheckCircle2 size={18} /> Transferred Successfully!
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={18} /> Beam to Laptop Screen
+                      </>
+                    )}
+                  </button>
+
+                  {mobileUploadSuccess && (
+                    <div style={{ background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, borderRadius: 8, padding: "12px 14px", marginBottom: 12, color: C.ramp, fontSize: 13, textAlign: "center", lineHeight: 1.4 }}>
+                      🎉 <strong>Photo sent to your laptop!</strong> Look at your laptop screen — PaddleOCR-VL 1.6 is now processing the timetable.
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileUploadPreview(null);
+                      setMobileUploadFileName("");
+                      setMobileUploadSuccess(false);
+                    }}
+                    style={{ width: "100%", background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 8, padding: "10px 0", fontSize: 13, cursor: "pointer" }}
+                  >
+                    Retake / Choose Different Photo
+                  </button>
+                </div>
+              )}
+
+              {/* Demo fallback */}
+              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14, textAlign: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sendMobileImageToDesktop("jecrc_section_c_clean.jpg", "jecrc_section_c_clean.jpg");
+                  }}
+                  style={{ background: "transparent", border: "none", color: C.boulder, fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}
+                >
+                  Test Beam with Calibrated JECRC Sec-C Sample
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -3187,87 +3518,6 @@
                 </div>
               ) : (
                 <div>
-                  {/* Compact Header Bar for Schedule & Ramp */}
-                  <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 18px", marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Calendar size={19} color={C.ramp} />
-                      </div>
-                      <div>
-                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-                          Class Schedule & Weekly Timetable
-                          <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
-                            {scheduleAll.length} Classes Active
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 1 }}>
-                          JECRC B.Tech Sec-C · Selected Day: <strong style={{ color: C.textPrimary }}>{DAY_LABEL[selectedDay]}</strong> ({classesForSelectedDay.length} classes)
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowScheduleUploadModal(true)}
-                        style={{
-                          background: C.ramp,
-                          border: "none",
-                          color: "#08211E",
-                          borderRadius: 6,
-                          padding: "8px 16px",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          boxShadow: "0 2px 10px rgba(63,214,196,0.22)"
-                        }}
-                      >
-                        <Camera size={14} /> Scan & Upload Timetable
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setStage("edit-schedule")}
-                        style={{
-                          background: C.panelAlt,
-                          border: `1px solid ${C.border}`,
-                          color: C.textPrimary,
-                          borderRadius: 6,
-                          padding: "8px 14px",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5
-                        }}
-                      >
-                        <Pencil size={13} color={C.boulder} /> Edit Schedule
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowTrainerModal(true)}
-                        style={{
-                          background: "rgba(255,138,92,0.12)",
-                          border: `1px solid ${C.boulder}`,
-                          color: C.boulder,
-                          borderRadius: 6,
-                          padding: "8px 12px",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5
-                        }}
-                      >
-                        <Brain size={13} /> Model Trainer
-                      </button>
-                    </div>
-                  </div>
-
                   {/* Scan Success Banner */}
                   {scheduleScanSuccessMsg && (
                     <div style={{ marginBottom: 16, background: "rgba(63,214,196,0.1)", border: `1px solid ${C.ramp}`, borderRadius: 8, padding: "12px 16px" }}>
@@ -3310,45 +3560,93 @@
                     </div>
                   )}
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {/* Shrunk Single-Row Timetable Control Bar */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                       {DAY_ORDER.map((d) => (
                         <button
                           key={d}
                           onClick={() => setSelectedDay(d)}
                           style={{
                             fontSize: 12.5,
-                            padding: "5px 12px",
-                            borderRadius: 5,
+                            padding: "6px 14px",
+                            borderRadius: 6,
                             border: `1px solid ${selectedDay === d ? C.boulder : C.border}`,
-                            background: selectedDay === d ? "rgba(255,138,92,0.12)" : "transparent",
+                            background: selectedDay === d ? "rgba(255,138,92,0.14)" : C.panel,
                             color: selectedDay === d ? C.boulder : C.textMuted,
+                            fontWeight: selectedDay === d ? 700 : 500,
                             cursor: "pointer",
+                            transition: "all 0.15s ease",
                           }}
                         >
                           {DAY_LABEL[d]}
                         </button>
                       ))}
+                      <span style={{ fontSize: 11.5, color: C.textMuted, marginLeft: 6 }}>
+                        {classesForSelectedDay.length} classes
+                      </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setStage("edit-schedule")}
-                      style={{
-                        background: "rgba(255,138,92,0.12)",
-                        border: `1px solid ${C.boulder}`,
-                        color: C.boulder,
-                        borderRadius: 6,
-                        padding: "6px 12px",
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6
-                      }}
-                    >
-                      <Pencil size={13} /> Edit Schedule ({classesForSelectedDay.length} classes)
-                    </button>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowScheduleUploadModal(true)}
+                        style={{
+                          background: C.ramp,
+                          border: "none",
+                          color: "#08211E",
+                          borderRadius: 6,
+                          padding: "8px 16px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          boxShadow: "0 2px 10px rgba(63,214,196,0.22)"
+                        }}
+                      >
+                        <QrCode size={14} /> Scan & Upload Timetable
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStage("edit-schedule")}
+                        style={{
+                          background: C.panelAlt,
+                          border: `1px solid ${C.border}`,
+                          color: C.textPrimary,
+                          borderRadius: 6,
+                          padding: "8px 13px",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                      >
+                        <Pencil size={13} color={C.boulder} /> Edit Schedule
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowTrainerModal(true)}
+                        style={{
+                          background: "rgba(255,138,92,0.12)",
+                          border: `1px solid ${C.boulder}`,
+                          color: C.boulder,
+                          borderRadius: 6,
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                      >
+                        <Brain size={13} /> Model Trainer
+                      </button>
+                    </div>
                   </div>
 
                   <div className="rp-grid">
@@ -3934,14 +4232,14 @@
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Camera size={22} color={C.ramp} />
+                      <QrCode size={22} color={C.ramp} />
                     </div>
                     <div>
                       <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: C.textPrimary }}>
                         Scan & Upload Timetable
                       </div>
                       <div style={{ fontSize: 13, color: C.textMuted }}>
-                        PaddleOCR-VL 1.6 Document Vision • Scan via Camera or Choose File from Device
+                        Scan QR code with your phone camera or select a timetable image from this device
                       </div>
                     </div>
                   </div>
@@ -3953,74 +4251,242 @@
                   </button>
                 </div>
 
-                {/* Two Distinct Upload Options */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
-                  {/* Option 1: Scan & Upload (Camera) */}
+                {/* Primary Feature: Mobile Phone QR Code Scanner Card */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(63,214,196,0.12) 0%, rgba(20,24,33,0.92) 100%)",
+                    border: `1.5px solid ${C.ramp}`,
+                    borderRadius: 14,
+                    padding: "20px 22px",
+                    marginBottom: 18,
+                    boxShadow: "0 8px 32px rgba(63,214,196,0.14)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Smartphone size={18} color={C.ramp} />
+                      <span style={{ fontSize: 14.5, fontWeight: 700, color: C.textPrimary, letterSpacing: 0.3 }}>
+                        Scan QR with Your Phone Camera
+                      </span>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", background: "rgba(63,214,196,0.22)", color: C.ramp, padding: "2px 8px", borderRadius: 10 }}>
+                        Direct Mobile Beam
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5 }}>
+                      {mobileSyncStatus === "received" ? (
+                        <span style={{ color: C.ramp, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>
+                          <CheckCircle2 size={14} /> Beamed Successfully!
+                        </span>
+                      ) : (
+                        <span style={{ color: C.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.ramp, display: "inline-block" }} className="spin" />
+                          Live Sync ID: <code style={{ color: C.ramp, fontWeight: 600 }}>{mobileSessionId}</code>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center" }}>
+                    {/* QR Code Graphic */}
+                    <div style={{ textAlign: "center", minWidth: 160 }}>
+                      <div
+                        style={{
+                          background: "#FFFFFF",
+                          padding: 10,
+                          borderRadius: 12,
+                          display: "inline-flex",
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                          border: "2px solid rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=2&data=${encodeURIComponent(mobileUploadUrl)}`}
+                          alt="Scan Timetable with Phone"
+                          style={{ width: 160, height: 160, display: "block" }}
+                        />
+                      </div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 7, fontWeight: 500 }}>
+                        Point phone camera to scan
+                      </div>
+                    </div>
+
+                    {/* Quick Steps & Actions */}
+                    <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: C.textPrimary, lineHeight: 1.45 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(63,214,196,0.2)", color: C.ramp, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 700, flexShrink: 0 }}>
+                          1
+                        </div>
+                        <div>
+                          <strong>Open Camera on your phone</strong> and point it at this QR code.
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: C.textPrimary, lineHeight: 1.45 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(63,214,196,0.2)", color: C.ramp, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 700, flexShrink: 0 }}>
+                          2
+                        </div>
+                        <div>
+                          Tap <strong>"Snap Timetable with Camera"</strong> or choose from your phone gallery.
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: C.textPrimary, lineHeight: 1.45 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(63,214,196,0.2)", color: C.ramp, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 700, flexShrink: 0 }}>
+                          3
+                        </div>
+                        <div>
+                          Tap <strong>Beam to Laptop</strong> — the timetable will appear right here automatically!
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                              navigator.clipboard.writeText(mobileUploadUrl);
+                            }
+                            setCopiedMobileLink(true);
+                            setTimeout(() => setCopiedMobileLink(false), 2500);
+                          }}
+                          style={{
+                            background: copiedMobileLink ? "rgba(63,214,196,0.2)" : C.panelAlt,
+                            border: `1px solid ${copiedMobileLink ? C.ramp : C.border}`,
+                            color: copiedMobileLink ? C.ramp : C.textPrimary,
+                            borderRadius: 6,
+                            padding: "6px 12px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                          }}
+                        >
+                          {copiedMobileLink ? <Check size={13} /> : <Copy size={13} />}
+                          {copiedMobileLink ? "Link Copied!" : "Copy Mobile Link"}
+                        </button>
+
+                        <a
+                          href={desktopLocalTestUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background: "transparent",
+                            border: `1px solid ${C.border}`,
+                            color: C.textMuted,
+                            borderRadius: 6,
+                            padding: "6px 12px",
+                            fontSize: 12,
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            textDecoration: "none",
+                          }}
+                        >
+                          <ExternalLink size={13} /> Test Scanner in New Tab
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {mobileSyncNotice && (
+                    <div
+                      style={{
+                        marginTop: 14,
+                        background: "rgba(63,214,196,0.18)",
+                        border: `1px solid ${C.ramp}`,
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        fontSize: 12.5,
+                        color: C.ramp,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <CheckCircle2 size={16} /> {mobileSyncNotice}
+                      </span>
+                      <button
+                        onClick={() => setMobileSyncNotice(null)}
+                        style={{ background: "transparent", border: "none", color: C.ramp, cursor: "pointer", padding: 2 }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider for Direct Device Upload */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 16px" }}>
+                  <div style={{ flex: 1, height: 1, background: C.border }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: C.textMuted, letterSpacing: 0.5 }}>
+                    Or Upload Directly From This Device
+                  </span>
+                  <div style={{ flex: 1, height: 1, background: C.border }} />
+                </div>
+
+                {/* Direct Upload Options */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
                   <button
                     type="button"
                     onClick={() => scheduleCameraInputRef.current?.click()}
                     style={{
-                      background: "linear-gradient(145deg, rgba(63,214,196,0.14) 0%, rgba(63,214,196,0.04) 100%)",
-                      border: `1.5px solid ${C.ramp}`,
-                      borderRadius: 12,
-                      padding: "18px 16px",
+                      background: C.panelAlt,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 10,
+                      padding: "12px 14px",
                       textAlign: "left",
                       cursor: "pointer",
-                      transition: "all 0.18s ease",
                       display: "flex",
-                      flexDirection: "column",
+                      alignItems: "center",
                       gap: 10,
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(63,214,196,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Camera size={20} color={C.ramp} />
-                      </div>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", background: "rgba(63,214,196,0.2)", color: C.ramp, padding: "3px 8px", borderRadius: 12 }}>
-                        Camera
-                      </span>
+                    <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(63,214,196,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Camera size={18} color={C.ramp} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>
-                        📷 Scan & Upload
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: C.textPrimary }}>
+                        📷 Device Camera
                       </div>
-                      <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.4 }}>
-                        Snap photo directly with phone or tablet camera from college noticeboard or paper printout.
+                      <div style={{ fontSize: 11.5, color: C.textMuted }}>
+                        Snap directly with device camera
                       </div>
                     </div>
                   </button>
 
-                  {/* Option 2: Choose File from Device */}
                   <button
                     type="button"
                     onClick={() => scheduleInlineFileInputRef.current?.click()}
                     style={{
-                      background: "linear-gradient(145deg, rgba(255,138,92,0.14) 0%, rgba(255,138,92,0.04) 100%)",
-                      border: `1.5px solid ${C.boulder}`,
-                      borderRadius: 12,
-                      padding: "18px 16px",
+                      background: C.panelAlt,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 10,
+                      padding: "12px 14px",
                       textAlign: "left",
                       cursor: "pointer",
-                      transition: "all 0.18s ease",
                       display: "flex",
-                      flexDirection: "column",
+                      alignItems: "center",
                       gap: 10,
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(255,138,92,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Folder size={20} color={C.boulder} />
-                      </div>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", background: "rgba(255,138,92,0.2)", color: C.boulder, padding: "3px 8px", borderRadius: 12 }}>
-                        Device Storage
-                      </span>
+                    <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(255,138,92,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Folder size={18} color={C.boulder} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>
-                        📁 Choose File from Device
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: C.textPrimary }}>
+                        📁 Browse Files
                       </div>
-                      <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.4 }}>
-                        Browse screenshot, WhatsApp image, PDF export or photo saved on your computer or phone.
+                      <div style={{ fontSize: 11.5, color: C.textMuted }}>
+                        Choose image from file storage
                       </div>
                     </div>
                   </button>
