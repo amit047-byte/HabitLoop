@@ -1539,11 +1539,11 @@
 
           if (isDone) {
             color = "#3CD09B";
-            border = "1px solid rgba(60, 208, 155, 0.4)";
+            border = "1px solid #3CD09B";
+            glow = true;
+            glowColor = isToday ? "0 0 16px rgba(60, 208, 155, 0.9)" : "0 0 8px rgba(60, 208, 155, 0.45)";
             if (isToday) {
-              glow = true;
-              glowColor = "0 0 14px rgba(60, 208, 155, 0.85)";
-              border = "1px solid rgba(255, 255, 255, 0.8)";
+              border = "1.5px solid #FFFFFF";
             }
           } else {
             if (isToday) {
@@ -1555,7 +1555,7 @@
               color = "#141722";
               border = "1px solid #1D212E";
             } else {
-              color = "#191D2B";
+              color = "#161925";
               border = "1px solid #222636";
             }
           }
@@ -2215,13 +2215,17 @@
       const todayHabitsDone = habits.filter((h) => h.logs?.[todayKey]).length;
 
       function toggleHabitDay(habitId, dayKey) {
-        setHabits((prev) =>
-          prev.map((h) =>
+        setHabits((prev) => {
+          const updated = prev.map((h) =>
             h.id === habitId
-              ? { ...h, logs: { ...h.logs, [dayKey]: !h.logs?.[dayKey] } }
+              ? { ...h, logs: { ...(h.logs || {}), [dayKey]: !h.logs?.[dayKey] } }
               : h
-          )
-        );
+          );
+          try {
+            saveJSON("data:habits", updated);
+          } catch (e) {}
+          return updated;
+        });
       }
 
       function addCustomHabit() {
@@ -4259,6 +4263,8 @@
           ...activeTasks.filter((t) => t.start != null).map((t) => ({ ...t, kind: t.cognitiveLoad })),
         ].sort((a, b) => a.start - b.start);
         const doneTargetsCount = todaysTargets.filter((t) => t.done).length;
+        const todayPct = habits.length > 0 ? Math.round((todayHabitsDone / habits.length) * 100) : 0;
+        const topStreak = habits.length > 0 ? Math.max(...habits.map((h) => computeHabitStreak(h.logs))) : 0;
 
         const svgWidth = 520;
         const svgHeight = 140;
@@ -4271,96 +4277,460 @@
         pageBody = (
           <div className="rp-shell">
             <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-              {/* Top Header */}
-              <div className="rp-header" style={{ marginBottom: 18 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Flame size={20} color={C.boulder} />
-                      <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700 }}>HabitFlow × Ramp</span>
-                    </div>
-                    <div style={{ fontSize: 12.5, color: C.textMuted, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
-                      <ClockIcon size={12} /> {fmtClock(now)} · <span style={{ color: C.ramp }}>Local AI Engine</span>
-                    </div>
+              {/* Top Header Row */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 14 }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Flame size={22} color={C.boulder} />
+                    <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: "#EEF0F5" }}>
+                      HabitFlow × Ramp
+                    </span>
                   </div>
-
-                  {/* Primary View Switcher */}
-                  <div style={{ display: "flex", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 7, padding: 3 }}>
-                    <button
-                      onClick={() => setDashboardTab("habits")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "6px 12px",
-                        borderRadius: 5,
-                        border: "none",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        background: dashboardTab === "habits" ? C.ramp : "transparent",
-                        color: dashboardTab === "habits" ? "#0B2421" : C.textMuted,
-                      }}
-                    >
-                      <CheckSquare size={14} /> HabitFlow ({todayHabitsDone}/{habits.length})
-                    </button>
-                    <button
-                      onClick={() => setDashboardTab("schedule")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "6px 12px",
-                        borderRadius: 5,
-                        border: "none",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        background: dashboardTab === "schedule" ? C.boulder : "transparent",
-                        color: dashboardTab === "schedule" ? "#2A1206" : C.textMuted,
-                      }}
-                    >
-                      <Calendar size={14} /> Schedule & Ramp
-                    </button>
+                  <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{
+                      fontSize: 10.5,
+                      background: "rgba(60,208,155,0.12)",
+                      border: "1px solid rgba(60,208,155,0.35)",
+                      color: "#3CD09B",
+                      borderRadius: 10,
+                      padding: "2px 8px",
+                      fontWeight: 700,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontFamily: "'Space Grotesk', monospace"
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3CD09B", display: "inline-block" }} />
+                      LIVE
+                    </span>
+                    <span style={{ color: "#8E95A8" }}>
+                      <ClockIcon size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                      {fmtClock(now)} · <span style={{ color: C.ramp }}>Local AI Engine</span>
+                    </span>
                   </div>
                 </div>
 
-                <div className="rp-header-actions">
-                  <button onClick={startDebrief} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Bell size={13} /> Debrief</button>
-                  <button onClick={() => setStage("targets-page")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Target size={13} /> Targets{todaysTargets.length > 0 ? ` ${doneTargetsCount}/${todaysTargets.length}` : ""}</button>
-                  <button onClick={() => setStage("energy-log")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: ENERGY_COLORS[effectiveEnergy - 1], borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Zap size={13} /> Energy {effectiveEnergy}/5</button>
-                  <button onClick={openPomodoroSetup} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Timer size={13} /> Focus</button>
-                  <button onClick={() => setStage("edit-schedule")} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,138,92,0.12)", border: `1px solid ${C.boulder}`, color: C.boulder, borderRadius: 6, padding: "6px 11px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><Pencil size={13} /> Edit Schedule</button>
-                  <button onClick={openProfilePage} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><User size={13} /> Profile</button>
-                  <button onClick={() => setStage("settings-page")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Settings size={13} /></button>
-                  <button onClick={() => setModalOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "6px 12px", fontSize: 13, cursor: "pointer" }}><Command size={13} /> Capture <span style={{ color: C.textMuted }}>⌘K</span></button>
+                {/* Primary View Switcher Tabs (Top Right) */}
+                <div style={{ display: "flex", background: "#10131E", border: "1px solid #1C2030", borderRadius: 9, padding: 4, gap: 4 }}>
+                  <button
+                    onClick={() => setDashboardTab("habits")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 7,
+                      padding: "7px 14px",
+                      borderRadius: 7,
+                      border: dashboardTab === "habits" ? "1px solid rgba(60, 208, 155, 0.35)" : "1px solid transparent",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      background: dashboardTab === "habits" ? "rgba(60, 208, 155, 0.12)" : "transparent",
+                      color: dashboardTab === "habits" ? "#3CD09B" : C.textMuted,
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <CheckCircle2 size={14} color={dashboardTab === "habits" ? "#3CD09B" : C.textMuted} />
+                    HabitFlow ({todayHabitsDone}/{habits.length})
+                  </button>
+                  <button
+                    onClick={() => setDashboardTab("schedule")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 7,
+                      padding: "7px 14px",
+                      borderRadius: 7,
+                      border: dashboardTab === "schedule" ? `1px solid ${C.boulder}` : "1px solid transparent",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      background: dashboardTab === "schedule" ? "rgba(255,138,92,0.12)" : "transparent",
+                      color: dashboardTab === "schedule" ? C.boulder : C.textMuted,
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Calendar size={14} /> Schedule & Ramp
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Bar Capsule (Centered Pill Container matching the screenshot) */}
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: 20
+              }}>
+                <div style={{
+                  background: "#10131E",
+                  border: "1px solid #1C2030",
+                  borderRadius: 9999,
+                  padding: "6px 10px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.25)"
+                }}>
+                  <button
+                    onClick={startDebrief}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "transparent",
+                      border: "1px solid #232838",
+                      color: "#A0A8BF",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Bell size={13} /> Debrief
+                  </button>
+                  <button
+                    onClick={() => setStage("targets-page")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "transparent",
+                      border: "1px solid #232838",
+                      color: "#A0A8BF",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Circle size={12} color="#3FD6C4" /> Targets {todaysTargets.length > 0 ? `${doneTargetsCount}/${todaysTargets.length}` : "0/1"}
+                  </button>
+                  <button
+                    onClick={() => setStage("energy-log")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "rgba(63, 214, 196, 0.12)",
+                      border: "1px solid rgba(63, 214, 196, 0.35)",
+                      color: "#3FD6C4",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Zap size={13} color="#3FD6C4" /> Energy {effectiveEnergy}/5
+                  </button>
+                  <button
+                    onClick={openPomodoroSetup}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "transparent",
+                      border: "1px solid #232838",
+                      color: "#A0A8BF",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Timer size={13} /> Focus
+                  </button>
+                  <button
+                    onClick={() => setStage("edit-schedule")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "rgba(227, 178, 60, 0.08)",
+                      border: "1px solid #E3B23C",
+                      color: "#E3B23C",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Pencil size={13} color="#E3B23C" /> Edit Schedule
+                  </button>
+                  <button
+                    onClick={openProfilePage}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "transparent",
+                      border: "1px solid #232838",
+                      color: "#A0A8BF",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <User size={13} /> Profile
+                  </button>
+                  <button
+                    onClick={() => setStage("settings-page")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "transparent",
+                      border: "1px solid #232838",
+                      color: "#A0A8BF",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Settings size={13} /> Settings
+                  </button>
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid #2A2F42",
+                      color: "#EEF0F5",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Command size={13} /> Capture
+                  </button>
                 </div>
               </div>
 
               {dashboardTab === "habits" ? (
                 <div>
-                  {/* KPI Cards */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 20 }}>
-                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>Today's Habit Completion</div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color: C.ramp, marginTop: 4 }}>
-                        {todayHabitsDone} / {habits.length}
+                  {/* 3 KPI Cards matching reference design */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 22 }}>
+                    {/* Card 1: Today's Habit Completion */}
+                    <div style={{
+                      background: "#111420",
+                      border: "1px solid #1D2232",
+                      borderRadius: 14,
+                      padding: "18px 20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between"
+                    }}>
+                      <div>
+                        <div style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#6D758B",
+                          letterSpacing: 1.4,
+                          textTransform: "uppercase",
+                          fontFamily: "'Space Grotesk', monospace"
+                        }}>
+                          TODAY'S HABIT COMPLETION
+                        </div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, marginBottom: 12 }}>
+                          <span style={{
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            fontSize: 34,
+                            fontWeight: 700,
+                            color: "#EEF0F5",
+                            lineHeight: 1
+                          }}>
+                            {todayHabitsDone} / {habits.length}
+                          </span>
+                          <span style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: "#3CD09B",
+                            fontFamily: "'Space Grotesk', monospace"
+                          }}>
+                            {todayPct}% Done
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 2 }}>Logged for {DAY_LABEL[todayKey]}</div>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#8E95A8", marginBottom: 10 }}>
+                          <span>Logged for <strong style={{ color: "#EEF0F5" }}>{DAY_LABEL[todayKey]}</strong></span>
+                          <span style={{ fontSize: 11.5, color: "#6D758B", fontFamily: "'Space Grotesk', monospace" }}>Live Sync</span>
+                        </div>
+                        {/* Progress Bar */}
+                        <div style={{ height: 4, background: "#1C2030", borderRadius: 9999, overflow: "hidden" }}>
+                          <div style={{
+                            width: `${todayPct}%`,
+                            height: "100%",
+                            background: "#3CD09B",
+                            borderRadius: 9999,
+                            boxShadow: todayPct > 0 ? "0 0 10px rgba(60, 208, 155, 0.6)" : "none",
+                            transition: "width 0.3s ease"
+                          }} />
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>Weekly Consistency Rate</div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color: C.boulder, marginTop: 4 }}>
-                        {overallWeeklyRate}%
+
+                    {/* Card 2: Weekly Consistency Rate */}
+                    <div style={{
+                      background: "#111420",
+                      border: "1px solid #1D2232",
+                      borderRadius: 14,
+                      padding: "18px 20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between"
+                    }}>
+                      <div>
+                        <div style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#6D758B",
+                          letterSpacing: 1.4,
+                          textTransform: "uppercase",
+                          fontFamily: "'Space Grotesk', monospace"
+                        }}>
+                          WEEKLY CONSISTENCY RATE
+                        </div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, marginBottom: 12 }}>
+                          <span style={{
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            fontSize: 34,
+                            fontWeight: 700,
+                            color: "#EEF0F5",
+                            lineHeight: 1
+                          }}>
+                            {overallWeeklyRate}%
+                          </span>
+                          <span style={{
+                            fontSize: 13,
+                            color: "#8E95A8",
+                            fontWeight: 500
+                          }}>
+                            Across Mon–Sun
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 2 }}>Across Mon–Sun</div>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#8E95A8", marginBottom: 10 }}>
+                          <span>Rolling 7-Day Window</span>
+                          <span style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: overallWeeklyRate >= 75 ? "#3CD09B" : overallWeeklyRate >= 40 ? "#E3B23C" : "#FF8A5C",
+                            fontFamily: "'Space Grotesk', monospace"
+                          }}>
+                            {overallWeeklyRate >= 80 ? "Optimal" : overallWeeklyRate >= 50 ? "Consistent" : overallWeeklyRate >= 20 ? "Stabilizing" : "Building"}
+                          </span>
+                        </div>
+                        {/* 7-Segment Day Pill Track */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }}>
+                          {DAY_ORDER.map((d, i) => {
+                            const rate = dailyHabitRates[i] || 0;
+                            const isToday = d === todayKey;
+                            let segBg = "#1C2030";
+                            if (rate >= 75) segBg = "#3CD09B";
+                            else if (rate >= 40) segBg = "#306C5D";
+                            else if (rate > 0) segBg = "#224A3F";
+                            else if (isToday) segBg = "#1E2B38";
+                            return (
+                              <div
+                                key={d}
+                                title={`${DAY_LABEL[d]}: ${rate}% habits done`}
+                                style={{
+                                  height: 4,
+                                  borderRadius: 9999,
+                                  background: segBg,
+                                  boxShadow: rate >= 75 ? "0 0 8px rgba(60, 208, 155, 0.4)" : "none",
+                                  transition: "all 0.2s ease"
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>Top Active Streak</div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color: "#E3B23C", marginTop: 4 }}>
-                        {habits.length > 0 ? Math.max(...habits.map((h) => computeHabitStreak(h.logs))) : 0} days
+
+                    {/* Card 3: Top Active Streak */}
+                    <div style={{
+                      background: "#111420",
+                      border: "1px solid #1D2232",
+                      borderRadius: 14,
+                      padding: "18px 20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between"
+                    }}>
+                      <div>
+                        <div style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#6D758B",
+                          letterSpacing: 1.4,
+                          textTransform: "uppercase",
+                          fontFamily: "'Space Grotesk', monospace"
+                        }}>
+                          TOP ACTIVE STREAK
+                        </div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, marginBottom: 12 }}>
+                          <span style={{
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            fontSize: 34,
+                            fontWeight: 700,
+                            color: "#E3B23C",
+                            lineHeight: 1
+                          }}>
+                            {topStreak} days
+                          </span>
+                          <span style={{
+                            fontSize: 13,
+                            color: "#8E95A8",
+                            fontWeight: 500
+                          }}>
+                            Active run
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 2 }}>Best consecutive run this week</div>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#8E95A8", marginBottom: 10 }}>
+                          <span>Best consecutive run this week</span>
+                          <span style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: topStreak >= 5 ? "#3CD09B" : topStreak >= 3 ? "#E3B23C" : "#FF8A5C",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4
+                          }}>
+                            🔥 {topStreak >= 5 ? "On Fire" : topStreak >= 3 ? "Building" : topStreak >= 1 ? "Warm up" : "Warm up"}
+                          </span>
+                        </div>
+                        {/* Streak Track */}
+                        <div style={{ height: 4, background: "#1C2030", borderRadius: 9999, overflow: "hidden" }}>
+                          <div style={{
+                            width: `${Math.min(100, Math.max(topStreak > 0 ? 12 : 3, (topStreak / 7) * 100))}%`,
+                            height: "100%",
+                            background: "linear-gradient(90deg, #FF8A5C, #E3B23C)",
+                            borderRadius: 9999,
+                            boxShadow: topStreak > 0 ? "0 0 10px rgba(227, 178, 60, 0.5)" : "none",
+                            transition: "width 0.3s ease"
+                          }} />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
