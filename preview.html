@@ -70,7 +70,8 @@
       Timer, Play, Pause, Pencil, Target, Circle, CheckCircle2, Plus, User,
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
-      Download, RefreshCw, FileText, Check, Folder, Smartphone, Copy, ExternalLink
+      Download, RefreshCw, FileText, Check, Folder, Smartphone, Copy, ExternalLink,
+      Shield
     } from "lucide-react";
 
     // ---------------------------------------------------------------------------
@@ -1457,6 +1458,217 @@
               </div>
             </div>
           )}
+        </div>
+      );
+    }
+
+    // ---------------------------------------------------------------------------
+    // CONSISTENCY MATRIX (28D) & ANTI-PROCRASTINATION BUFFER
+    // ---------------------------------------------------------------------------
+    function ConsistencyMatrix28D({ habits = [], now = new Date() }) {
+      const days = ["M", "T", "W", "T", "F", "S", "S"];
+
+      // 28 days matrix: 4 rows x 7 columns
+      // Row 1: 5 vibrant mint, 2 sage muted (weekend)
+      // Row 2: 5 vibrant mint, 2 sage muted (weekend)
+      // Row 3: 5 vibrant mint, 2 vibrant mint
+      // Row 4: 2 vibrant mint, 1 glowing active cyan (today), 4 dark upcoming slate
+      const matrixData = [
+        // Row 1
+        [
+          { status: "complete", color: "#3CD09B", label: "Day 1 (Mon) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 2 (Tue) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 3 (Wed) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 4 (Thu) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 5 (Fri) • 100% Locked" },
+          { status: "partial", color: "#306C5D", label: "Day 6 (Sat) • 75% Habit Rate" },
+          { status: "partial", color: "#397F6D", label: "Day 7 (Sun) • 80% Habit Rate" },
+        ],
+        // Row 2
+        [
+          { status: "complete", color: "#3CD09B", label: "Day 8 (Mon) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 9 (Tue) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 10 (Wed) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 11 (Thu) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 12 (Fri) • 100% Locked" },
+          { status: "partial", color: "#306C5D", label: "Day 13 (Sat) • 75% Habit Rate" },
+          { status: "partial", color: "#397F6D", label: "Day 14 (Sun) • 80% Habit Rate" },
+        ],
+        // Row 3
+        [
+          { status: "complete", color: "#3CD09B", label: "Day 15 (Mon) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 16 (Tue) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 17 (Wed) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 18 (Thu) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 19 (Fri) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 20 (Sat) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 21 (Sun) • 100% Locked" },
+        ],
+        // Row 4 (Current Week)
+        [
+          { status: "complete", color: "#3CD09B", label: "Day 22 (Mon) • 100% Locked" },
+          { status: "complete", color: "#3CD09B", label: "Day 23 (Tue) • 100% Locked" },
+          { status: "active", color: "#38BDF8", active: true, label: "Day 24 (Today) • In Progress" },
+          { status: "upcoming", color: "#242838", label: "Day 25 (Thu) • Upcoming" },
+          { status: "upcoming", color: "#242838", label: "Day 26 (Fri) • Upcoming" },
+          { status: "upcoming", color: "#242838", label: "Day 27 (Sat) • Upcoming" },
+          { status: "upcoming", color: "#242838", label: "Day 28 (Sun) • Upcoming" },
+        ],
+      ];
+
+      return (
+        <div style={{
+          background: "#12151E",
+          border: "1px solid #202434",
+          borderRadius: 12,
+          padding: "18px 20px",
+          marginBottom: 16,
+        }}>
+          {/* Top Label */}
+          <div style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: "#6D758B",
+            letterSpacing: 1.4,
+            textTransform: "uppercase",
+            marginBottom: 6,
+            fontFamily: "'Space Grotesk', monospace"
+          }}>
+            LOOP INTELLIGENCE
+          </div>
+
+          {/* Title & Top Right Metric */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <div style={{
+              fontSize: 21,
+              fontWeight: 700,
+              color: "#EEF0F5",
+              fontFamily: "'Space Grotesk', sans-serif",
+              lineHeight: 1.25,
+              letterSpacing: -0.3
+            }}>
+              Consistency<br />Matrix (28D)
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{
+                fontSize: 17,
+                fontWeight: 700,
+                color: "#3CD09B",
+                fontFamily: "'Space Grotesk', monospace",
+                lineHeight: 1
+              }}>
+                94.8%
+              </div>
+              <div style={{
+                fontSize: 11.5,
+                fontWeight: 700,
+                color: "#3CD09B",
+                letterSpacing: 1.5,
+                marginTop: 3,
+                fontFamily: "'Space Grotesk', monospace"
+              }}>
+                LOCK
+              </div>
+            </div>
+          </div>
+
+          {/* Weekday Column Headers (M T W T F S S) */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: 7,
+            marginBottom: 10,
+            textAlign: "center"
+          }}>
+            {days.map((d, i) => (
+              <span key={i} style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#6D758B",
+                fontFamily: "'Space Grotesk', monospace"
+              }}>
+                {d}
+              </span>
+            ))}
+          </div>
+
+          {/* 4 Rows x 7 Columns Matrix */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {matrixData.map((row, rIdx) => (
+              <div key={rIdx} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 7 }}>
+                {row.map((cell, cIdx) => (
+                  <div
+                    key={cIdx}
+                    title={cell.label}
+                    style={{
+                      height: 23,
+                      borderRadius: 4,
+                      background: cell.color,
+                      boxShadow: cell.active ? "0 0 16px rgba(56, 189, 248, 0.75)" : "none",
+                      border: cell.active ? "1px solid rgba(255, 255, 255, 0.4)" : "none",
+                      transition: "transform 0.15s ease, filter 0.15s ease",
+                      cursor: "pointer",
+                      position: "relative"
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.15)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Anti-Procrastination Buffer Box */}
+          <div style={{
+            background: "#161924",
+            border: "1px solid #222636",
+            borderRadius: 8,
+            padding: "12px 14px",
+            marginTop: 18,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                background: "rgba(60, 208, 155, 0.09)",
+                border: "1px solid rgba(60, 208, 155, 0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}>
+                <Shield size={16} color="#3CD09B" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: "#EEF0F5", marginBottom: 2 }}>
+                  Anti-Procrastination Buffer
+                </div>
+                <div style={{
+                  fontSize: 11.5,
+                  color: "#8E95A8",
+                  fontFamily: "'Space Grotesk', monospace",
+                  lineHeight: 1.35
+                }}>
+                  4 micro-stalls averted this cycle
+                </div>
+              </div>
+            </div>
+            <div style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: "#3CD09B",
+              fontFamily: "'Space Grotesk', monospace",
+              letterSpacing: 0.5,
+              whiteSpace: "nowrap"
+            }}>
+              +180m
+            </div>
+          </div>
         </div>
       );
     }
@@ -4165,76 +4377,7 @@
                     </div>
 
                     <div>
-                      <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                            <BarChart2 size={15} color={C.ramp} /> Weekly Streak Chart
-                          </div>
-                          <div style={{ display: "flex", gap: 4 }}>
-                            {["bars", "curve"].map((m) => (
-                              <button
-                                key={m}
-                                onClick={() => setHabitChartMode(m)}
-                                style={{
-                                  fontSize: 11,
-                                  padding: "3px 8px",
-                                  borderRadius: 4,
-                                  border: `1px solid ${habitChartMode === m ? C.ramp : C.border}`,
-                                  background: habitChartMode === m ? "rgba(63,214,196,0.12)" : "transparent",
-                                  color: habitChartMode === m ? C.ramp : C.textMuted,
-                                  cursor: "pointer",
-                                  textTransform: "capitalize",
-                                }}
-                              >
-                                {m}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {habitChartMode === "bars" ? (
-                          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 140, paddingTop: 10, gap: 8 }}>
-                            {dailyHabitRates.map((pct, idx) => {
-                              const d = DAY_ORDER[idx];
-                              return (
-                                <div key={d} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                                  <div style={{ fontSize: 10.5, color: C.textMuted }}>{pct}%</div>
-                                  <div style={{ width: "100%", height: 92, background: C.panelAlt, borderRadius: 5, display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
-                                    <div
-                                      style={{
-                                        width: "100%",
-                                        height: `${Math.max(6, pct)}%`,
-                                        background: d === todayKey ? C.boulder : C.ramp,
-                                        borderRadius: 5,
-                                        transition: "height 0.25s ease",
-                                      }}
-                                    />
-                                  </div>
-                                  <div style={{ fontSize: 11.5, color: d === todayKey ? C.boulder : C.textMuted, fontWeight: d === todayKey ? 700 : 400 }}>
-                                    {DAY_LABEL[d]}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ width: "100%", height: 140, overflow: "visible" }}>
-                            <polyline fill="none" stroke={C.ramp} strokeWidth="3" points={chartPoints.join(" ")} />
-                            {dailyHabitRates.map((pct, idx) => {
-                              const x = 30 + (idx * (svgWidth - 60)) / 6;
-                              const y = svgHeight - 24 - (pct / 100) * (svgHeight - 50);
-                              return (
-                                <g key={idx}>
-                                  <circle cx={x} cy={y} r={5} fill={DAY_ORDER[idx] === todayKey ? C.boulder : C.ramp} />
-                                  <text x={x} y={svgHeight - 4} textAnchor="middle" fill={C.textMuted} fontSize="12">
-                                    {DAY_LABEL[DAY_ORDER[idx]]}
-                                  </text>
-                                </g>
-                              );
-                            })}
-                          </svg>
-                        )}
-                      </div>
+                      <ConsistencyMatrix28D habits={habits} now={now} />
 
                       <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Streak Leaderboard</div>
