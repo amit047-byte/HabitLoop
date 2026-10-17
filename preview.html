@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   
+
   <!-- Babel for in-browser JSX compilation -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
@@ -30,18 +31,18 @@
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      background: #12141B;
-      color: #EEF0F5;
-      font-family: 'IBM Plex Sans', sans-serif;
+      background: #0B0F14;
+      color: #FFFFFF;
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     .rp-shell { padding: 2rem 1.5rem; box-sizing: border-box; }
     .rp-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
     .rp-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .rp-grid { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 24px; }
     .rp-hour-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .rp-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; overflow-y: auto; z-index: 50; backdrop-filter: blur(3px); }
+    .rp-overlay { position: fixed; inset: 0; background: rgba(5,8,14,0.78); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; overflow-y: auto; z-index: 50; backdrop-filter: blur(4px); }
     .hf-grid-table { width: 100%; border-collapse: collapse; }
-    .hf-grid-table th, .hf-grid-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #2A2E3B; }
+    .hf-grid-table th, .hf-grid-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #1E293B; }
     .hf-grid-table th:first-child, .hf-grid-table td:first-child { text-align: left; }
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -71,7 +72,7 @@
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
       Download, RefreshCw, FileText, Check, Folder, Smartphone, Copy, ExternalLink,
-      Shield
+      Shield, TrendingUp, Award
     } from "lucide-react";
 
     // ---------------------------------------------------------------------------
@@ -102,16 +103,20 @@
 
     const ENERGY_COLORS = ["#4C6EF5", "#3FA9A4", "#E3B23C", "#F2823D", "#E0524B"];
     const C = {
-      bg: "#12141B",
-      panel: "#191C25",
-      panelAlt: "#1F2330",
-      border: "#2A2E3B",
-      textPrimary: "#EEF0F5",
-      textMuted: "#868EA3",
-      ramp: "#3FD6C4",
-      boulder: "#FF8A5C",
-      crisis: "#E0524B",
-      class: "#5B6478",
+      bg: "#0B0F14",
+      panel: "#111720",
+      panelAlt: "#161E28",
+      border: "#1E293B",
+      textPrimary: "#FFFFFF",
+      textSecondary: "#CBD5E1",
+      textMuted: "#64748B",
+      ramp: "#2DD4BF",
+      boulder: "#F97316",
+      crisis: "#EF4444",
+      warning: "#F59E0B",
+      class: "#475569",
+      study: "#3B82F6",
+      lab: "#F59E0B",
     };
 
     const DAY_START = 0;
@@ -155,10 +160,10 @@
     ];
 
     const DEFAULT_HABITS = [
-      { id: "h-1", name: "Deep Code / Algorithm Practice", category: "Study", color: "#3FD6C4", mins: 45, load: "boulder", logs: { mon: true, tue: true, wed: true, thu: true, fri: false, sat: false, sun: false } },
-      { id: "h-2", name: "Badminton / 30m Cardio", category: "Fitness", color: "#FF8A5C", mins: 30, load: "ramp", logs: { mon: true, tue: false, wed: true, thu: true, fri: true, sat: false, sun: false } },
-      { id: "h-3", name: "Hydration (2.5L Water)", category: "Wellness", color: "#4C6EF5", mins: 15, load: "ramp", logs: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false } },
-      { id: "h-4", name: "Review Class & AutoCAD Notes", category: "Academic", color: "#E3B23C", mins: 25, load: "boulder", logs: { mon: false, tue: true, wed: true, thu: false, fri: true, sat: false, sun: false } },
+      { id: "h-1", name: "Deep Code / Algorithm Practice", category: "Study", color: "#2DD4BF", mins: 45, load: "boulder", logs: { mon: true, tue: true, wed: true, thu: true, fri: false, sat: false, sun: false } },
+      { id: "h-2", name: "Badminton / 30m Cardio", category: "Fitness", color: "#F97316", mins: 30, load: "ramp", logs: { mon: true, tue: false, wed: true, thu: true, fri: true, sat: false, sun: false } },
+      { id: "h-3", name: "Hydration (2.5L Water)", category: "Wellness", color: "#3B82F6", mins: 15, load: "ramp", logs: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false } },
+      { id: "h-4", name: "Review Class & AutoCAD Notes", category: "Academic", color: "#F59E0B", mins: 25, load: "boulder", logs: { mon: false, tue: true, wed: true, thu: false, fri: true, sat: false, sun: false } },
     ];
 
     const BOULDER_KEYWORDS = ["study", "report", "essay", "write", "read", "project", "exam", "revise", "prepare", "thesis", "research", "lab", "assignment", "code", "calculus", "physics"];
@@ -1518,8 +1523,8 @@
 
       return (
         <div style={{
-          background: "#12151E",
-          border: "1px solid #202434",
+          background: C.panel,
+          border: `1px solid ${C.border}`,
           borderRadius: 12,
           padding: "18px 20px",
           marginBottom: 16,
@@ -1528,7 +1533,7 @@
           <div style={{
             fontSize: 11,
             fontWeight: 700,
-            color: "#6D758B",
+            color: C.textMuted,
             letterSpacing: 1.4,
             textTransform: "uppercase",
             marginBottom: 6,
@@ -1542,7 +1547,7 @@
             <div style={{
               fontSize: 21,
               fontWeight: 700,
-              color: "#EEF0F5",
+              color: C.textPrimary,
               fontFamily: "'Space Grotesk', sans-serif",
               lineHeight: 1.25,
               letterSpacing: -0.3
@@ -1553,7 +1558,7 @@
               <div style={{
                 fontSize: 17,
                 fontWeight: 700,
-                color: "#3CD09B",
+                color: C.ramp,
                 fontFamily: "'Space Grotesk', monospace",
                 lineHeight: 1
               }}>
@@ -1562,7 +1567,7 @@
               <div style={{
                 fontSize: 11.5,
                 fontWeight: 700,
-                color: "#3CD09B",
+                color: C.ramp,
                 letterSpacing: 1.5,
                 marginTop: 3,
                 fontFamily: "'Space Grotesk', monospace"
@@ -1584,7 +1589,7 @@
               <span key={i} style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: "#6D758B",
+                color: C.textMuted,
                 fontFamily: "'Space Grotesk', monospace"
               }}>
                 {d}
@@ -1603,7 +1608,7 @@
                     style={{
                       height: 23,
                       borderRadius: 4,
-                      background: cell.color,
+                      background: cell.active ? "#38BDF8" : cell.color === "#3CD09B" ? C.ramp : cell.color,
                       boxShadow: cell.active ? "0 0 16px rgba(56, 189, 248, 0.75)" : "none",
                       border: cell.active ? "1px solid rgba(255, 255, 255, 0.4)" : "none",
                       transition: "transform 0.15s ease, filter 0.15s ease",
@@ -1620,8 +1625,8 @@
 
           {/* Anti-Procrastination Buffer Box */}
           <div style={{
-            background: "#161924",
-            border: "1px solid #222636",
+            background: C.panelAlt,
+            border: `1px solid ${C.border}`,
             borderRadius: 8,
             padding: "12px 14px",
             marginTop: 18,
@@ -1635,22 +1640,22 @@
                 width: 32,
                 height: 32,
                 borderRadius: 6,
-                background: "rgba(60, 208, 155, 0.09)",
-                border: "1px solid rgba(60, 208, 155, 0.25)",
+                background: "rgba(45, 212, 191, 0.09)",
+                border: "1px solid rgba(45, 212, 191, 0.25)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0
               }}>
-                <Shield size={16} color="#3CD09B" />
+                <Shield size={16} color={C.ramp} />
               </div>
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: "#EEF0F5", marginBottom: 2 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: C.textPrimary, marginBottom: 2 }}>
                   Anti-Procrastination Buffer
                 </div>
                 <div style={{
                   fontSize: 11.5,
-                  color: "#8E95A8",
+                  color: C.textMuted,
                   fontFamily: "'Space Grotesk', monospace",
                   lineHeight: 1.35
                 }}>
@@ -1661,7 +1666,7 @@
             <div style={{
               fontSize: 16,
               fontWeight: 700,
-              color: "#3CD09B",
+              color: C.ramp,
               fontFamily: "'Space Grotesk', monospace",
               letterSpacing: 0.5,
               whiteSpace: "nowrap"
@@ -4152,57 +4157,86 @@
           <div className="rp-shell">
             <div style={{ maxWidth: 1040, margin: "0 auto" }}>
               {/* Top Header */}
-              <div className="rp-header" style={{ marginBottom: 18 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Flame size={20} color={C.boulder} />
-                      <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700 }}>HabitFlow × Ramp</span>
+              <div className="rp-header" style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      background: "#F97316",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 8px rgba(249, 115, 22, 0.35)",
+                      flexShrink: 0
+                    }}>
+                      <Flame size={17} color="#FFFFFF" />
                     </div>
-                    <div style={{ fontSize: 12.5, color: C.textMuted, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
-                      <ClockIcon size={12} /> {fmtClock(now)} · <span style={{ color: C.ramp }}>Local AI Engine</span>
-                    </div>
+                    <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#FFFFFF", letterSpacing: -0.2 }}>
+                      HabitFlow <span style={{ color: "#64748B", fontWeight: 400 }}>×</span> Ramp
+                    </span>
                   </div>
 
-                  {/* Primary View Switcher */}
-                  <div style={{ display: "flex", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 7, padding: 3 }}>
-                    <button
-                      onClick={() => setDashboardTab("habits")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "6px 12px",
-                        borderRadius: 5,
-                        border: "none",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        background: dashboardTab === "habits" ? C.ramp : "transparent",
-                        color: dashboardTab === "habits" ? "#0B2421" : C.textMuted,
-                      }}
-                    >
-                      <CheckSquare size={14} /> HabitFlow ({todayHabitsDone}/{habits.length})
-                    </button>
-                    <button
-                      onClick={() => setDashboardTab("schedule")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "6px 12px",
-                        borderRadius: 5,
-                        border: "none",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        background: dashboardTab === "schedule" ? C.boulder : "transparent",
-                        color: dashboardTab === "schedule" ? "#2A1206" : C.textMuted,
-                      }}
-                    >
-                      <Calendar size={14} /> Schedule & Ramp
-                    </button>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: C.panel,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 20,
+                    padding: "3px 10px",
+                    fontSize: 12,
+                    color: C.textMuted
+                  }}>
+                    <ClockIcon size={12} color={C.textMuted} />
+                    <span>{fmtClock(now)}</span>
+                    <span style={{ color: C.border }}>•</span>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.ramp, display: "inline-block" }} />
+                    <span style={{ color: C.ramp, fontWeight: 600 }}>Local AI Engine</span>
                   </div>
+                </div>
+
+                {/* Primary View Switcher */}
+                <div style={{ display: "flex", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 7, padding: 3 }}>
+                  <button
+                    onClick={() => setDashboardTab("habits")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 14px",
+                      borderRadius: 5,
+                      border: "none",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      background: dashboardTab === "habits" ? C.ramp : "transparent",
+                      color: dashboardTab === "habits" ? "#042F2E" : C.textMuted,
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <CheckSquare size={14} /> HabitFlow ({todayHabitsDone}/{habits.length})
+                  </button>
+                  <button
+                    onClick={() => setDashboardTab("schedule")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 14px",
+                      borderRadius: 5,
+                      border: "none",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      background: dashboardTab === "schedule" ? C.boulder : "transparent",
+                      color: dashboardTab === "schedule" ? "#2A1206" : C.textMuted,
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Calendar size={14} /> Schedule & Ramp
+                  </button>
                 </div>
 
                 <div className="rp-header-actions">
@@ -4221,26 +4255,66 @@
                 <div>
                   {/* KPI Cards */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 20 }}>
-                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>Today's Habit Completion</div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color: C.ramp, marginTop: 4 }}>
-                        {todayHabitsDone} / {habits.length}
+                    {/* Card 1: Today's Habit Completion */}
+                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: 1.1, textTransform: "uppercase" }}>TODAY'S HABIT COMPLETION</span>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, color: C.textMuted, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 6px" }}>
+                            {Math.round((todayHabitsDone / Math.max(1, habits.length)) * 100)}%
+                          </span>
+                        </div>
+                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+                          <span style={{ color: C.ramp }}>{todayHabitsDone}</span>
+                          <span style={{ fontSize: 22, color: C.textMuted, fontWeight: 400 }}>/</span>
+                          <span style={{ fontSize: 26, color: C.ramp }}>{habits.length}</span>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 4, marginBottom: 16 }}>
+                          Logged for <strong style={{ color: C.textPrimary, fontWeight: 600 }}>{DAY_LABEL[todayKey]}</strong>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 2 }}>Logged for {DAY_LABEL[todayKey]}</div>
+                      <div style={{ width: "100%", height: 3.5, background: C.panelAlt, borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ width: `${(todayHabitsDone / Math.max(1, habits.length)) * 100}%`, height: "100%", background: C.ramp, borderRadius: 2, transition: "width 0.3s ease" }} />
+                      </div>
                     </div>
-                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>Weekly Consistency Rate</div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color: C.boulder, marginTop: 4 }}>
-                        {overallWeeklyRate}%
+
+                    {/* Card 2: Weekly Consistency Rate */}
+                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: 1.1, textTransform: "uppercase" }}>WEEKLY CONSISTENCY RATE</span>
+                          <TrendingUp size={14} color={C.boulder} />
+                        </div>
+                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: C.boulder }}>
+                          {overallWeeklyRate}%
+                        </div>
+                        <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 4, marginBottom: 16 }}>
+                          Across Mon–Sun active periods
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 2 }}>Across Mon–Sun</div>
+                      <div style={{ width: "100%", height: 3.5, background: C.panelAlt, borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ width: `${overallWeeklyRate}%`, height: "100%", background: C.boulder, borderRadius: 2, transition: "width 0.3s ease" }} />
+                      </div>
                     </div>
-                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>Top Active Streak</div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color: "#E3B23C", marginTop: 4 }}>
-                        {habits.length > 0 ? Math.max(...habits.map((h) => computeHabitStreak(h.logs))) : 0} days
+
+                    {/* Card 3: Top Active Streak */}
+                    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: 1.1, textTransform: "uppercase" }}>TOP ACTIVE STREAK</span>
+                          <Award size={14} color="#F59E0B" />
+                        </div>
+                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: "#F59E0B", display: "flex", alignItems: "baseline", gap: 8 }}>
+                          <span>{habits.length > 0 ? Math.max(...habits.map((h) => computeHabitStreak(h.logs))) : 0}</span>
+                          <span style={{ fontSize: 22, fontWeight: 600 }}>days</span>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 4, marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}>
+                          <Flame size={12} color="#F59E0B" /> Best consecutive run this week
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 2 }}>Best consecutive run this week</div>
+                      <div style={{ width: "100%", height: 3.5, background: C.panelAlt, borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ width: `${Math.min(100, ((habits.length > 0 ? Math.max(...habits.map((h) => computeHabitStreak(h.logs))) : 0) / 7) * 100)}%`, height: "100%", background: "#F59E0B", borderRadius: 2, transition: "width 0.3s ease" }} />
+                      </div>
                     </div>
                   </div>
 
@@ -4339,13 +4413,15 @@
                       </div>
 
                       <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Create New Habit</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, fontWeight: 700, color: C.ramp, letterSpacing: 1.1, textTransform: "uppercase", marginBottom: 12 }}>
+                          <Plus size={14} color={C.ramp} /> CREATE NEW HABIT
+                        </div>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <input
                             value={newHabitName}
                             onChange={(e) => setNewHabitName(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && addCustomHabit()}
-                            placeholder="Habit name (e.g. 45m Robotics / Arduino prototyping)"
+                            placeholder="Habit name (e.g. 45m Robotics / Architecture study)"
                             style={{ flex: "2 1 200px", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.textPrimary, fontSize: 13.5 }}
                           />
                           <select
@@ -4356,7 +4432,7 @@
                             <option value="Study">Study</option>
                             <option value="Fitness">Fitness</option>
                             <option value="Wellness">Wellness</option>
-                            <option value="Coding">Coding</option>
+                            <option value="Academic">Academic</option>
                           </select>
                           <select
                             value={newHabitLoad}
@@ -4368,7 +4444,7 @@
                           </select>
                           <button
                             onClick={addCustomHabit}
-                            style={{ background: C.ramp, border: "none", borderRadius: 6, padding: "8px 16px", color: "#0B2421", fontSize: 13.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                            style={{ background: C.ramp, border: "none", borderRadius: 6, padding: "8px 16px", color: "#042F2E", fontSize: 13.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                           >
                             <Plus size={15} /> Add Habit
                           </button>
@@ -4380,16 +4456,26 @@
                       <ConsistencyMatrix28D habits={habits} now={now} />
 
                       <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Streak Leaderboard</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 700, color: C.textPrimary, display: "flex", alignItems: "center", gap: 7 }}>
+                            <Flame size={15} color={C.boulder} /> Streak Leaderboard
+                          </div>
+                          <span style={{ fontSize: 11, color: C.textMuted, fontFamily: "'Space Grotesk', monospace" }}>Live Ranks</span>
+                        </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {[...habits]
                             .sort((a, b) => computeHabitStreak(b.logs) - computeHabitStreak(a.logs))
-                            .map((h) => {
+                            .map((h, idx) => {
                               const s = computeHabitStreak(h.logs);
                               return (
-                                <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.panelAlt, borderRadius: 6, padding: "8px 12px", fontSize: 13 }}>
-                                  <span>{h.name}</span>
-                                  <span style={{ color: C.boulder, fontWeight: 600 }}>{s} day streak</span>
+                                <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", fontSize: 13 }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <span style={{ fontSize: 11.5, fontWeight: 700, color: C.textMuted, width: 14 }}>{idx + 1}</span>
+                                    <span style={{ color: C.textPrimary, fontWeight: 500 }}>{h.name}</span>
+                                  </div>
+                                  <span style={{ color: "#F59E0B", fontWeight: 700, display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}>
+                                    <Flame size={12} color="#F59E0B" /> {s} day streak
+                                  </span>
                                 </div>
                               );
                             })}
@@ -4400,8 +4486,8 @@
                       <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginTop: 16 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                           <div>
-                            <div style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                              <Target size={15} color={C.boulder} /> Today's Targets
+                            <div style={{ fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, color: C.textPrimary }}>
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.boulder, display: "inline-block" }} /> Today's Targets
                             </div>
                             <div style={{ fontSize: 11.5, color: C.textMuted }}>
                               {todaysTargets.filter((t) => t.done).length} of {todaysTargets.length} completed
@@ -4415,7 +4501,7 @@
                               border: "none",
                               color: "#2A1206",
                               borderRadius: 5,
-                              padding: "5px 10px",
+                              padding: "6px 12px",
                               fontSize: 12,
                               fontWeight: 700,
                               cursor: "pointer",
@@ -4429,7 +4515,7 @@
                         </div>
 
                         {todaysTargets.length === 0 ? (
-                          <div style={{ fontSize: 12.5, color: C.textMuted, padding: "8px 0" }}>
+                          <div style={{ fontSize: 12, color: C.textMuted, padding: "18px 12px", textAlign: "center", border: `1px dashed ${C.border}`, borderRadius: 6, background: C.panelAlt }}>
                             No targets set for today. Click "+ Add Target" to set a goal with deadline and difficulty.
                           </div>
                         ) : (
