@@ -214,6 +214,20 @@
       const m = Math.floor(mins % 60);
       return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
     }
+    function to24HHMM(val) {
+      if (!val) return "18:00";
+      const str = String(val);
+      const match = str.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+      if (match) {
+        let h = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        const ap = match[3] ? match[3].toLowerCase() : null;
+        if (ap === "pm" && h < 12) h += 12;
+        if (ap === "am" && h === 12) h = 0;
+        return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      }
+      return "18:00";
+    }
     function formatTime(mins) {
       return minutesToHHMM(mins);
     }
@@ -1004,7 +1018,16 @@
       const [loggedIn, setLoggedIn] = useState(false);
       const [authMode, setAuthMode] = useState("signin"); // "signin" or "signup"
 
-      const [profile, setProfile] = useState({ name: "Amitabha Ghosh", email: "amit.productivity047@gmail.com", university: "JECRC University · B.Tech Sec-C" });
+      const [profile, setProfile] = useState({
+        name: "Amitabha Ghosh",
+        email: "amit.productivity047@gmail.com",
+        university: "JECRC University",
+        degree: "B.Tech Computer Science & Engineering",
+        semester: "4th Semester",
+        studentId: "23BCON047",
+        dailyTargetHours: 4,
+        bio: "Striving for academic consistency, high-energy focus, and deep work."
+      });
       const [loginIdentifier, setLoginIdentifier] = useState("");
       const [loginPassword, setLoginPassword] = useState("");
       const [rememberMe, setRememberMe] = useState(true);
@@ -1013,15 +1036,22 @@
       const [signupName, setSignupName] = useState("");
       const [signupEmail, setSignupEmail] = useState("");
       const [signupPassword, setSignupPassword] = useState("");
-      const [signupUniversity, setSignupUniversity] = useState("JECRC University · B.Tech Sec-C");
+      const [signupUniversity, setSignupUniversity] = useState("JECRC University");
 
       const [profileEmailInput, setProfileEmailInput] = useState("");
       const [profileNameInput, setProfileNameInput] = useState("");
+      const [profileUniversityInput, setProfileUniversityInput] = useState("");
+      const [profileDegreeInput, setProfileDegreeInput] = useState("");
+      const [profileSemesterInput, setProfileSemesterInput] = useState("");
+      const [profileStudentIdInput, setProfileStudentIdInput] = useState("");
+      const [profileDailyTargetHoursInput, setProfileDailyTargetHoursInput] = useState(4);
+      const [profileBioInput, setProfileBioInput] = useState("");
       const [profileMsg, setProfileMsg] = useState(null);
 
       // Auto-debrief timing & trigger state
       const [autoDebriefEnabled, setAutoDebriefEnabled] = useState(true);
       const [lastDebriefTriggerDate, setLastDebriefTriggerDate] = useState(null);
+      const [noClassesNotice, setNoClassesNotice] = useState(false);
 
       // Target Creation Modal / Card state
       const [showAddTargetModal, setShowAddTargetModal] = useState(false);
@@ -1205,7 +1235,7 @@
           }
 
           let finalSched = sched;
-          if (!sched || sched.length < 10 || sched.some((c) => c.subject === "Physics 101" || c.subject === "Calculus II" || c.subject === "Chem Lab")) {
+          if (!sched || sched.length === 0) {
             finalSched = DEMO_SCHEDULE;
             saveJSON("data:schedule", DEMO_SCHEDULE);
           }
@@ -1268,11 +1298,22 @@
             const u = savedUser || {
               name: "Amitabha Ghosh",
               email: "amit.productivity047@gmail.com",
-              university: "JECRC University · B.Tech Sec-C",
+              university: "JECRC University",
+              degree: "B.Tech Computer Science & Engineering",
+              semester: "4th Semester",
+              studentId: "23BCON047",
+              dailyTargetHours: 4,
+              bio: "Striving for academic consistency, high-energy focus, and deep work."
             };
             setProfile(u);
             setProfileNameInput(u.name || "");
             setProfileEmailInput(u.email || "");
+            setProfileUniversityInput(u.university || "JECRC University");
+            setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
+            setProfileSemesterInput(u.semester || "4th Semester");
+            setProfileStudentIdInput(u.studentId || "23BCON047");
+            setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
+            setProfileBioInput(u.bio || "");
             setLoggedIn(true);
             setStage(stageParam || "dashboard");
             if (tabParam) setDashboardTab(tabParam);
@@ -1302,6 +1343,20 @@
         })();
       }, []);
 
+      const todayKey = getWeekdayKey(now);
+      const todayDateKey = now.toDateString();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const currentHour = now.getHours();
+      const effectiveEnergy = hourlyEnergy[currentHour] ?? energy;
+      const morningSubjectsToday = [...new Set(scheduleAll.filter((c) => c.day === todayKey && c.start < NOON).map((c) => c.subject))];
+      const classesForToday = scheduleAll.filter((c) => c.day === todayKey).map((c) => ({ title: c.subject, start: c.start, end: c.end }));
+      const classesForSelectedDay = scheduleAll
+        .map((c, idx) => ({ ...c, scheduleIndex: idx }))
+        .filter((c) => c.day === selectedDay)
+        .map((c) => ({ title: c.subject, start: c.start, end: c.end, scheduleIndex: c.scheduleIndex }));
+      const todaysTargets = targetsByDate[todayDateKey] || [];
+      const canAddDebrief = debriefAnswer.text.trim() && debriefAnswer.difficulty && parseFloat(debriefAnswer.hours) > 0;
+
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:schedule", scheduleAll); }, [scheduleAll, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:tasks", tasks); }, [tasks, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:hourlyEnergy", hourlyEnergy); }, [hourlyEnergy, bootstrapped, loggedIn]);
@@ -1321,6 +1376,8 @@
       // Auto-Debrief Schedule Timer (configured from Settings)
       useEffect(() => {
         if (!autoDebriefEnabled || !debriefTime || debriefOpen || !loggedIn) return;
+        const classesToday = scheduleAll.filter((c) => c.day === todayKey);
+        if (classesToday.length === 0) return; // Do not auto-trigger debrief on days without classes (like Sunday)
         const curH = now.getHours();
         const curM = now.getMinutes();
         const todayStr = now.toDateString();
@@ -1332,7 +1389,7 @@
           setLastDebriefTriggerDate(todayStr);
           startDebrief();
         }
-      }, [now, debriefTime, autoDebriefEnabled, lastDebriefTriggerDate, debriefOpen, loggedIn]);
+      }, [now, debriefTime, autoDebriefEnabled, lastDebriefTriggerDate, debriefOpen, loggedIn, scheduleAll, todayKey]);
 
       useEffect(() => {
         if (!pomodoroActive || pomodoroPaused) return;
@@ -1355,20 +1412,6 @@
         setPomodoroCyclesCompleted(nextCycles);
         setPomodoroSecondsLeft(duration * 60);
       }, [pomodoroSecondsLeft, pomodoroActive]);
-
-      const todayKey = getWeekdayKey(now);
-      const todayDateKey = now.toDateString();
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      const currentHour = now.getHours();
-      const effectiveEnergy = hourlyEnergy[currentHour] ?? energy;
-      const morningSubjectsToday = [...new Set(scheduleAll.filter((c) => c.day === todayKey && c.start < NOON).map((c) => c.subject))];
-      const classesForToday = scheduleAll.filter((c) => c.day === todayKey).map((c) => ({ title: c.subject, start: c.start, end: c.end }));
-      const classesForSelectedDay = scheduleAll
-        .map((c, idx) => ({ ...c, scheduleIndex: idx }))
-        .filter((c) => c.day === selectedDay)
-        .map((c) => ({ title: c.subject, start: c.start, end: c.end, scheduleIndex: c.scheduleIndex }));
-      const todaysTargets = targetsByDate[todayDateKey] || [];
-      const canAddDebrief = debriefAnswer.text.trim() && debriefAnswer.difficulty && parseFloat(debriefAnswer.hours) > 0;
 
       // ---- HabitFlow Analytics ----
       const dailyHabitRates = DAY_ORDER.map((d) => {
@@ -1450,8 +1493,12 @@
       }
 
       function startDebrief() {
-        const subjects = morningSubjectsToday.length > 0 ? morningSubjectsToday : ["Physics 101", "Calculus II"];
-        setDebriefQueue(subjects);
+        const classesToday = [...new Set(scheduleAll.filter((c) => c.day === todayKey).map((c) => c.subject))];
+        if (classesToday.length === 0) {
+          setNoClassesNotice(true);
+          return;
+        }
+        setDebriefQueue(classesToday);
         setDebriefIndex(0);
         setDebriefCollected([]);
         setDebriefAnswer(defaultDebriefAnswer());
@@ -1797,7 +1844,11 @@
         const userObj = {
           name: profile.name && profile.name !== "Student" ? profile.name : capitalized,
           email: id.includes("@") ? id : `${id}@jecrc.edu.in`,
-          university: profile.university || "JECRC University · B.Tech Sec-C",
+          university: profile.university || "JECRC University",
+          degree: profile.degree || "B.Tech Computer Science & Engineering",
+          semester: profile.semester || "4th Semester",
+          studentId: profile.studentId || "23BCON047",
+          dailyTargetHours: profile.dailyTargetHours || 4,
           loggedInAt: new Date().toISOString(),
         };
         setProfile(userObj);
@@ -1820,7 +1871,11 @@
         const userObj = {
           name,
           email,
-          university: signupUniversity.trim() || "JECRC University · B.Tech Sec-C",
+          university: signupUniversity.trim() || "JECRC University",
+          degree: "B.Tech Computer Science & Engineering",
+          semester: "4th Semester",
+          studentId: "23BCON047",
+          dailyTargetHours: 4,
           loggedInAt: new Date().toISOString(),
         };
         setProfile(userObj);
@@ -1835,7 +1890,12 @@
         const userObj = {
           name: "Amitabha Ghosh",
           email: "amit.productivity047@gmail.com",
-          university: "JECRC University · B.Tech Sec-C",
+          university: "JECRC University",
+          degree: "B.Tech Computer Science & Engineering",
+          semester: "4th Semester",
+          studentId: "23BCON047",
+          dailyTargetHours: 4,
+          bio: "Striving for academic consistency, high-energy focus, and deep work.",
           loggedInAt: new Date().toISOString(),
         };
         setProfile(userObj);
@@ -1848,7 +1908,11 @@
         const userObj = {
           name: "Guest Student",
           email: "guest@jecrc.edu.in",
-          university: "JECRC University · B.Tech Sec-C",
+          university: "JECRC University",
+          degree: "B.Tech Computer Science & Engineering",
+          semester: "4th Semester",
+          studentId: "23BCON047",
+          dailyTargetHours: 4,
           loggedInAt: new Date().toISOString(),
           isGuest: true,
         };
@@ -1865,6 +1929,38 @@
         setLoginIdentifier("");
         setLoginPassword("");
         setAuthError(null);
+      }
+
+      function openProfilePage() {
+        setProfileNameInput(profile.name || "");
+        setProfileEmailInput(profile.email || "");
+        setProfileUniversityInput(profile.university || "JECRC University");
+        setProfileDegreeInput(profile.degree || "B.Tech Computer Science & Engineering");
+        setProfileSemesterInput(profile.semester || "4th Semester");
+        setProfileStudentIdInput(profile.studentId || "23BCON047");
+        setProfileDailyTargetHoursInput(profile.dailyTargetHours || 4);
+        setProfileBioInput(profile.bio || "Striving for academic consistency, high-energy focus, and deep work.");
+        setProfileMsg(null);
+        setStage("profile-page");
+      }
+
+      function saveProfile() {
+        const updated = {
+          ...profile,
+          name: profileNameInput.trim() || profile.name || "Student",
+          email: profileEmailInput.trim() || profile.email || "student@jecrc.edu.in",
+          university: profileUniversityInput.trim() || profile.university || "JECRC University",
+          degree: profileDegreeInput.trim() || profile.degree || "B.Tech Computer Science & Engineering",
+          semester: profileSemesterInput.trim() || profile.semester || "4th Semester",
+          studentId: profileStudentIdInput.trim() || profile.studentId || "23BCON047",
+          dailyTargetHours: Number(profileDailyTargetHoursInput) || 4,
+          bio: profileBioInput.trim() || profile.bio || "",
+        };
+        setProfile(updated);
+        saveJSON("data:currentUser", updated);
+        saveJSON("data:profile", updated);
+        setProfileMsg("Profile updated and saved successfully!");
+        setTimeout(() => setProfileMsg(null), 3500);
       }
 
       // ---- Target Handlers & Modal ----
@@ -1948,18 +2044,19 @@
         setEditTargetDifficulty(tg.difficulty || "medium");
         setEditTargetMinutes(tg.estimatedMinutes || 30);
 
+        const customTime = to24HHMM(tg.deadline);
+        setEditTargetDeadlineCustom(customTime);
+
         if (!tg.deadline || tg.deadline === "No deadline") {
           setEditTargetDeadlineType("none");
-          setEditTargetDeadlineCustom("");
-        } else if (tg.deadline === "End of Day (11:59 PM)") {
+        } else if (tg.deadline.includes("11:59") || tg.deadline.toLowerCase().includes("end of day")) {
           setEditTargetDeadlineType("eod");
-          setEditTargetDeadlineCustom("");
-        } else if (tg.deadline === "6:00 PM" || tg.deadline === "Evening") {
+          setEditTargetDeadlineCustom("23:59");
+        } else if (tg.deadline === "6:00 PM" || tg.deadline.toLowerCase().includes("evening")) {
           setEditTargetDeadlineType("evening");
-          setEditTargetDeadlineCustom("");
+          setEditTargetDeadlineCustom("18:00");
         } else {
           setEditTargetDeadlineType("custom");
-          setEditTargetDeadlineCustom(tg.deadline);
         }
 
         setShowEditTargetModal(true);
@@ -1970,12 +2067,20 @@
         if (!text || !editingTargetId) return;
 
         let deadlineStr = "No deadline";
-        if (editTargetDeadlineType === "eod") {
-          deadlineStr = "End of Day (11:59 PM)";
-        } else if (editTargetDeadlineType === "evening") {
-          deadlineStr = "6:00 PM";
-        } else if (editTargetDeadlineType === "custom" && editTargetDeadlineCustom) {
-          deadlineStr = editTargetDeadlineCustom;
+        if (editTargetDeadlineType === "none") {
+          deadlineStr = "No deadline";
+        } else if (editTargetDeadlineCustom) {
+          const minsVal = hhmmToMinutes(editTargetDeadlineCustom);
+          const h24 = Math.floor(minsVal / 60) % 24;
+          const m = minsVal % 60;
+          const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+          const ampm = h24 < 12 ? "AM" : "PM";
+          const formattedTime = `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+          if (editTargetDeadlineType === "eod" && editTargetDeadlineCustom === "23:59") {
+            deadlineStr = "End of Day (11:59 PM)";
+          } else {
+            deadlineStr = formattedTime;
+          }
         }
 
         const cogLoad = editTargetDifficulty === "easy" ? "ramp" : "boulder";
@@ -2320,36 +2425,6 @@
                   </button>
                 </div>
               )}
-
-              {/* Demo fallback */}
-              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14, textAlign: "center" }}>
-                <div style={{ fontSize: 11.5, color: C.textMuted, marginBottom: 8 }}>
-                  Quick Beam JECRC Master Timetable Sample:
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
-                  {["B", "A", "C", "D"].map((sec) => (
-                    <button
-                      key={sec}
-                      type="button"
-                      onClick={() => {
-                        sendMobileImageToDesktop(`jecrc_section_${sec.toLowerCase()}_clean.jpg`, `SEC ${sec}.jpg`);
-                      }}
-                      style={{
-                        background: C.panelAlt,
-                        border: `1px solid ${C.border}`,
-                        color: C.ramp,
-                        padding: "5px 10px",
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer"
-                      }}
-                    >
-                      Beam Sec-{sec}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         );
@@ -2936,7 +3011,7 @@
                       Settings & Preferences
                     </div>
                     <div style={{ fontSize: 12, color: C.textMuted }}>
-                      Account authentication, auto-debrief schedule, and timetable OCR
+                      Account authentication, profile management, and auto-debrief schedule
                     </div>
                   </div>
                 </div>
@@ -2973,10 +3048,29 @@
                 </div>
 
                 <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 14 }}>
-                  University / Program: <strong style={{ color: C.textPrimary }}>{profile.university || "JECRC University · B.Tech Sec-C"}</strong>
+                  University / Program: <strong style={{ color: C.textPrimary }}>{profile.university || "JECRC University"}</strong>
                 </div>
 
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={openProfilePage}
+                    style={{
+                      background: "rgba(63,214,196,0.12)",
+                      border: `1px solid ${C.ramp}`,
+                      color: C.ramp,
+                      borderRadius: 6,
+                      padding: "8px 14px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    <User size={13} /> Edit Full Student Profile
+                  </button>
                   <button
                     type="button"
                     onClick={handleSignOut}
@@ -3076,7 +3170,7 @@
                   {/* Preset Time Buttons */}
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {[
-                      { label: "12:50 PM (After Sec-C Classes)", h: 12, m: 50 },
+                      { label: "1:00 PM (After Classes)", h: 13, m: 0 },
                       { label: "5:00 PM (Evening)", h: 17, m: 0 },
                       { label: "9:00 PM (Nightly Review)", h: 21, m: 0 },
                     ].map((p) => (
@@ -3127,33 +3221,210 @@
                 </button>
               </div>
 
-              {/* 3. Edit Schedule Interface Button & Timetable Overview */}
-              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: C.ramp }}>
-                    <Calendar size={16} /> Class Schedule & Timetable
+              {/* Done Button */}
+              <button onClick={() => setStage("dashboard")} style={{ width: "100%", background: C.boulder, border: "none", borderRadius: 6, padding: "11px 0", color: "#2A1206", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Done / Return to Dashboard</button>
+            </div>
+          </div>
+        );
+      } else if (stage === "profile-page") {
+        pageBody = (
+          <div className="rp-shell">
+            <div style={{ maxWidth: 640, margin: "0 auto" }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: "rgba(63,214,196,0.15)", border: `1.5px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <User size={22} color={C.ramp} />
                   </div>
-                  <span style={{ fontSize: 11.5, color: C.textMuted }}>
-                    {scheduleAll.length} weekly blocks
-                  </span>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: C.textPrimary }}>
+                      Student Profile
+                    </div>
+                    <div style={{ fontSize: 12.5, color: C.textMuted }}>
+                      Manage your academic credentials, university details, and daily study targets
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setStage("dashboard")}
+                    style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
+                  >
+                    <X size={15} /> Close
+                  </button>
+                </div>
+              </div>
+
+              {profileMsg && (
+                <div style={{ background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, color: C.ramp, borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                  <CheckCircle2 size={16} /> {profileMsg}
+                </div>
+              )}
+
+              {/* Profile Overview Card */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,138,92,0.25) 0%, rgba(63,214,196,0.25) 100%)", border: `2px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 700, color: C.ramp }}>
+                    {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary }}>
+                      {profile.name || "Student"}
+                    </div>
+                    <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>
+                      {profile.email || "student@jecrc.edu.in"}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 11, background: "rgba(63,214,196,0.14)", color: C.ramp, border: `1px solid rgba(63,214,196,0.3)`, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                        {profile.university || "University Student"}
+                      </span>
+                      {profile.degree && (
+                        <span style={{ fontSize: 11, background: C.panelAlt, color: C.textMuted, border: `1px solid ${C.border}`, padding: "2px 8px", borderRadius: 4 }}>
+                          {profile.degree}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 14 }}>
-                  Open the schedule editor to add manual class periods, edit timings, or scan timetable images with PaddleOCR-VL 1.6 or the in-browser model.
+                {/* Quick Academic KPIs */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+                  <div style={{ background: C.panelAlt, borderRadius: 8, padding: 10, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: C.textMuted }}>Daily Targets</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.ramp, marginTop: 2 }}>
+                      {todaysTargets.filter(t => t.done).length}/{todaysTargets.length}
+                    </div>
+                  </div>
+                  <div style={{ background: C.panelAlt, borderRadius: 8, padding: 10, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: C.textMuted }}>Habits Logged</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.boulder, marginTop: 2 }}>
+                      {todayHabitsDone}/{habits.length}
+                    </div>
+                  </div>
+                  <div style={{ background: C.panelAlt, borderRadius: 8, padding: 10, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: C.textMuted }}>Study Goal</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, marginTop: 2 }}>
+                      {profile.dailyTargetHours || 4} hrs/day
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Editable Academic Form */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                  <Pencil size={15} color={C.ramp} /> Edit Student Credentials
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Full Name</label>
+                    <input
+                      type="text"
+                      value={profileNameInput}
+                      onChange={(e) => setProfileNameInput(e.target.value)}
+                      placeholder="e.g. Amitabha Ghosh"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Email Address</label>
+                    <input
+                      type="email"
+                      value={profileEmailInput}
+                      onChange={(e) => setProfileEmailInput(e.target.value)}
+                      placeholder="e.g. amitabha@university.edu"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>University / College</label>
+                    <input
+                      type="text"
+                      value={profileUniversityInput}
+                      onChange={(e) => setProfileUniversityInput(e.target.value)}
+                      placeholder="e.g. JECRC University"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Degree & Branch</label>
+                    <input
+                      type="text"
+                      value={profileDegreeInput}
+                      onChange={(e) => setProfileDegreeInput(e.target.value)}
+                      placeholder="e.g. B.Tech Computer Science & Engineering"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Semester / Year</label>
+                    <input
+                      type="text"
+                      value={profileSemesterInput}
+                      onChange={(e) => setProfileSemesterInput(e.target.value)}
+                      placeholder="e.g. 4th Semester"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Student ID / Roll No</label>
+                    <input
+                      type="text"
+                      value={profileStudentIdInput}
+                      onChange={(e) => setProfileStudentIdInput(e.target.value)}
+                      placeholder="e.g. 23BCON047"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Daily Study Target (Hours)</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="16"
+                      step="0.5"
+                      value={profileDailyTargetHoursInput}
+                      onChange={(e) => setProfileDailyTargetHoursInput(e.target.value)}
+                      style={{ width: 100, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 14, boxSizing: "border-box" }}
+                    />
+                    <span style={{ fontSize: 12.5, color: C.textMuted }}>hours of focused study / problem solving per day</span>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ display: "block", fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Academic Motto / Goal Note</label>
+                  <textarea
+                    rows={2}
+                    value={profileBioInput}
+                    onChange={(e) => setProfileBioInput(e.target.value)}
+                    placeholder="e.g. Master Data Structures and complete competitive programming targets..."
+                    style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13, resize: "none", boxSizing: "border-box" }}
+                  />
                 </div>
 
                 <div style={{ display: "flex", gap: 10 }}>
                   <button
                     type="button"
-                    onClick={() => setStage("edit-schedule")}
+                    onClick={saveProfile}
                     style={{
                       flex: 1,
-                      background: C.boulder,
+                      background: C.ramp,
                       border: "none",
-                      color: "#2A1206",
+                      color: "#08211E",
                       borderRadius: 6,
                       padding: "10px 0",
-                      fontSize: 13,
+                      fontSize: 13.5,
                       fontWeight: 700,
                       cursor: "pointer",
                       display: "flex",
@@ -3162,67 +3433,54 @@
                       gap: 6
                     }}
                   >
-                    <Pencil size={14} /> ✏️ Open Schedule Editor
+                    <CheckCircle2 size={16} /> Save Profile Changes
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setDashboardTab("schedule");
-                      setStage("dashboard");
-                      setShowScheduleUploadCard(true);
-                    }}
+                    onClick={() => setStage("dashboard")}
                     style={{
-                      flex: 1,
                       background: C.panelAlt,
                       border: `1px solid ${C.border}`,
                       color: C.textPrimary,
                       borderRadius: 6,
-                      padding: "10px 0",
+                      padding: "10px 18px",
                       fontSize: 13,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6
+                      cursor: "pointer"
                     }}
                   >
-                    <Camera size={14} color={C.ramp} /> Timetable Scanner
+                    Done
                   </button>
                 </div>
               </div>
 
-              {/* 4. PaddleOCR-VL 1.6 Document Vision Engine */}
-              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                  <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: C.ramp }}>
-                    <Cpu size={16} /> Timetable OCR Engine
-                  </div>
-                  <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
-                    PaddleOCR-VL 1.6 Active
-                  </span>
+              {/* Account Session Actions */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>Account Session</div>
+                  <div style={{ fontSize: 11.5, color: C.textMuted }}>Currently signed in as {profile.email}</div>
                 </div>
-
-                <div style={{ fontSize: 12.5, color: C.textMuted, lineHeight: 1.5, marginBottom: 14 }}>
-                  HabitLoop uses Baidu's <strong>PaddleOCR-VL 1.6</strong> with PP-DocLayoutV3 for document vision and layout parsing. Timetables can be scanned via phone QR beam or chosen directly from this device.
-                </div>
-
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setStage("dashboard");
-                      setDashboardTab("schedule");
-                      setShowScheduleUploadModal(true);
+                    onClick={handleSignOut}
+                    style={{
+                      background: "rgba(224,82,75,0.12)",
+                      border: `1px solid ${C.crisis}`,
+                      color: "#FF8C8C",
+                      borderRadius: 6,
+                      padding: "7px 12px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
                     }}
-                    style={{ flex: 1, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, color: C.ramp, borderRadius: 6, padding: "9px 0", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                   >
-                    <Camera size={14} /> Open Timetable Scanner
+                    <LogIn size={13} /> Sign Out
                   </button>
                 </div>
               </div>
-
-              {/* Done Button */}
-              <button onClick={() => setStage("dashboard")} style={{ width: "100%", background: C.boulder, border: "none", borderRadius: 6, padding: "11px 0", color: "#2A1206", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Done / Return to Dashboard</button>
             </div>
           </div>
         );
@@ -3305,6 +3563,7 @@
                   <button onClick={() => setStage("energy-log")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: ENERGY_COLORS[effectiveEnergy - 1], borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Zap size={13} /> Energy {effectiveEnergy}/5</button>
                   <button onClick={openPomodoroSetup} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Timer size={13} /> Focus</button>
                   <button onClick={() => setStage("edit-schedule")} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,138,92,0.12)", border: `1px solid ${C.boulder}`, color: C.boulder, borderRadius: 6, padding: "6px 11px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><Pencil size={13} /> Edit Schedule</button>
+                  <button onClick={openProfilePage} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><User size={13} /> Profile</button>
                   <button onClick={() => setStage("settings-page")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Settings size={13} /></button>
                   <button onClick={() => setModalOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "6px 12px", fontSize: 13, cursor: "pointer" }}><Command size={13} /> Capture <span style={{ color: C.textMuted }}>⌘K</span></button>
                 </div>
@@ -4233,20 +4492,30 @@
 
                 {/* Deadline of Target */}
                 <div style={{ marginBottom: 18 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
-                    Deadline of Target
-                  </label>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted }}>
+                      Deadline of Target
+                    </label>
+                    {editTargetDeadlineType !== "none" && editTargetDeadlineCustom && (
+                      <span style={{ fontSize: 11.5, color: C.ramp, fontWeight: 600 }}>
+                        Target due: {fmtTime(hhmmToMinutes(editTargetDeadlineCustom))}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 10 }}>
                     {[
-                      { id: "eod", label: "End of Day", sub: "11:59 PM" },
-                      { id: "evening", label: "Evening", sub: "6:00 PM" },
-                      { id: "custom", label: "Specific", sub: "Custom" },
-                      { id: "none", label: "No Deadline", sub: "Open" },
+                      { id: "eod", label: "End of Day", sub: "11:59 PM", time: "23:59" },
+                      { id: "evening", label: "Evening", sub: "6:00 PM", time: "18:00" },
+                      { id: "custom", label: "Specific", sub: "Custom Time", time: editTargetDeadlineCustom || "18:00" },
+                      { id: "none", label: "No Deadline", sub: "Open", time: "" },
                     ].map((dl) => (
                       <button
                         key={dl.id}
                         type="button"
-                        onClick={() => setEditTargetDeadlineType(dl.id)}
+                        onClick={() => {
+                          setEditTargetDeadlineType(dl.id);
+                          if (dl.time) setEditTargetDeadlineCustom(dl.time);
+                        }}
                         style={{
                           background: editTargetDeadlineType === dl.id ? "rgba(63,214,196,0.12)" : C.panelAlt,
                           border: `1px solid ${editTargetDeadlineType === dl.id ? C.ramp : C.border}`,
@@ -4264,15 +4533,63 @@
                     ))}
                   </div>
 
-                  {editTargetDeadlineType === "custom" && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-                      <span style={{ fontSize: 12, color: C.textMuted }}>Pick Deadline Time:</span>
-                      <input
-                        type="time"
-                        value={editTargetDeadlineCustom}
-                        onChange={(e) => setEditTargetDeadlineCustom(e.target.value)}
-                        style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.textPrimary, fontSize: 13 }}
-                      />
+                  {editTargetDeadlineType !== "none" && (
+                    <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 12, marginTop: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary, display: "flex", alignItems: "center", gap: 5 }}>
+                          <ClockIcon size={13} color={C.ramp} /> Pick Deadline Time:
+                        </span>
+                        <input
+                          type="time"
+                          value={editTargetDeadlineCustom || "18:00"}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              setEditTargetDeadlineCustom(e.target.value);
+                              setEditTargetDeadlineType("custom");
+                            }
+                          }}
+                          style={{
+                            background: C.panel,
+                            border: `1.5px solid ${C.ramp}`,
+                            borderRadius: 6,
+                            padding: "6px 12px",
+                            color: C.textPrimary,
+                            fontSize: 13.5,
+                            fontWeight: 600,
+                            cursor: "pointer"
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {[
+                          { label: "12:00 PM", val: "12:00" },
+                          { label: "3:00 PM", val: "15:00" },
+                          { label: "6:00 PM", val: "18:00" },
+                          { label: "9:00 PM", val: "21:00" },
+                          { label: "11:59 PM", val: "23:59" },
+                        ].map((chip) => (
+                          <button
+                            key={chip.val}
+                            type="button"
+                            onClick={() => {
+                              setEditTargetDeadlineCustom(chip.val);
+                              setEditTargetDeadlineType("custom");
+                            }}
+                            style={{
+                              background: editTargetDeadlineCustom === chip.val ? "rgba(63,214,196,0.18)" : C.panel,
+                              border: `1px solid ${editTargetDeadlineCustom === chip.val ? C.ramp : C.border}`,
+                              color: editTargetDeadlineCustom === chip.val ? C.ramp : C.textMuted,
+                              borderRadius: 4,
+                              padding: "4px 8px",
+                              fontSize: 11,
+                              cursor: "pointer",
+                              fontWeight: 500
+                            }}
+                          >
+                            {chip.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -4884,6 +5201,33 @@
             </div>
           )}
 
+          {noClassesNotice && (
+            <div className="rp-overlay" onClick={() => setNoClassesNotice(false)}>
+              <div
+                className="rp-modal-card"
+                onClick={(e) => e.stopPropagation()}
+                style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, width: "min(440px, 92%)", padding: 22, textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.6)" }}
+              >
+                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                  <Calendar size={24} color={C.ramp} />
+                </div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: C.textPrimary, marginBottom: 8 }}>
+                  No Classes Scheduled Today ({DAY_LABEL[todayKey] || todayKey})
+                </div>
+                <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.5, marginBottom: 18 }}>
+                  There are no lecture or lab periods scheduled in your timetable for today. Class debrief only runs when there are active subjects scheduled to debrief.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setNoClassesNotice(false)}
+                  style={{ width: "100%", background: C.ramp, border: "none", color: "#08211E", borderRadius: 6, padding: "10px 0", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Understood
+                </button>
+              </div>
+            </div>
+          )}
+
           {debriefOpen && debriefQueue[debriefIndex] && (
             <div className="rp-overlay">
               <div className="rp-modal-card" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, width: "min(480px, 92%)", padding: 22 }}>
@@ -4893,9 +5237,24 @@
                 </div>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 600, marginBottom: 14 }}>Any assignment from {debriefQueue[debriefIndex]}?</div>
                 <input value={debriefAnswer.text} onChange={(e) => setDebriefAnswer((prev) => ({ ...prev, text: e.target.value }))} placeholder="e.g. Problem set 3" style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 11px", color: C.textPrimary, fontSize: 14, marginBottom: 14, boxSizing: "border-box" }} />
-                <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                   <button onClick={() => setDebriefOpen(false)} style={{ flex: 1, background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 0", color: C.textMuted, cursor: "pointer" }}>Skip</button>
                   <button onClick={() => { setInputText(`${debriefAnswer.text} (${debriefQueue[debriefIndex]})`); setDebriefOpen(false); setModalOpen(true); }} style={{ flex: 1, background: C.boulder, border: "none", borderRadius: 6, padding: "9px 0", color: "#2A1206", fontWeight: 600, cursor: "pointer" }}>Schedule It</button>
+                </div>
+                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11.5, color: C.textMuted, flexWrap: "wrap", gap: 6 }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <Bell size={12} color={C.ramp} /> Auto-Debrief: <strong style={{ color: C.ramp }}>{fmtTime(debriefTime.hour * 60 + debriefTime.minute)}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDebriefOpen(false);
+                      setStage("settings-page");
+                    }}
+                    style={{ background: "transparent", border: "none", color: C.boulder, cursor: "pointer", fontSize: 11.5, textDecoration: "underline", padding: 0 }}
+                  >
+                    Change Timing
+                  </button>
                 </div>
               </div>
             </div>
