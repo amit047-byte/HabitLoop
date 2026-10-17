@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-HabitLoop × Ramp — Local Server with PaddleOCR-VL (v1.6) Integration
-Serves the application at http://localhost:8080 and provides the PaddleOCRVL Document Understanding API.
+HabitLoop × Ramp — Local Server with Qwen-VL & PaddleOCR-VL Integration
+Provides pure dynamic timetable extraction without any hardcoded datasets.
 """
 
 import os
@@ -20,53 +20,27 @@ os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 
 PORT = 8080
 
-SECTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jecrc_sections.json")
-JECRC_SECTIONS = {}
-if os.path.isfile(SECTIONS_FILE):
-    try:
-        with open(SECTIONS_FILE, "r") as f:
-            JECRC_SECTIONS = json.load(f)
-    except Exception as e:
-        print(f"Warning: could not load {SECTIONS_FILE}: {e}")
-
-def detect_section(filename="", text=""):
-    combined = f"{filename or ''} {text or ''}"
-    m = re.search(r"\b(?:SEC|SECTION)[-_\s.:]*([A-T])\b", combined, re.I)
-    if m:
-        return m.group(1).upper()
-    m2 = re.search(r"(?:^|[^a-zA-Z])(?:SEC|SECTION)[-_\s.:]*([A-T])(?:[^a-zA-Z]|$)", combined, re.I)
-    if m2:
-        return m2.group(1).upper()
-    return None
-
-def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sample=False, section_hint=""):
+def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sample=False):
     os.makedirs("output", exist_ok=True)
     temp_img_path = os.path.join("output", filename)
     if image_bytes:
         with open(temp_img_path, "wb") as f:
             f.write(image_bytes)
 
-    detected_sec = detect_section(filename=filename, text=section_hint)
-    if not detected_sec and section_hint and section_hint.upper() in JECRC_SECTIONS:
-        detected_sec = section_hint.upper()
-
-    if is_sample or detected_sec:
-        sec_key = detected_sec if (detected_sec and detected_sec in JECRC_SECTIONS) else "B"
-        sec_data = JECRC_SECTIONS.get(sec_key, {})
+    if is_sample:
         return {
             "success": True,
-            "engine": "PaddleOCRVL",
-            "pipeline_version": "v1.6",
-            "section": sec_key,
-            "section_name": sec_data.get("name", f"Section {sec_key}"),
-            "classes": sec_data.get("classes", []),
-            "output_dir": "output",
-            "message": f"Loaded verified timetable for {sec_data.get('name', 'Section ' + sec_key)}."
+            "engine": "Sample",
+            "classes": [
+                {"subject": "Sample Class 1", "day": "mon", "start": 480, "end": 530},
+                {"subject": "Sample Class 2", "day": "mon", "start": 580, "end": 630}
+            ],
+            "message": "Sample timetable loaded."
         }
 
-    print(f"🚀 Processing document: {temp_img_path}")
+    print(f"🚀 Processing document dynamically: {temp_img_path}")
 
-    # 0. Qwen-VL Vision-Language Model Zero-Shot Extraction
+    # 1. Qwen-VL Vision-Language Model Zero-Shot Extraction (Pure AI Vision)
     try:
         from qwen_extractor import extract_timetable_with_qwen
         print("🧠 Attempting zero-shot extraction with Qwen-VL Vision AI...")
@@ -87,7 +61,7 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
     except Exception as qwen_err:
         print(f"ℹ️ Qwen-VL note: {qwen_err}")
 
-    # 1. Native PaddleOCRVL execution
+    # 2. Native PaddleOCRVL execution
     try:
         from paddleocr import PaddleOCRVL
         pipeline = PaddleOCRVL(pipeline_version="v1.6")
@@ -104,20 +78,6 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
             if hasattr(res, "json"):
                 json_data.append(res.json)
 
-        sec_from_ocr = detect_section(filename=filename, text=md_text)
-        if sec_from_ocr and sec_from_ocr in JECRC_SECTIONS:
-            sec_data = JECRC_SECTIONS[sec_from_ocr]
-            return {
-                "success": True,
-                "engine": "PaddleOCRVL",
-                "pipeline_version": "v1.6",
-                "section": sec_from_ocr,
-                "section_name": sec_data.get("name"),
-                "classes": sec_data.get("classes", []),
-                "markdown": md_text,
-                "output_dir": "output"
-            }
-
         if md_text.strip():
             print("✨ PaddleOCRVL v1.6 native execution succeeded!")
             return {
@@ -132,7 +92,7 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
     except Exception as e:
         print(f"ℹ️ PaddleOCRVL pipeline note: {e}")
 
-    # 2. Native PaddleOCR detection fallback
+    # 3. Native PaddleOCR detection fallback
     try:
         from paddleocr import PaddleOCR
         ocr = PaddleOCR(use_angle_cls=True, lang="en")
@@ -140,19 +100,6 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
         if ocr_result and ocr_result[0]:
             lines = [line[1][0] for line in ocr_result[0] if line and len(line) >= 2]
             md_text = "\n".join(lines)
-            sec_from_ocr = detect_section(filename=filename, text=md_text)
-            if sec_from_ocr and sec_from_ocr in JECRC_SECTIONS:
-                sec_data = JECRC_SECTIONS[sec_from_ocr]
-                return {
-                    "success": True,
-                    "engine": "PaddleOCR",
-                    "pipeline_version": "v1.6",
-                    "section": sec_from_ocr,
-                    "section_name": sec_data.get("name"),
-                    "classes": sec_data.get("classes", []),
-                    "markdown": md_text,
-                    "output_dir": "output"
-                }
             print(f"✨ PaddleOCR standard extraction extracted {len(lines)} lines!")
             return {
                 "success": True,
@@ -165,16 +112,15 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
     except Exception as ocr_err:
         print(f"ℹ️ PaddleOCR fallback note: {ocr_err}")
 
-    # 3. If Python OCR requires client fallback
+    # 4. Fall back to client OCR
     return {
         "success": False,
         "fallback_client_ocr": True,
-        "error": "PaddleOCR backend processing queued. Falling back to in-browser client OCR engine."
+        "error": "Routing to high-precision document OCR engine."
     }
 
 class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
-        # Enable CORS for local development & API access
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, api-subscription-key")
@@ -185,7 +131,6 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        # Support /api/paddleocr/scan, /api/ocr/scan, and /api/qwen/scan
         if self.path in ["/api/paddleocr/scan", "/api/ocr/scan", "/api/qwen/scan"]:
             try:
                 content_len = int(self.headers.get("Content-Length", 0))
@@ -194,7 +139,6 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
                 
                 img_val = payload.get("image", "")
                 fileName = payload.get("fileName", "timetable_input.jpg")
-                section_hint = payload.get("section", "")
                 image_bytes = None
                 script_dir = os.path.dirname(os.path.abspath(__file__))
                 local_candidate = os.path.join(script_dir, img_val) if img_val else ""
@@ -215,7 +159,7 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
                         pass
                 
                 is_sample = payload.get("isSample", False) or (img_val == "sample")
-                result = execute_paddleocr_vl(image_bytes, filename=fileName, is_sample=is_sample, section_hint=section_hint)
+                result = execute_paddleocr_vl(image_bytes, filename=fileName, is_sample=is_sample)
                 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
@@ -236,8 +180,8 @@ def run():
     print("=" * 60)
     print(f"🚀 HabitLoop Local Server Running at http://localhost:{PORT}")
     print(f"📂 Serving directory: {os.getcwd()}")
-    print(f"✨ PaddleOCR-VL (v1.6) OCR scan endpoint: http://localhost:{PORT}/api/paddleocr/scan")
-    print(f"🎯 Calibrated sections loaded: {len(JECRC_SECTIONS)} sections (A through T)")
+    print(f"🧠 Qwen-VL Zero-Shot Vision endpoint: http://localhost:{PORT}/api/qwen/scan")
+    print(f"✨ PaddleOCR-VL (v1.6) OCR endpoint: http://localhost:{PORT}/api/paddleocr/scan")
     print("=" * 60)
     try:
         httpd.serve_forever()
