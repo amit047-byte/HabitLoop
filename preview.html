@@ -1469,7 +1469,8 @@
       habits = [],
       now = new Date(),
       activeDay = null,
-      onSelectDay = () => {}
+      onSelectDay = () => {},
+      onToggleHabitDay = null
     }) {
       const days = ["M", "T", "W", "T", "F", "S", "S"];
       const dayKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -1479,140 +1480,30 @@
       const currentDayIdx = (now.getDay() + 6) % 7;
       const currentDayKey = dayKeys[currentDayIdx];
 
-      // Calculate daily completion rate from live 7-Day Habit Matrix
-      const totalHabits = Math.max(1, habits.length);
-      const getLiveRate = (dKey) => {
-        const done = habits.filter((h) => h.logs?.[dKey]).length;
-        return { count: done, rate: done / totalHabits };
-      };
+      // Total slots = habits.length * 7 days
+      const totalHabits = habits.length;
+      const totalSlots = Math.max(1, totalHabits * 7);
 
-      // Baseline historical weeks (Weeks 1, 2, 3) - persistent 28D cycle benchmark
-      const week1 = [
-        { rate: 1.0, color: "#3CD09B", label: "Day 1 (Mon) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 2 (Tue) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 3 (Wed) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 4 (Thu) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 5 (Fri) • 100% Locked into 28D Loop" },
-        { rate: 0.75, color: "#306C5D", label: "Day 6 (Sat) • 75% Habit Consistency" },
-        { rate: 0.80, color: "#397F6D", label: "Day 7 (Sun) • 80% Habit Consistency" },
-      ];
+      // Live total completed checkmarks across all habits
+      const totalDoneAllHabits = habits.reduce(
+        (sum, h) => sum + Object.values(h.logs || {}).filter(Boolean).length,
+        0
+      );
 
-      const week2 = [
-        { rate: 1.0, color: "#3CD09B", label: "Day 8 (Mon) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 9 (Tue) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 10 (Wed) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 11 (Thu) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 12 (Fri) • 100% Locked into 28D Loop" },
-        { rate: 0.75, color: "#306C5D", label: "Day 13 (Sat) • 75% Habit Consistency" },
-        { rate: 0.80, color: "#397F6D", label: "Day 14 (Sun) • 80% Habit Consistency" },
-      ];
-
-      const week3 = [
-        { rate: 1.0, color: "#3CD09B", label: "Day 15 (Mon) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 16 (Tue) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 17 (Wed) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 18 (Thu) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 19 (Fri) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 20 (Sat) • 100% Locked into 28D Loop" },
-        { rate: 1.0, color: "#3CD09B", label: "Day 21 (Sun) • 100% Locked into 28D Loop" },
-      ];
-
-      // Week 4 (Live Current Week): Dynamically computed directly from the 7-Day Habit Matrix!
-      const week4 = dayKeys.map((dKey, idx) => {
-        const { count, rate } = getLiveRate(dKey);
-        const dayNum = 21 + idx + 1;
-        const isToday = (idx === currentDayIdx);
-        const isPast = (idx < currentDayIdx);
-        const isFuture = (idx > currentDayIdx);
-        const isSelected = activeDay === dKey;
-
-        let color = "#242838";
-        let active = false;
-        let glow = false;
-        let glowColor = "none";
-        let status = "upcoming";
-
-        if (isToday) {
-          active = true;
-          glow = true;
-          if (count === totalHabits && totalHabits > 0) {
-            color = "#3CD09B";
-            glowColor = "0 0 16px rgba(60, 208, 155, 0.85)";
-            status = "today-complete";
-          } else {
-            color = "#38BDF8";
-            glowColor = "0 0 16px rgba(56, 189, 248, 0.85)";
-            status = "today-active";
-          }
-        } else if (count > 0 || isPast) {
-          if (rate >= 0.8) {
-            color = "#3CD09B";
-            status = "complete";
-          } else if (rate >= 0.5) {
-            color = "#306C5D";
-            status = "partial-high";
-          } else if (rate > 0) {
-            color = "#245548";
-            status = "partial-low";
-          } else {
-            color = isPast ? "#1F2432" : "#242838";
-            status = isPast ? "missed" : "upcoming";
-          }
-        }
-
-        const pct = Math.round(rate * 100);
-        const label = isToday
-          ? `Day ${dayNum} (${dayNames[idx]} - Today) • ${count}/${totalHabits} Habits Done (${pct}%) • ${count === totalHabits ? "Locked" : "In Progress"} • Click to focus in 7-Day Matrix`
-          : `Day ${dayNum} (${dayNames[idx]}) • ${count}/${totalHabits} Habits Done (${pct}%) • Click to focus in 7-Day Matrix`;
-
-        return {
-          dayKey: dKey,
-          dayIndex: idx,
-          dayNum,
-          count,
-          rate,
-          color,
-          active,
-          glow,
-          glowColor,
-          status,
-          label,
-          isToday,
-          isSelected
-        };
-      });
-
-      const matrixRows = [week1, week2, week3, week4];
-
-      // Live 28D Consistency Calculation connected to the 7-Day matrix:
-      const w1Pts = week1.reduce((sum, d) => sum + d.rate, 0);
-      const w2Pts = week2.reduce((sum, d) => sum + d.rate, 0);
-      const w3Pts = week3.reduce((sum, d) => sum + d.rate, 0);
-
-      // In current week, consider days up to today (plus any future pre-logged days)
-      let w4Pts = 0;
-      let w4TrackedDays = Math.max(1, currentDayIdx + 1);
-      week4.forEach((c, idx) => {
-        if (idx <= currentDayIdx || c.count > 0) {
-          w4Pts += c.rate;
-        }
-      });
-
-      const totalPoints = w1Pts + w2Pts + w3Pts + w4Pts;
-      const totalTrackedDays = 21 + w4TrackedDays;
-      const consistencyRate = Math.min(100, Math.max(0, (totalPoints / totalTrackedDays) * 100));
+      // Live consistency rate across all active habit slots
+      const consistencyRate = totalHabits > 0 ? Math.min(100, Math.max(0, (totalDoneAllHabits / totalSlots) * 100)) : 0;
       const formattedRate = consistencyRate.toFixed(1) + "%";
 
-      // Lock status badge
-      let lockText = "LOCK";
-      let lockColor = "#3CD09B";
-      if (consistencyRate >= 90) {
+      // Dynamic Lock Status
+      let lockText = "RELOAD";
+      let lockColor = "#FF8A5C";
+      if (consistencyRate >= 80) {
         lockText = "LOCK";
         lockColor = "#3CD09B";
-      } else if (consistencyRate >= 75) {
+      } else if (consistencyRate >= 50) {
         lockText = "ACTIVE";
         lockColor = "#3FD6C4";
-      } else if (consistencyRate >= 50) {
+      } else if (consistencyRate > 0) {
         lockText = "BUILDING";
         lockColor = "#E3B23C";
       } else {
@@ -1620,19 +1511,78 @@
         lockColor = "#FF8A5C";
       }
 
-      // Live Anti-Procrastination Buffer connected to habit matrix:
-      // Boulder habits avert cognitive friction stalls
+      // Live Anti-Procrastination Buffer: Boulder habits avert friction stalls
       const boulderHabits = habits.filter((h) => h.load === "boulder");
       const boulderLogsCount = boulderHabits.reduce(
         (sum, h) => sum + Object.values(h.logs || {}).filter(Boolean).length,
         0
       );
-      const totalDoneAllHabits = habits.reduce(
-        (sum, h) => sum + Object.values(h.logs || {}).filter(Boolean).length,
-        0
-      );
-      const stallsAverted = Math.max(1, boulderLogsCount);
-      const bufferMinutes = Math.min(360, Math.max(90, totalDoneAllHabits * 15 + boulderLogsCount * 15));
+      const stallsAverted = boulderLogsCount;
+      const bufferMinutes = totalDoneAllHabits * 15 + boulderLogsCount * 15;
+
+      // Dynamic matrix dimension label: 28D for 4 habits, 35D for 5, 42D for 6, etc.
+      const matrixDimension = totalHabits * 7;
+      const dimensionLabel = totalHabits === 4 ? "28D" : `${matrixDimension}D`;
+
+      // Matrix Rows: 1 Row per Habit, 7 Columns (M T W T F S S)
+      const matrixRows = habits.map((h, rIdx) => {
+        return dayKeys.map((dKey, cIdx) => {
+          const isDone = !!h.logs?.[dKey];
+          const isToday = (cIdx === currentDayIdx);
+          const isPast = (cIdx < currentDayIdx);
+          const isSelected = activeDay === dKey;
+
+          let color = "#191D2B";
+          let border = "1px solid #232838";
+          let glow = false;
+          let glowColor = "none";
+
+          if (isDone) {
+            color = "#3CD09B";
+            border = "1px solid rgba(60, 208, 155, 0.4)";
+            if (isToday) {
+              glow = true;
+              glowColor = "0 0 14px rgba(60, 208, 155, 0.85)";
+              border = "1px solid rgba(255, 255, 255, 0.8)";
+            }
+          } else {
+            if (isToday) {
+              color = "#182635";
+              border = "1.5px solid #38BDF8";
+              glow = true;
+              glowColor = "0 0 12px rgba(56, 189, 248, 0.65)";
+            } else if (isPast) {
+              color = "#141722";
+              border = "1px solid #1D212E";
+            } else {
+              color = "#191D2B";
+              border = "1px solid #222636";
+            }
+          }
+
+          if (isSelected && !glow) {
+            border = "1px solid #38BDF8";
+          }
+
+          const label = `${h.name} (${h.category}) • ${dayNames[cIdx]}: ${isDone ? "Done ✓" : "Pending"} • Click to toggle`;
+
+          return {
+            habitId: h.id,
+            habitName: h.name,
+            habitColor: h.color,
+            dayKey: dKey,
+            dayIndex: cIdx,
+            isDone,
+            isToday,
+            isSelected,
+            color,
+            border,
+            glow,
+            glowColor,
+            label
+          };
+        });
+      });
 
       return (
         <div style={{
@@ -1657,15 +1607,20 @@
 
           {/* Title & Top Right Metric (Live Computed from Habit Matrix) */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-            <div style={{
-              fontSize: 21,
-              fontWeight: 700,
-              color: "#EEF0F5",
-              fontFamily: "'Space Grotesk', sans-serif",
-              lineHeight: 1.25,
-              letterSpacing: -0.3
-            }}>
-              Consistency<br />Matrix (28D)
+            <div>
+              <div style={{
+                fontSize: 21,
+                fontWeight: 700,
+                color: "#EEF0F5",
+                fontFamily: "'Space Grotesk', sans-serif",
+                lineHeight: 1.25,
+                letterSpacing: -0.3
+              }}>
+                Consistency<br />Matrix ({dimensionLabel})
+              </div>
+              <div style={{ fontSize: 11.5, color: "#6D758B", marginTop: 4, fontFamily: "'Space Grotesk', monospace" }}>
+                {totalHabits} {totalHabits === 1 ? "habit" : "habits"} × 7 days
+              </div>
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{
@@ -1725,50 +1680,53 @@
             })}
           </div>
 
-          {/* 4 Rows x 7 Columns Matrix */}
+          {/* Matrix Rows: 1 Row per Habit, 7 Columns (M T W T F S S) */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {matrixRows.map((row, rIdx) => {
-              const isRow4 = (rIdx === 3);
-              return (
-                <div key={rIdx} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 7 }}>
-                  {row.map((cell, cIdx) => {
-                    const dKey = dayKeys[cIdx];
-                    const isColSelected = activeDay === dKey;
-                    const isCellGlowing = cell.glow;
-                    return (
+            {matrixRows.length === 0 ? (
+              <div style={{ padding: "18px 0", textAlign: "center", fontSize: 12, color: "#6D758B" }}>
+                No habits yet. Click <b>+ New Habit</b> to start your consistency loop.
+              </div>
+            ) : (
+              matrixRows.map((row, rIdx) => {
+                const h = habits[rIdx];
+                return (
+                  <div key={h?.id || rIdx} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 7 }}>
+                    {row.map((cell, cIdx) => (
                       <div
-                        key={cIdx}
+                        key={cell.dayKey}
                         title={cell.label}
                         onClick={() => {
-                          if (isRow4) {
-                            onSelectDay(activeDay === dKey ? null : dKey);
+                          if (onToggleHabitDay) {
+                            onToggleHabitDay(cell.habitId, cell.dayKey);
+                          } else {
+                            onSelectDay(activeDay === cell.dayKey ? null : cell.dayKey);
                           }
                         }}
                         style={{
                           height: 23,
                           borderRadius: 4,
                           background: cell.color,
-                          boxShadow: isCellGlowing ? cell.glowColor : isColSelected ? "0 0 10px rgba(56, 189, 248, 0.5)" : "none",
-                          border: cell.active ? "1px solid rgba(255, 255, 255, 0.45)" : isColSelected ? "1px solid #38BDF8" : "none",
+                          boxShadow: cell.glow ? cell.glowColor : cell.isSelected ? "0 0 10px rgba(56, 189, 248, 0.5)" : "none",
+                          border: cell.border,
                           transition: "transform 0.15s ease, filter 0.15s ease, box-shadow 0.2s ease",
                           cursor: "pointer",
                           position: "relative"
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.18)")}
+                        onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.22)")}
                         onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
                       />
-                    );
-                  })}
-                </div>
-              );
-            })}
+                    ))}
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* Sync Legend & Focus Status */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, fontSize: 11, color: "#6D758B", flexWrap: "wrap", gap: 6 }}>
             <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3CD09B", display: "inline-block" }} />
-              Row 4 feeds live from 7-Day Habit Matrix
+              1 row per habit · Live synced (click cell to log)
             </span>
             <span style={{ color: activeDay ? "#38BDF8" : "#8E95A8", fontWeight: 600 }}>
               {activeDay ? `Day Focus: ${activeDay.toUpperCase()}` : `Today: ${dayNames[currentDayIdx]}`}
@@ -4428,7 +4386,7 @@
                                 gap: 5,
                                 fontFamily: "'Space Grotesk', monospace"
                               }}
-                              title="Every habit checkmark directly updates Row 4 of the 28-Day Consistency Matrix and the Anti-Procrastination Buffer in real time"
+                              title="Every habit checkmark directly updates its corresponding row in the Consistency Matrix and the Anti-Procrastination Buffer in real time"
                             >
                               <Shield size={12} color="#3CD09B" /> Connected to 28D Loop
                             </span>
@@ -4579,7 +4537,7 @@
                           </tbody>
                           <tfoot>
                             <tr>
-                              <td style={{ fontSize: 12, color: C.textMuted, paddingTop: 12 }}>Daily % (28D Row 4)</td>
+                              <td style={{ fontSize: 12, color: C.textMuted, paddingTop: 12 }}>Daily Completion %</td>
                               {dailyHabitRates.map((pct, i) => {
                                 const d = DAY_ORDER[i];
                                 const isSelected = activeMatrixDay === d;
@@ -4612,6 +4570,7 @@
                         now={now}
                         activeDay={activeMatrixDay}
                         onSelectDay={setActiveMatrixDay}
+                        onToggleHabitDay={toggleHabitDay}
                       />
 
                       <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18 }}>
