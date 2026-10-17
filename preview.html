@@ -279,16 +279,14 @@
       ignoreTokens: [
         "LUNCH", "RECESS", "BREAK", "TEA", "LIBRARY", "SPORTS",
         "ASSEMBLY", "FREE", "MENTOR", "ZERO PERIOD", "TEACHERS", "SUBJECTS",
-        "NOMENCLATURE", "SECTION-C", "TIME TABLE", "COORDINATOR", "HOD",
-        "DEAN", "W.E.F", "FIRST YEAR", "SEMESTER-I", "DAY/TIME", "BUILD YOUR WORLD"
+        "NOMENCLATURE", "TIME TABLE", "COORDINATOR", "HOD",
+        "DEAN", "W.E.F", "FIRST YEAR", "DAY/TIME", "BUILD YOUR WORLD"
       ],
       dictionary: [
         { from: "CS", to: "Communication Skills" },
         { from: "CPLT", to: "Computer Programming and Logical Thinking" },
         { from: "EM-I", to: "Engineering Mathematics-I" },
         { from: "EM-1", to: "Engineering Mathematics-I" },
-        { from: "EM-I TUT-C1", to: "Engineering Mathematics-I Tutorial (Group C1)" },
-        { from: "EM-I TUT-C2", to: "Engineering Mathematics-I Tutorial (Group C2)" },
         { from: "EM-I TUT", to: "Engineering Mathematics-I Tutorial" },
         { from: "CHEMISTRY", to: "Engineering Chemistry" },
         { from: "COMM. SKILLS", to: "Communication Skills" },
@@ -299,13 +297,12 @@
         { from: "CPLT LAB", to: "Computer Programming & Logical Thinking Lab" },
         { from: "DIGITAL LITERACY LAB", to: "Digital Data and AI Literacy Lab" },
         { from: "DDAL", to: "Digital Data and AI Literacy" },
-        { from: "EDP", to: "Entrepreneurship Development" },
-        { from: "EDP-C", to: "Entrepreneurship Development (Section C)" },
+        { from: "EDP", to: "Entrepreneurship Development" }
       ],
       cleanRegexList: [
         "\\b(NYB|VIB|KAB|C1KAB|C2KAB)[-\\s]*\\d+\\b",
         "\\b(NB|SH|MJ|SS|JK)\\b",
-        "\\bC[12][-:]",
+        "\\b[A-Za-z][12][-:]",
         "\\([A-Z0-9/,-]+\\)",
         "\\[[A-Z0-9/,-]+\\]"
       ]
@@ -404,7 +401,7 @@
       ];
     }
 
-    async function runLocalOcrModel(imageSrc, model) {
+    async function runLocalOcrModel(imageSrc, model, onProgress = () => {}) {
       return new Promise(async (resolve, reject) => {
         try {
           const img = new Image();
@@ -412,82 +409,112 @@
           img.onload = async () => {
             const canvas = preprocessImageToCanvas(img);
             const w = canvas.width, h = canvas.height;
-            const startMin = hhmmToMinutes(model.startTime || "09:00");
+            const startMin = hhmmToMinutes(model.startTime || "08:00");
             const slot = model.slotDurationMins || 50;
             const days = model.days || ["mon", "tue", "wed", "thu", "fri", "sat"];
-            const totalPeriods = model.totalPeriods || 7;
-            const headerRatio = (model.headerMarginPercent || 12) / 100;
-            const leftRatio = (model.leftMarginPercent || 15) / 100;
+            const totalPeriods = model.totalPeriods || 6;
 
-            const cellMap = {}; // key: `${day}:${period}` -> array of tokens
+            const structured = [];
 
-            // Try running in-browser Tesseract.js if available
+            // Run in-browser Tesseract.js directly on image canvas
             if (typeof window !== "undefined" && window.Tesseract) {
               try {
                 const ocrResult = await window.Tesseract.recognize(canvas, "eng", {
-                  logger: () => {},
+                  logger: (m) => {
+                    if (m.status === "recognizing text" && onProgress && typeof m.progress === "number") {
+                      onProgress(m.progress);
+                    }
+                  },
                 });
+
                 const words = ocrResult?.data?.words || [];
+                const lines = ocrResult?.data?.lines || [];
+
+                // 1. Grid cell spatial detection
+                const cellMap = {};
+                let minX = w, maxX = 0, minY = h, maxY = 0;
+                for (const word of words) {
+                  if (word.text && word.text.trim().length > 1) {
+                    minX = Math.min(minX, word.bbox.x0);
+                    maxX = Math.max(maxX, word.bbox.x1);
+                    minY = Math.min(minY, word.bbox.y0);
+                    maxY = Math.max(maxY, word.bbox.y1);
+                  }
+                }
+                const gridW = Math.max(100, maxX - minX);
+                const gridH = Math.max(100, maxY - minY);
+                const leftOffset = minX + gridW * 0.12;
+                const topOffset = minY + gridH * 0.12;
+
                 for (const word of words) {
                   const text = word.text?.trim();
                   if (!text || text.length < 2) continue;
-                  const bbox = word.bbox;
-                  const cx = (bbox.x0 + bbox.x1) / 2;
-                  const cy = (bbox.y0 + bbox.y1) / 2;
-                  const nx = cx / w, ny = cy / h;
+                  const cx = (word.bbox.x0 + word.bbox.x1) / 2;
+                  const cy = (word.bbox.y0 + word.bbox.y1) / 2;
 
-                  if (ny < headerRatio || nx < leftRatio) continue; // Skip header / legend
+                  if (cx < leftOffset || cy < topOffset) continue;
 
-                  let dayIdx, periodIdx;
-                  if (model.orientation === "days_in_rows") {
-                    dayIdx = Math.floor(((ny - headerRatio) / (1 - headerRatio)) * days.length);
-                    periodIdx = Math.floor(((nx - leftRatio) / (1 - leftRatio)) * totalPeriods);
-                  } else {
-                    dayIdx = Math.floor(((nx - leftRatio) / (1 - leftRatio)) * days.length);
-                    periodIdx = Math.floor(((ny - headerRatio) / (1 - headerRatio)) * totalPeriods);
+                  const dayIdx = Math.min(days.length - 1, Math.max(0, Math.floor(((cy - topOffset) / (maxY - topOffset)) * days.length)));
+                  const periodIdx = Math.min(totalPeriods - 1, Math.max(0, Math.floor(((cx - leftOffset) / (maxX - leftOffset)) * totalPeriods)));
+
+                  const key = `${days[dayIdx]}:${periodIdx}`;
+                  if (!cellMap[key]) cellMap[key] = [];
+                  cellMap[key].push(text);
+                }
+
+                for (const key of Object.keys(cellMap)) {
+                  const [day, pStr] = key.split(":");
+                  const p = parseInt(pStr, 10);
+                  const rawCombined = cellMap[key].join(" ");
+                  const cleaned = cleanSubjectWithModel(rawCombined, model);
+                  if (cleaned && cleaned.length >= 2) {
+                    const sMin = startMin + p * slot;
+                    const eMin = sMin + slot;
+                    structured.push({
+                      subject: cleaned,
+                      day,
+                      start: sMin,
+                      end: eMin,
+                    });
                   }
+                }
 
-                  if (dayIdx >= 0 && dayIdx < days.length && periodIdx >= 0 && periodIdx < totalPeriods) {
-                    const key = `${days[dayIdx]}:${periodIdx}`;
-                    if (!cellMap[key]) cellMap[key] = [];
-                    cellMap[key].push(text);
+                // 2. Line-by-line fallback if grid was sparse
+                if (structured.length < 2 && lines.length > 0) {
+                  const DAY_REGEX = /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?)\b/i;
+                  let curDay = "mon";
+                  let pIdx = 0;
+                  for (const line of lines) {
+                    const lText = (line.text || "").trim();
+                    const dMatch = lText.match(DAY_REGEX);
+                    if (dMatch) {
+                      const dRaw = dMatch[1].toLowerCase().substring(0, 3);
+                      curDay = dRaw;
+                      pIdx = 0;
+                    }
+                    const cleanLine = lText.replace(DAY_REGEX, "").replace(/[|\-*•:]+/g, " ").trim();
+                    if (cleanLine.length >= 3 && !/^(time|recess|lunch|table|period|section|room)/i.test(cleanLine)) {
+                      const cleaned = cleanSubjectWithModel(cleanLine, model) || cleanLine;
+                      if (cleaned && cleaned.length >= 2) {
+                        const sMin = startMin + pIdx * slot;
+                        const eMin = sMin + slot;
+                        structured.push({
+                          subject: cleaned,
+                          day: curDay,
+                          start: sMin,
+                          end: eMin,
+                        });
+                        pIdx = (pIdx + 1) % totalPeriods;
+                      }
+                    }
                   }
                 }
               } catch (tessErr) {
-                console.warn("Tesseract OCR skipped, using structural grid extractor:", tessErr);
+                console.warn("Tesseract OCR execution error:", tessErr);
               }
             }
 
-            // If cells were detected from Tesseract words, clean and structure them
-            const structured = [];
-            const cellKeys = Object.keys(cellMap);
-            if (cellKeys.length > 0) {
-              for (const key of cellKeys) {
-                const [day, pStr] = key.split(":");
-                const p = parseInt(pStr, 10);
-                const rawCombined = cellMap[key].join(" ");
-                const cleaned = cleanSubjectWithModel(rawCombined, model);
-                if (cleaned) {
-                  const sMin = startMin + p * slot;
-                  const eMin = sMin + slot;
-                  structured.push({
-                    subject: cleaned,
-                    day,
-                    start: sMin,
-                    end: eMin,
-                  });
-                }
-              }
-            }
-
-            // If Tesseract extracted classes, return them! Otherwise fallback to model calibration
-            if (structured.length >= 3) {
-              resolve(structured);
-            } else {
-              // Heuristic structural timetable parse based on calibrated grid
-              const fallback = runModelOnSampleData(model);
-              resolve(fallback);
-            }
+            resolve(structured);
           };
           img.onerror = () => reject(new Error("Failed to load timetable image for scanning."));
           img.src = imageSrc;
@@ -535,20 +562,41 @@
   </tbody>
 </table>`;
 
-    function parsePaddleOcrMarkdownOrTable(mdOrHtml, model) {
-      if (!mdOrHtml) return runModelOnSampleData(model);
+    function parsePaddleOcrMarkdownOrTable(rawInput, model) {
+      if (!rawInput || typeof rawInput !== "string" || !rawInput.trim()) return [];
       try {
-        let tableHtml = mdOrHtml;
+        let text = rawInput.trim();
+        const defaultPeriods = model?.periods || JECRC_PERIODS;
+        const classes = [];
 
-        // If input is markdown table, convert to HTML table
-        if (mdOrHtml.includes("|") && !mdOrHtml.includes("<table")) {
-          const lines = mdOrHtml.split("\n").map((l) => l.trim()).filter((l) => l.startsWith("|") && l.endsWith("|"));
-          if (lines.length >= 3) {
+        const DAY_REGEX = /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?)\b/i;
+        const normalizeDay = (str) => {
+          const m = (str || "").match(DAY_REGEX);
+          return m ? m[1].toLowerCase().substring(0, 3) : null;
+        };
+
+        const cleanCellSubject = (cellText) => {
+          if (!cellText) return "";
+          let cleaned = cellText.replace(/\b(NYB|VIB|KAB|AB|BH)[-\s]*\d+\b/gi, "");
+          cleaned = cleaned.replace(/\b[A-Za-z][12][-:]/g, "");
+          cleaned = cleaned.replace(/\b(NB|SH|MJ|SS|JK|DK|AK|PS|RS)\b/g, "").trim();
+          cleaned = cleaned.replace(/[\(\)\[\]]/g, " ").replace(/\s+/g, " ").trim();
+          return cleanSubjectWithModel(cleaned, model) || cleaned;
+        };
+
+        // 1. If text is a Markdown table (| ... |) or HTML table (<table>)
+        let tableHtml = "";
+        if (text.includes("<table")) {
+          tableHtml = text;
+        } else if (text.includes("|")) {
+          const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.startsWith("|") && l.endsWith("|"));
+          if (lines.length >= 2) {
             let html = '<table border="1"><thead><tr>';
             const headers = lines[0].split("|").slice(1, -1).map((c) => c.trim());
             headers.forEach((h) => { html += `<th>${h}</th>`; });
             html += '</tr></thead><tbody>';
-            for (let i = 2; i < lines.length; i++) {
+            const dataStartIndex = (lines.length > 1 && lines[1].includes("---")) ? 2 : 1;
+            for (let i = dataStartIndex; i < lines.length; i++) {
               const rowCells = lines[i].split("|").slice(1, -1).map((c) => c.trim());
               if (rowCells.length > 0) {
                 html += '<tr>';
@@ -561,150 +609,208 @@
           }
         }
 
-        // If table matches the calibrated JECRC Section-C timetable structure:
-        const isJecrcSecC =
-          tableHtml.includes("CS Lab") ||
-          tableHtml.includes("Autocad") ||
-          tableHtml.includes("Digital Literacy") ||
-          (tableHtml.includes("EM-I") && tableHtml.includes("CPLT"));
-        if (isJecrcSecC) {
-          return runModelOnSampleData(model);
-        }
+        if (tableHtml) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(tableHtml, "text/html");
+          const trs = Array.from(doc.querySelectorAll("tr"));
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(tableHtml, "text/html");
-        const trs = Array.from(doc.querySelectorAll("tr"));
-        if (trs.length < 3) return runModelOnSampleData(model);
-
-        // Build 2D grid matrix taking rowspan and colspan into account
-        const grid = {};
-        let maxCols = 0;
-        trs.forEach((tr, rIdx) => {
-          const cells = Array.from(tr.querySelectorAll("td, th"));
-          let cIdx = 0;
-          cells.forEach((cell) => {
-            while (grid[`${rIdx}:${cIdx}`] !== undefined) cIdx++;
-            const rSpan = parseInt(cell.getAttribute("rowspan") || "1", 10);
-            const cSpan = parseInt(cell.getAttribute("colspan") || "1", 10);
-            const text = (cell.textContent || "").trim();
-            for (let dr = 0; dr < rSpan; dr++) {
-              for (let dc = 0; dc < cSpan; dc++) {
-                grid[`${rIdx + dr}:${cIdx + dc}`] = text;
-              }
-            }
-            cIdx += cSpan;
-            if (cIdx > maxCols) maxCols = cIdx;
-          });
-        });
-
-        // Time columns
-        const timeCols = {};
-        for (let c = 1; c < maxCols; c++) {
-          const headerTxt = grid[`0:${c}`] || grid[`1:${c}`] || "";
-          const m = headerTxt.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
-          if (m) {
-            let [, sh, sm, eh, em] = m.map(Number);
-            if (sh < 7) sh += 12;
-            if (eh < 7) eh += 12;
-            timeCols[c] = { start: sh * 60 + sm, end: eh * 60 + em };
-          }
-        }
-
-        const DAY_MAP = {
-          monday: "mon", tuesday: "tue", wednesday: "wed",
-          thursday: "thu", friday: "fri", saturday: "sat"
-        };
-
-        const dayRows = {};
-        trs.forEach((_, r) => {
-          const firstCell = (grid[`${r}:0`] || "").toLowerCase().trim();
-          for (const [dName, dKey] of Object.entries(DAY_MAP)) {
-            if (firstCell.startsWith(dName)) {
-              if (!dayRows[dKey]) dayRows[dKey] = [];
-              dayRows[dKey].push(r);
-              break;
-            }
-          }
-        });
-
-        const defaultPeriods = model.periods || JECRC_PERIODS;
-        const classes = [];
-
-        const daysFound = Object.keys(dayRows);
-        if (daysFound.length >= 3) {
-          for (const [dayKey, rList] of Object.entries(dayRows)) {
-            let c = 1;
-            while (c < maxCols) {
-              const texts = [];
-              for (const r of rList) {
-                const raw = grid[`${r}:${c}`] || "";
-                if (raw) {
-                  let cleaned = raw.replace(/\b(NYB|VIB|KAB|C1KAB|C2KAB)[-\s]*\d+\b/gi, "");
-                  cleaned = cleaned.replace(/\b(NB|SH|MJ|SS|JK)\b/g, "").trim();
-                  cleaned = cleaned.replace(/[\(\)\[\]]/g, "").trim();
-                  if (cleaned && !texts.includes(cleaned)) texts.push(cleaned);
+          if (trs.length >= 2) {
+            // Build 2D grid matrix taking rowspan and colspan into account
+            const grid = {};
+            let maxCols = 0;
+            trs.forEach((tr, rIdx) => {
+              const cells = Array.from(tr.querySelectorAll("td, th"));
+              let cIdx = 0;
+              cells.forEach((cell) => {
+                while (grid[`${rIdx}:${cIdx}`] !== undefined) cIdx++;
+                const rSpan = parseInt(cell.getAttribute("rowspan") || "1", 10);
+                const cSpan = parseInt(cell.getAttribute("colspan") || "1", 10);
+                const cellVal = (cell.textContent || "").trim();
+                for (let dr = 0; dr < rSpan; dr++) {
+                  for (let dc = 0; dc < cSpan; dc++) {
+                    grid[`${rIdx + dr}:${cIdx + dc}`] = cellVal;
+                  }
                 }
-              }
+                cIdx += cSpan;
+                if (cIdx > maxCols) maxCols = cIdx;
+              });
+            });
 
-              if (texts.length > 0) {
-                let span = 1;
-                while (c + span < maxCols) {
-                  const nextTexts = [];
-                  for (const r of rList) {
-                    const nextRaw = grid[`${r}:${c + span}`] || "";
-                    if (nextRaw) {
-                      let nextClean = nextRaw.replace(/\b(NYB|VIB|KAB|C1KAB|C2KAB)[-\s]*\d+\b/gi, "");
-                      nextClean = nextClean.replace(/\b(NB|SH|MJ|SS|JK)\b/g, "").trim();
-                      if (nextClean && !nextTexts.includes(nextClean)) nextTexts.push(nextClean);
+            // Check if column headers represent days or periods
+            let daysInCols = 0;
+            const colDayMap = {};
+            for (let c = 0; c < maxCols; c++) {
+              const headerVal = grid[`0:${c}`] || grid[`1:${c}`] || "";
+              const dKey = normalizeDay(headerVal);
+              if (dKey) {
+                daysInCols++;
+                colDayMap[c] = dKey;
+              }
+            }
+
+            if (daysInCols >= 3) {
+              // Days are COLUMNS, time slots are in ROWS
+              for (let r = 1; r < trs.length; r++) {
+                const rowLabel = grid[`${r}:0`] || "";
+                let startTime = 480 + (r - 1) * 50;
+                let endTime = startTime + 50;
+                const m = rowLabel.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+                if (m) {
+                  let [, sh, sm, eh, em] = m.map(Number);
+                  if (sh < 7) sh += 12;
+                  if (eh < 7) eh += 12;
+                  startTime = sh * 60 + sm;
+                  endTime = eh * 60 + em;
+                } else if (defaultPeriods[r - 1]) {
+                  startTime = defaultPeriods[r - 1].start;
+                  endTime = defaultPeriods[r - 1].end;
+                }
+
+                for (let c = 0; c < maxCols; c++) {
+                  if (colDayMap[c]) {
+                    const cellVal = grid[`${r}:${c}`] || "";
+                    const cleaned = cleanCellSubject(cellVal);
+                    if (cleaned && cleaned.length >= 2 && !/^(recess|lunch|break|library|free)$/i.test(cleaned)) {
+                      classes.push({
+                        subject: cleaned,
+                        day: colDayMap[c],
+                        start: startTime,
+                        end: endTime,
+                      });
                     }
                   }
-                  if (texts.some((t) => nextTexts.includes(t))) {
-                    span++;
+                }
+              }
+            } else {
+              // Days are ROWS, time slots are in COLUMNS
+              const timeCols = {};
+              for (let c = 1; c < maxCols; c++) {
+                const headerTxt = grid[`0:${c}`] || grid[`1:${c}`] || "";
+                const m = headerTxt.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+                if (m) {
+                  let [, sh, sm, eh, em] = m.map(Number);
+                  if (sh < 7) sh += 12;
+                  if (eh < 7) eh += 12;
+                  timeCols[c] = { start: sh * 60 + sm, end: eh * 60 + em };
+                }
+              }
+
+              const dayRows = {};
+              trs.forEach((_, r) => {
+                // Check cell in col 0 and col 1 for day name
+                const cell0 = grid[`${r}:0`] || "";
+                const cell1 = grid[`${r}:1`] || "";
+                const dKey = normalizeDay(cell0) || normalizeDay(cell1);
+                if (dKey) {
+                  if (!dayRows[dKey]) dayRows[dKey] = [];
+                  dayRows[dKey].push(r);
+                }
+              });
+
+              for (const [dayKey, rList] of Object.entries(dayRows)) {
+                let c = 1;
+                while (c < maxCols) {
+                  const texts = [];
+                  for (const r of rList) {
+                    const raw = grid[`${r}:${c}`] || "";
+                    const cleaned = cleanCellSubject(raw);
+                    if (cleaned && !texts.includes(cleaned)) texts.push(cleaned);
+                  }
+
+                  if (texts.length > 0) {
+                    let span = 1;
+                    while (c + span < maxCols) {
+                      const nextTexts = [];
+                      for (const r of rList) {
+                        const nextRaw = grid[`${r}:${c + span}`] || "";
+                        const nextClean = cleanCellSubject(nextRaw);
+                        if (nextClean && !nextTexts.includes(nextClean)) nextTexts.push(nextClean);
+                      }
+                      if (texts.some((t) => nextTexts.includes(t))) {
+                        span++;
+                      } else {
+                        break;
+                      }
+                    }
+
+                    const sInfo = timeCols[c];
+                    const eInfo = timeCols[c + span - 1] || sInfo;
+                    const startTime = sInfo ? sInfo.start : (defaultPeriods[Math.min(defaultPeriods.length - 1, c - 1)]?.start || 480 + (c - 1) * 50);
+                    const endTime = eInfo ? eInfo.end : (defaultPeriods[Math.min(defaultPeriods.length - 1, c + span - 2)]?.end || startTime + span * 50);
+
+                    const finalSubject = texts.join(" / ");
+                    if (finalSubject && finalSubject.length >= 2 && endTime > startTime && !/^(recess|lunch|break|library|free)$/i.test(finalSubject)) {
+                      classes.push({
+                        subject: finalSubject,
+                        day: dayKey,
+                        start: startTime,
+                        end: endTime,
+                      });
+                    }
+                    c += span;
                   } else {
-                    break;
+                    c++;
                   }
                 }
-
-                const sInfo = timeCols[c];
-                const eInfo = timeCols[c + span - 1] || sInfo;
-                let startTime = sInfo ? sInfo.start : (defaultPeriods[Math.min(defaultPeriods.length - 1, c - 1)]?.start || 480);
-                let endTime = eInfo ? eInfo.end : (defaultPeriods[Math.min(defaultPeriods.length - 1, c + span - 2)]?.end || 530);
-
-                const rawJoined = texts.join(" / ");
-                const finalSubject = cleanSubjectWithModel(rawJoined, model) || rawJoined;
-
-                if (finalSubject && finalSubject.length >= 2 && endTime > startTime) {
-                  classes.push({
-                    subject: finalSubject,
-                    day: dayKey,
-                    start: startTime,
-                    end: endTime
-                  });
-                }
-                c += span;
-              } else {
-                c++;
               }
             }
           }
         }
 
-        if (classes.length >= 3) {
-          return classes;
-        } else {
-          return runModelOnSampleData(model);
+        // 2. If table didn't produce enough classes, try line-by-line text parsing
+        if (classes.length < 2) {
+          const rawLines = text.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+          let currentDay = "mon";
+          let pIdx = 0;
+          for (const line of rawLines) {
+            const detectedDay = normalizeDay(line);
+            if (detectedDay) {
+              currentDay = detectedDay;
+              pIdx = 0;
+              continue;
+            }
+
+            const timeMatch = line.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+            let sMin = 0, eMin = 0;
+            let lineSubject = line;
+            if (timeMatch) {
+              let [, sh, sm, eh, em] = timeMatch.map(Number);
+              if (sh < 7) sh += 12;
+              if (eh < 7) eh += 12;
+              sMin = sh * 60 + sm;
+              eMin = eh * 60 + em;
+              lineSubject = line.replace(timeMatch[0], "").trim();
+            } else {
+              const pInfo = defaultPeriods[Math.min(defaultPeriods.length - 1, pIdx)] || { start: 480 + pIdx * 50, end: 530 + pIdx * 50 };
+              sMin = pInfo.start;
+              eMin = pInfo.end;
+            }
+
+            const cleanSubj = cleanCellSubject(lineSubject);
+            if (cleanSubj && cleanSubj.length >= 2 && !/^(time|table|recess|lunch|period|room|section|faculty)/i.test(cleanSubj)) {
+              classes.push({
+                subject: cleanSubj,
+                day: currentDay,
+                start: sMin,
+                end: eMin,
+              });
+              pIdx++;
+            }
+          }
         }
+
+        return classes;
       } catch (err) {
-        console.warn("Failed to parse PaddleOCR-VL output, falling back to calibrated schedule:", err);
-        return runModelOnSampleData(model);
+        console.warn("Error parsing OCR markdown or table:", err);
+        return [];
       }
     }
 
     async function runPaddleOcrModel(imageSrc, model, useSampleFallback = false, onStatus = () => {}) {
       if (useSampleFallback) {
-        onStatus("⚡ Loading verified PaddleOCR-VL (pipeline_version='v1.6') document layout…");
-        await new Promise((r) => setTimeout(r, 450));
-        return parsePaddleOcrMarkdownOrTable(VERIFIED_PADDLEOCR_MD, model);
+        onStatus("⚡ Loading calibrated JECRC Section-C demo timetable…");
+        await new Promise((r) => setTimeout(r, 350));
+        return runModelOnSampleData(model);
       }
 
       // Convert imageSrc to base64 if needed
@@ -723,38 +829,68 @@
         }
       }
 
-      // 1. Try local or Vercel PaddleOCR-VL endpoint (/api/paddleocr/scan)
-      try {
-        onStatus("Connecting to PaddleOCR-VL (v1.6) at /api/paddleocr/scan…");
-        const isHttp = typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http");
-        const isLocal = typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:");
-        const paddleApiUrl = (isHttp && !isLocal)
-          ? "/api/paddleocr/scan"
-          : "https://habit-loop-flame.vercel.app/api/paddleocr/scan";
+      // 1. Try local server or Vercel PaddleOCR endpoint
+      const isFileProto = typeof window !== "undefined" && window.location && window.location.protocol === "file:";
+      const isLocal = typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
-        const proxyResp = await fetch(paddleApiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: sendImage }),
-        });
-        if (proxyResp.ok) {
-          const resJson = await proxyResp.json();
-          if (resJson.success) {
-            onStatus("PaddleOCRVL v1.6 pipeline completed! Parsing layout markdown & tables…");
-            const dataToParse = resJson.markdown || resJson.table_html || VERIFIED_PADDLEOCR_MD;
-            return parsePaddleOcrMarkdownOrTable(dataToParse, model);
-          } else if (resJson.error) {
-            throw new Error(resJson.error);
-          }
-        }
-      } catch (proxyErr) {
-        console.warn("PaddleOCR-VL endpoint unavailable, using verified layout fallback:", proxyErr);
+      const endpoints = [];
+      if (isFileProto) {
+        endpoints.push("http://localhost:8080/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
+      } else if (isLocal) {
+        endpoints.push("/api/paddleocr/scan", "http://localhost:8080/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
+      } else {
+        endpoints.push("/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
       }
 
-      // 2. Fallback to verified PaddleOCR-VL 1.6 extracted structure
-      onStatus("Loaded verified PaddleOCR-VL 1.6 document extraction.");
-      await new Promise((r) => setTimeout(r, 400));
-      return parsePaddleOcrMarkdownOrTable(VERIFIED_PADDLEOCR_MD, model);
+      for (const endpoint of endpoints) {
+        try {
+          onStatus(`Connecting to PaddleOCR-VL (v1.6) at ${endpoint}…`);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+          const proxyResp = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: sendImage, isSample: false }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (proxyResp.ok) {
+            const resJson = await proxyResp.json();
+            if (resJson.success && (resJson.markdown || resJson.table_html)) {
+              onStatus("PaddleOCR-VL pipeline completed! Parsing extracted layout…");
+              const dataToParse = resJson.markdown || resJson.table_html;
+              const parsed = parsePaddleOcrMarkdownOrTable(dataToParse, model);
+              if (parsed && parsed.length >= 2) {
+                return parsed;
+              }
+            } else if (resJson.fallback_client_ocr) {
+              console.info("Server requested client OCR processing.");
+              break;
+            }
+          }
+        } catch (proxyErr) {
+          console.warn(`PaddleOCR endpoint ${endpoint} unavailable:`, proxyErr);
+        }
+      }
+
+      // 2. High-precision In-Browser Client OCR fallback directly on the uploaded image
+      onStatus("Analyzing uploaded image with high-precision client document OCR…");
+      try {
+        const clientClasses = await runLocalOcrModel(sendImage || imageSrc, model, (progress) => {
+          onStatus(`Document OCR scanning in progress (${Math.round(progress * 100)}%)…`);
+        });
+
+        if (clientClasses && clientClasses.length >= 2) {
+          onStatus(`Successfully extracted ${clientClasses.length} timetable classes!`);
+          return clientClasses;
+        }
+      } catch (clientErr) {
+        console.warn("Client OCR scanning failed:", clientErr);
+      }
+
+      throw new Error("Could not detect any timetable classes from the uploaded image. Please ensure the timetable image is clear, sharp, and well-lit.");
     }
 
     function computeFreeBlocks(classes, workingTasks, nowMinutes) {

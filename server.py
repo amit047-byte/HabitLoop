@@ -11,9 +11,15 @@ import base64
 import uuid
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
+# Ensure user site-packages are accessible for PaddleOCR & PaddlePaddle
+user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
+if os.path.isdir(user_site) and user_site not in sys.path:
+    sys.path.insert(0, user_site)
+os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
+
 PORT = 8080
 
-def execute_paddleocr_vl(image_bytes, filename="timetable.jpg"):
+def execute_paddleocr_vl(image_bytes, filename="timetable.jpg", is_sample=False):
     """
     Executes PaddleOCRVL pipeline v1.6:
       from paddleocr import PaddleOCRVL
@@ -29,6 +35,18 @@ def execute_paddleocr_vl(image_bytes, filename="timetable.jpg"):
     with open(temp_img_path, "wb") as f:
         f.write(image_bytes)
 
+    if is_sample:
+        from paddleocr_pipeline import VERIFIED_PADDLEOCR_MD, VERIFIED_PADDLEOCR_HTML, VERIFIED_PADDLEOCR_JSON
+        return {
+            "success": True,
+            "engine": "PaddleOCRVL",
+            "pipeline_version": "v1.6",
+            "markdown": VERIFIED_PADDLEOCR_MD,
+            "table_html": VERIFIED_PADDLEOCR_HTML,
+            "json": VERIFIED_PADDLEOCR_JSON,
+            "output_dir": "output"
+        }
+
     print(f"🚀 Initializing PaddleOCRVL (pipeline_version='v1.6')...")
     print(f"📄 Processing document: {temp_img_path}")
 
@@ -39,44 +57,55 @@ def execute_paddleocr_vl(image_bytes, filename="timetable.jpg"):
         output = pipeline.predict(temp_img_path)
         
         md_text = ""
+        json_data = []
         for res in output:
             res.print()
             res.save_to_json(save_path="output")
             res.save_to_markdown(save_path="output")
             if hasattr(res, "markdown"):
                 md_text += str(res.markdown) + "\n"
+            if hasattr(res, "json"):
+                json_data.append(res.json)
 
-        print("✨ PaddleOCRVL v1.6 native execution succeeded!")
-        return {
-            "success": True,
-            "engine": "PaddleOCRVL",
-            "pipeline_version": "v1.6",
-            "markdown": md_text,
-            "table_html": None,
-            "output_dir": "output"
-        }
-    except ImportError:
-        print("ℹ️ 'paddleocr' library not installed in this Python environment.")
-        print("💡 Returning calibrated PaddleOCR-VL 1.6 document representation.")
+        if md_text.strip():
+            print("✨ PaddleOCRVL v1.6 native execution succeeded!")
+            return {
+                "success": True,
+                "engine": "PaddleOCRVL",
+                "pipeline_version": "v1.6",
+                "markdown": md_text,
+                "table_html": None,
+                "json": json_data,
+                "output_dir": "output"
+            }
     except Exception as e:
-        print(f"⚠️ PaddleOCRVL native attempt gave error ({e}). Returning calibrated model.")
+        print(f"ℹ️ PaddleOCRVL pipeline note: {e}")
 
-    # 2. Calibrated PaddleOCR-VL representation
-    from paddleocr_pipeline import VERIFIED_PADDLEOCR_MD, VERIFIED_PADDLEOCR_HTML, VERIFIED_PADDLEOCR_JSON
-    
-    with open("output/document.md", "w", encoding="utf-8") as f:
-        f.write(VERIFIED_PADDLEOCR_MD)
-    with open("output/document.json", "w", encoding="utf-8") as f:
-        json.dump(VERIFIED_PADDLEOCR_JSON, f, indent=2)
+    # 2. Native PaddleOCR detection fallback
+    try:
+        from paddleocr import PaddleOCR
+        ocr = PaddleOCR(use_angle_cls=True, lang="en")
+        ocr_result = ocr.ocr(temp_img_path, cls=True)
+        if ocr_result and ocr_result[0]:
+            lines = [line[1][0] for line in ocr_result[0] if line and len(line) >= 2]
+            md_text = "\n".join(lines)
+            print(f"✨ PaddleOCR standard extraction extracted {len(lines)} lines!")
+            return {
+                "success": True,
+                "engine": "PaddleOCR",
+                "pipeline_version": "v1.6",
+                "markdown": md_text,
+                "table_html": None,
+                "output_dir": "output"
+            }
+    except Exception as ocr_err:
+        print(f"ℹ️ PaddleOCR fallback note: {ocr_err}")
 
+    # 3. If Python OCR requires client fallback
     return {
-        "success": True,
-        "engine": "PaddleOCRVL",
-        "pipeline_version": "v1.6",
-        "markdown": VERIFIED_PADDLEOCR_MD,
-        "table_html": VERIFIED_PADDLEOCR_HTML,
-        "json": VERIFIED_PADDLEOCR_JSON,
-        "output_dir": "output"
+        "success": False,
+        "fallback_client_ocr": True,
+        "error": "PaddleOCR backend processing queued. Falling back to in-browser client OCR engine."
     }
 
 class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
@@ -119,16 +148,8 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
                     except Exception:
                         pass
                 
-                # If no image was sent, use the clean timetable as fallback
-                if not image_bytes:
-                    fallback_file = os.path.join(script_dir, "jecrc_section_c_clean.jpg")
-                    if os.path.isfile(fallback_file):
-                        with open(fallback_file, "rb") as f:
-                            image_bytes = f.read()
-                    else:
-                        raise ValueError("No image provided and default timetable file not found.")
-
-                result = execute_paddleocr_vl(image_bytes, filename="timetable_input.jpg")
+                is_sample = payload.get("isSample", False) or (img_val == "sample")
+                result = execute_paddleocr_vl(image_bytes, filename="timetable_input.jpg", is_sample=is_sample)
                 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
