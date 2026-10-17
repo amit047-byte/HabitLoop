@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HabitFlow × Ramp — Schedule & Habit Intelligence</title>
+  <title>HabitLoop × Ramp — Academic Schedule & Habit Architecture</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -830,17 +830,36 @@
       const [stage, setStage] = useState("loading");
       const [dashboardTab, setDashboardTab] = useState("habits"); // Starts on HabitFlow tab so you can preview both immediately
       const [bootstrapped, setBootstrapped] = useState(false);
-      const [loggedIn, setLoggedIn] = useState(true);
+      const [loggedIn, setLoggedIn] = useState(false);
+      const [authMode, setAuthMode] = useState("signin"); // "signin" or "signup"
 
-      const [profile, setProfile] = useState({ name: "Amitabha", email: "student@university.edu" });
+      const [profile, setProfile] = useState({ name: "Amitabha Ghosh", email: "amit.productivity047@gmail.com", university: "JECRC University · B.Tech Sec-C" });
       const [loginIdentifier, setLoginIdentifier] = useState("");
       const [loginPassword, setLoginPassword] = useState("");
       const [rememberMe, setRememberMe] = useState(true);
       const [authError, setAuthError] = useState(null);
 
+      const [signupName, setSignupName] = useState("");
+      const [signupEmail, setSignupEmail] = useState("");
+      const [signupPassword, setSignupPassword] = useState("");
+      const [signupUniversity, setSignupUniversity] = useState("JECRC University · B.Tech Sec-C");
+
       const [profileEmailInput, setProfileEmailInput] = useState("");
       const [profileNameInput, setProfileNameInput] = useState("");
       const [profileMsg, setProfileMsg] = useState(null);
+
+      // Auto-debrief timing & trigger state
+      const [autoDebriefEnabled, setAutoDebriefEnabled] = useState(true);
+      const [lastDebriefTriggerDate, setLastDebriefTriggerDate] = useState(null);
+
+      // Target Creation Modal / Card state
+      const [showAddTargetModal, setShowAddTargetModal] = useState(false);
+      const [targetFormText, setTargetFormText] = useState("");
+      const [targetFormDifficulty, setTargetFormDifficulty] = useState("medium");
+      const [targetFormMinutes, setTargetFormMinutes] = useState(45);
+      const [targetFormDeadlineType, setTargetFormDeadlineType] = useState("eod");
+      const [targetFormDeadlineCustom, setTargetFormDeadlineCustom] = useState("18:00");
+      const [targetFormAutoSchedule, setTargetFormAutoSchedule] = useState(false);
 
       const [scheduleAll, setScheduleAll] = useState(DEMO_SCHEDULE);
       const [selectedDay, setSelectedDay] = useState(() => getWeekdayKey(new Date()));
@@ -951,7 +970,20 @@
       // ---- Bootstrap ----
       useEffect(() => {
         (async () => {
-          const [sched, t, he, bd, tg, savedHabits, savedModel, savedSarvamKey, savedEngine] = await Promise.all([
+          const [
+            sched,
+            t,
+            he,
+            bd,
+            tg,
+            savedHabits,
+            savedModel,
+            savedSarvamKey,
+            savedEngine,
+            savedUser,
+            savedDebriefTime,
+            savedAutoDebrief,
+          ] = await Promise.all([
             loadJSON("data:schedule", DEMO_SCHEDULE),
             loadJSON("data:tasks", tasks),
             loadJSON("data:hourlyEnergy", hourlyEnergy),
@@ -961,6 +993,9 @@
             loadJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL),
             loadJSON("data:sarvamApiKey", DEFAULT_SARVAM_KEY),
             loadJSON("data:ocrEngine", "sarvam"),
+            loadJSON("data:currentUser", null),
+            loadJSON("data:debriefTime", DEFAULT_DEBRIEF_TIME),
+            loadJSON("data:autoDebriefEnabled", true),
           ]);
 
           let finalModel = savedModel;
@@ -987,7 +1022,25 @@
             setTempApiKeyInput(savedSarvamKey);
           }
           if (savedEngine) setOcrEngine(savedEngine);
-          setStage("dashboard");
+
+          if (savedDebriefTime && typeof savedDebriefTime.hour === "number") {
+            setDebriefTime(savedDebriefTime);
+          }
+          if (savedAutoDebrief !== undefined) {
+            setAutoDebriefEnabled(savedAutoDebrief);
+          }
+
+          if (savedUser) {
+            setProfile(savedUser);
+            setProfileNameInput(savedUser.name || "");
+            setProfileEmailInput(savedUser.email || "");
+            setLoggedIn(true);
+            setStage("dashboard");
+          } else {
+            setLoggedIn(false);
+            setStage("auth");
+          }
+
           setBootstrapped(true);
         })();
       }, []);
@@ -1001,11 +1054,29 @@
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:trainedOcrModel", ocrModel); }, [ocrModel, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:sarvamApiKey", sarvamApiKey); }, [sarvamApiKey, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:ocrEngine", ocrEngine); }, [ocrEngine, bootstrapped, loggedIn]);
+      useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:debriefTime", debriefTime); }, [debriefTime, bootstrapped, loggedIn]);
+      useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:autoDebriefEnabled", autoDebriefEnabled); }, [autoDebriefEnabled, bootstrapped, loggedIn]);
 
       useEffect(() => {
         const tick = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(tick);
       }, []);
+
+      // Auto-Debrief Schedule Timer (configured from Settings)
+      useEffect(() => {
+        if (!autoDebriefEnabled || !debriefTime || debriefOpen || !loggedIn) return;
+        const curH = now.getHours();
+        const curM = now.getMinutes();
+        const todayStr = now.toDateString();
+        if (
+          curH === debriefTime.hour &&
+          curM === debriefTime.minute &&
+          lastDebriefTriggerDate !== todayStr
+        ) {
+          setLastDebriefTriggerDate(todayStr);
+          startDebrief();
+        }
+      }, [now, debriefTime, autoDebriefEnabled, lastDebriefTriggerDate, debriefOpen, loggedIn]);
 
       useEffect(() => {
         if (!pomodoroActive || pomodoroPaused) return;
@@ -1366,12 +1437,206 @@
         }
       }
 
+      // ---- Auth Handlers ----
+      function handleSignIn(e) {
+        if (e) e.preventDefault();
+        const id = loginIdentifier.trim();
+        const pwd = loginPassword.trim();
+        if (!id) {
+          setAuthError("Please enter your email or username.");
+          return;
+        }
+        setAuthError(null);
+        const namePart = id.includes("@") ? id.split("@")[0] : id;
+        const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        const userObj = {
+          name: profile.name && profile.name !== "Student" ? profile.name : capitalized,
+          email: id.includes("@") ? id : `${id}@jecrc.edu.in`,
+          university: profile.university || "JECRC University · B.Tech Sec-C",
+          loggedInAt: new Date().toISOString(),
+        };
+        setProfile(userObj);
+        setLoggedIn(true);
+        setStage("dashboard");
+        if (rememberMe) {
+          saveJSON("data:currentUser", userObj);
+        }
+      }
+
+      function handleSignUp(e) {
+        if (e) e.preventDefault();
+        const name = signupName.trim();
+        const email = signupEmail.trim();
+        if (!name || !email) {
+          setAuthError("Please provide both your name and email address.");
+          return;
+        }
+        setAuthError(null);
+        const userObj = {
+          name,
+          email,
+          university: signupUniversity.trim() || "JECRC University · B.Tech Sec-C",
+          loggedInAt: new Date().toISOString(),
+        };
+        setProfile(userObj);
+        setLoggedIn(true);
+        setStage("dashboard");
+        if (rememberMe) {
+          saveJSON("data:currentUser", userObj);
+        }
+      }
+
+      function handleDemoLogin() {
+        const userObj = {
+          name: "Amitabha Ghosh",
+          email: "amit.productivity047@gmail.com",
+          university: "JECRC University · B.Tech Sec-C",
+          loggedInAt: new Date().toISOString(),
+        };
+        setProfile(userObj);
+        setLoggedIn(true);
+        setStage("dashboard");
+        saveJSON("data:currentUser", userObj);
+      }
+
+      function handleGuestLogin() {
+        const userObj = {
+          name: "Guest Student",
+          email: "guest@jecrc.edu.in",
+          university: "JECRC University · B.Tech Sec-C",
+          loggedInAt: new Date().toISOString(),
+          isGuest: true,
+        };
+        setProfile(userObj);
+        setLoggedIn(true);
+        setStage("dashboard");
+        saveJSON("data:currentUser", userObj);
+      }
+
+      function handleSignOut() {
+        deleteKey("data:currentUser");
+        setLoggedIn(false);
+        setStage("auth");
+        setLoginIdentifier("");
+        setLoginPassword("");
+        setAuthError(null);
+      }
+
+      // ---- Target Handlers & Modal ----
+      function openAddTargetModal() {
+        setTargetFormText("");
+        setTargetFormDifficulty("medium");
+        setTargetFormMinutes(45);
+        setTargetFormDeadlineType("eod");
+        setTargetFormDeadlineCustom("18:00");
+        setTargetFormAutoSchedule(false);
+        setShowAddTargetModal(true);
+      }
+
+      function saveTargetFromModal() {
+        const text = targetFormText.trim();
+        if (!text) return;
+
+        let deadlineStr = "No deadline";
+        if (targetFormDeadlineType === "eod") {
+          deadlineStr = "End of Day (11:59 PM)";
+        } else if (targetFormDeadlineType === "evening") {
+          deadlineStr = "6:00 PM";
+        } else if (targetFormDeadlineType === "custom" && targetFormDeadlineCustom) {
+          deadlineStr = targetFormDeadlineCustom;
+        }
+
+        const cogLoad = targetFormDifficulty === "easy" ? "ramp" : "boulder";
+        const mins = targetFormMinutes || 30;
+        const newTarget = {
+          id: newId("target"),
+          text,
+          done: false,
+          deadline: deadlineStr,
+          difficulty: targetFormDifficulty,
+          estimatedMinutes: mins,
+          cognitiveLoad: cogLoad,
+          linkedTaskId: null,
+          createdAt: new Date().toISOString(),
+        };
+
+        if (targetFormAutoSchedule) {
+          const freeBlocks = computeFreeBlocks(classesForToday, tasks, nowMinutes);
+          const slot = findBestSlot(freeBlocks, mins, cogLoad, hourlyEnergy);
+          const newTask = {
+            id: newId("tg-task"),
+            title: `[Target] ${text}`,
+            cognitiveLoad: cogLoad,
+            minutes: mins,
+            priority: targetFormDifficulty === "hard" ? 85 : targetFormDifficulty === "medium" ? 60 : 35,
+            status: slot ? "scheduled" : "pending",
+            start: slot ? slot.start : null,
+            end: slot ? slot.end : null,
+            deadline: deadlineStr,
+            isUrgent: false,
+            microSliced: false,
+            parentId: null,
+            pairedWith: null,
+          };
+          newTarget.linkedTaskId = newTask.id;
+          setTasks((prev) => [...prev, newTask]);
+          setLastReasoning(
+            slot
+              ? `Slotted target "${text}" (${mins}m ${cogLoad}) at ${fmtTime(slot.start)}–${fmtTime(slot.end)}.`
+              : `Added target "${text}" to pending tasks queue.`
+          );
+        }
+
+        setTargetsByDate((prev) => ({
+          ...prev,
+          [todayDateKey]: [...(prev[todayDateKey] || []), newTarget],
+        }));
+
+        setShowAddTargetModal(false);
+        setTargetFormText("");
+      }
+
+      function scheduleTargetIntoRamp(tg) {
+        const freeBlocks = computeFreeBlocks(classesForToday, tasks, nowMinutes);
+        const mins = tg.estimatedMinutes || 30;
+        const load = tg.cognitiveLoad || (tg.difficulty === "easy" ? "ramp" : "boulder");
+        const slot = findBestSlot(freeBlocks, mins, load, hourlyEnergy);
+        const newTask = {
+          id: newId("tg-task"),
+          title: `[Target] ${tg.text}`,
+          cognitiveLoad: load,
+          minutes: mins,
+          priority: tg.difficulty === "hard" ? 85 : tg.difficulty === "medium" ? 60 : 35,
+          status: slot ? "scheduled" : "pending",
+          start: slot ? slot.start : null,
+          end: slot ? slot.end : null,
+          deadline: tg.deadline || "No deadline",
+          isUrgent: false,
+          microSliced: false,
+          parentId: null,
+          pairedWith: null,
+        };
+        setTasks((prev) => [...prev, newTask]);
+        setTargetsByDate((prev) => ({
+          ...prev,
+          [todayDateKey]: (prev[todayDateKey] || []).map((t) =>
+            t.id === tg.id ? { ...t, linkedTaskId: newTask.id } : t
+          ),
+        }));
+        setLastReasoning(
+          slot
+            ? `Slotted target "${tg.text}" (${mins}m ${load}) into ${fmtTime(slot.start)}–${fmtTime(slot.end)}.`
+            : `Added target "${tg.text}" to pending tasks queue.`
+        );
+        setDashboardTab("schedule");
+      }
+
       function addTarget() {
         const text = newTargetText.trim();
         if (!text) return;
         setTargetsByDate((prev) => ({
           ...prev,
-          [todayDateKey]: [...(prev[todayDateKey] || []), { id: newId("target"), text, done: false, linkedTaskId: null }],
+          [todayDateKey]: [...(prev[todayDateKey] || []), { id: newId("target"), text, done: false, deadline: "No deadline", difficulty: "medium", estimatedMinutes: 30, cognitiveLoad: "boulder", linkedTaskId: null }],
         }));
         setNewTargetText("");
       }
@@ -1435,6 +1700,283 @@
             <div style={{ display: "flex", gap: 12, marginTop: 32, zIndex: 1 }}>
               <button onClick={() => setPomodoroPaused((p) => !p)} style={{ background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "10px 22px", fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>{pomodoroPaused ? <><Play size={15} /> Resume</> : <><Pause size={15} /> Pause</>}</button>
               <button onClick={() => setPomodoroSecondsLeft(0)} style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "10px 18px", fontSize: 14, cursor: "pointer" }}>Skip</button>
+            </div>
+          </div>
+        );
+      }
+
+      if (!bootstrapped || stage === "loading") {
+        return (
+          <div className="rp-shell" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 14 }}>
+            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(63,214,196,0.15)", border: `1.5px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Flame size={24} color={C.boulder} />
+            </div>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700 }}>HabitLoop × Ramp</div>
+            <div style={{ fontSize: 13, color: C.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+              <Loader2 size={14} className="spin" /> Loading your academic workstation…
+            </div>
+          </div>
+        );
+      }
+
+      if (!loggedIn || stage === "auth") {
+        return (
+          <div className="rp-shell" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "30px 16px" }}>
+            <div style={{ maxWidth: 460, width: "100%", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: "28px 26px", boxShadow: "0 20px 50px rgba(0,0,0,0.55)" }}>
+              {/* App Brand Header */}
+              <div style={{ textAlign: "center", marginBottom: 22 }}>
+                <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: 12, background: "rgba(255,138,92,0.15)", border: `1px solid ${C.boulder}`, alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                  <Flame size={24} color={C.boulder} />
+                </div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em" }}>
+                  HabitLoop × Ramp
+                </div>
+                <div style={{ fontSize: 12.5, color: C.textMuted, marginTop: 4 }}>
+                  Autonomous Habit Architecture & Cognitive Academic Scheduling
+                </div>
+              </div>
+
+              {/* Sign In vs Sign Up Tabs */}
+              <div style={{ display: "flex", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 3, marginBottom: 18 }}>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode("signin"); setAuthError(null); }}
+                  style={{
+                    flex: 1,
+                    padding: "8px 0",
+                    border: "none",
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    background: authMode === "signin" ? C.ramp : "transparent",
+                    color: authMode === "signin" ? "#07201D" : C.textMuted,
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode("signup"); setAuthError(null); }}
+                  style={{
+                    flex: 1,
+                    padding: "8px 0",
+                    border: "none",
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    background: authMode === "signup" ? C.boulder : "transparent",
+                    color: authMode === "signup" ? "#2A1206" : C.textMuted,
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  Create Account
+                </button>
+              </div>
+
+              {authError && (
+                <div style={{ marginBottom: 14, background: "rgba(224,82,75,0.12)", border: `1px solid ${C.crisis}`, borderRadius: 6, padding: "9px 12px", fontSize: 12.5, color: "#FF8C8C", display: "flex", alignItems: "center", gap: 8 }}>
+                  <AlertTriangle size={15} color={C.crisis} />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              {authMode === "signin" ? (
+                <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                      Email or Username
+                    </label>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={loginIdentifier}
+                      onChange={(e) => setLoginIdentifier(e.target.value)}
+                      placeholder="e.g. amit.productivity047@gmail.com"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted }}>
+                        Password
+                      </label>
+                      <span style={{ fontSize: 11, color: C.textMuted }}>Any password for demo</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: C.textMuted, cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                      />
+                      Remember me (keep me signed in)
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    style={{
+                      width: "100%",
+                      background: C.ramp,
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "11px 0",
+                      color: "#07201D",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      marginTop: 2,
+                    }}
+                  >
+                    Sign In to HabitLoop
+                  </button>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0" }}>
+                    <div style={{ flex: 1, height: 1, background: C.border }} />
+                    <span style={{ fontSize: 11, color: C.textMuted }}>OR FAST START</span>
+                    <div style={{ flex: 1, height: 1, background: C.border }} />
+                  </div>
+
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                      type="button"
+                      onClick={handleDemoLogin}
+                      style={{
+                        flex: 1,
+                        background: "rgba(255,138,92,0.12)",
+                        border: `1px solid ${C.boulder}`,
+                        color: C.boulder,
+                        borderRadius: 6,
+                        padding: "9px 8px",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <Sparkles size={13} color={C.boulder} /> Demo Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleGuestLogin}
+                      style={{
+                        flex: 1,
+                        background: C.panelAlt,
+                        border: `1px solid ${C.border}`,
+                        color: C.textMuted,
+                        borderRadius: 6,
+                        padding: "9px 8px",
+                        fontSize: 12.5,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Continue as Guest
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleSignUp} style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 5 }}>
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      placeholder="e.g. Amitabha Ghosh"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 5 }}>
+                      College / University Email
+                    </label>
+                    <input
+                      type="email"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      placeholder="e.g. amit.student@jecrc.edu.in"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 5 }}>
+                      University & Section
+                    </label>
+                    <input
+                      type="text"
+                      value={signupUniversity}
+                      onChange={(e) => setSignupUniversity(e.target.value)}
+                      placeholder="JECRC University · B.Tech Sec-C"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 5 }}>
+                      Set Password
+                    </label>
+                    <input
+                      type="password"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: C.textMuted, cursor: "pointer", marginTop: 2 }}>
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
+                    Save session on this device
+                  </label>
+
+                  <button
+                    type="submit"
+                    style={{
+                      width: "100%",
+                      background: C.boulder,
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "11px 0",
+                      color: "#2A1206",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      marginTop: 2,
+                    }}
+                  >
+                    Create Account & Get Started
+                  </button>
+                </form>
+              )}
+
+              <div style={{ marginTop: 18, textAlign: "center", fontSize: 11.5, color: C.textMuted, lineHeight: 1.5 }}>
+                🔒 <strong>Stored Locally:</strong> Your session persists automatically in your browser so you will not need to sign in every time.
+              </div>
             </div>
           </div>
         );
@@ -1514,49 +2056,492 @@
       } else if (stage === "targets-page") {
         pageBody = (
           <div className="rp-shell">
-            <div style={{ maxWidth: 520, margin: "0 auto" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 600 }}>Today's Targets</div>
-                <button onClick={() => setStage("dashboard")} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}><X size={18} /></button>
-              </div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 18, marginTop: 12 }}>
-                <input value={newTargetText} onChange={(e) => setNewTargetText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addTarget()} placeholder="Add a daily target…" style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 14 }} />
-                <button onClick={addTarget} style={{ background: C.boulder, border: "none", borderRadius: 6, padding: "0 16px", color: "#2A1206", cursor: "pointer" }}><Plus size={16} /></button>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {todaysTargets.length === 0 && <div style={{ fontSize: 13, color: C.textMuted }}>No targets logged yet today.</div>}
-                {todaysTargets.map((tg) => (
-                  <div key={tg.id} style={{ display: "flex", alignItems: "center", gap: 10, background: C.panel, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
-                    <button onClick={() => toggleTarget(tg.id)} style={{ background: "transparent", border: "none", color: tg.done ? C.ramp : C.textMuted, cursor: "pointer", display: "flex" }}>{tg.done ? <CheckCircle2 size={19} /> : <Circle size={19} />}</button>
-                    <span style={{ flex: 1, fontSize: 14, textDecoration: tg.done ? "line-through" : "none", color: tg.done ? C.textMuted : C.textPrimary }}>{tg.text}</span>
-                    <button onClick={() => deleteTarget(tg.id)} style={{ background: "transparent", border: "none", color: C.crisis, cursor: "pointer" }}><Trash2 size={14} /></button>
+            <div style={{ maxWidth: 640, margin: "0 auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(255,138,92,0.15)", border: `1px solid ${C.boulder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Target size={20} color={C.boulder} />
                   </div>
-                ))}
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700 }}>
+                      Daily Targets & Academic Goals
+                    </div>
+                    <div style={{ fontSize: 12, color: C.textMuted }}>
+                      {todaysTargets.filter((t) => t.done).length} of {todaysTargets.length} completed for {DAY_LABEL[todayKey]}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={openAddTargetModal}
+                    style={{
+                      background: C.boulder,
+                      border: "none",
+                      color: "#2A1206",
+                      borderRadius: 6,
+                      padding: "8px 14px",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Plus size={15} /> Add Target Card
+                  </button>
+                  <button onClick={() => setStage("dashboard")} style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "8px 12px", cursor: "pointer" }}>
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Inline Capture Bar */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 20, marginTop: 10 }}>
+                <input
+                  value={newTargetText}
+                  onChange={(e) => setNewTargetText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addTarget()}
+                  placeholder="Quick add daily target (or click 'Add Target Card' for deadline & difficulty)…"
+                  style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.textPrimary, fontSize: 13.5 }}
+                />
+                <button
+                  onClick={addTarget}
+                  disabled={!newTargetText.trim()}
+                  style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "0 14px", color: C.textPrimary, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                >
+                  <Plus size={15} /> Quick Add
+                </button>
+              </div>
+
+              {/* Targets List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {todaysTargets.length === 0 ? (
+                  <div style={{ background: C.panel, border: `1px dashed ${C.border}`, borderRadius: 8, padding: "30px 20px", textAlign: "center" }}>
+                    <Target size={30} color={C.textMuted} style={{ marginBottom: 10, opacity: 0.6 }} />
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>No targets created yet today</div>
+                    <div style={{ fontSize: 12.5, color: C.textMuted, marginTop: 4, marginBottom: 16 }}>
+                      Set your daily study objectives with custom deadlines, difficulty weights, and estimated completion times.
+                    </div>
+                    <button
+                      onClick={openAddTargetModal}
+                      style={{ background: C.boulder, border: "none", color: "#2A1206", borderRadius: 6, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
+                    >
+                      <Plus size={14} /> Open Target Creation Card
+                    </button>
+                  </div>
+                ) : (
+                  todaysTargets.map((tg) => {
+                    const diffColor = tg.difficulty === "easy" ? C.ramp : tg.difficulty === "hard" ? "#FF5E5B" : C.boulder;
+                    const diffLabel = tg.difficulty === "easy" ? "15m Ramp" : tg.difficulty === "hard" ? "90m Deep Focus" : "45m Boulder";
+                    return (
+                      <div
+                        key={tg.id}
+                        style={{
+                          background: C.panel,
+                          border: `1px solid ${C.border}`,
+                          borderLeft: `3.5px solid ${tg.done ? C.textMuted : diffColor}`,
+                          borderRadius: 8,
+                          padding: "12px 14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                          opacity: tg.done ? 0.65 : 1,
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+                            <button
+                              onClick={() => toggleTarget(tg.id)}
+                              style={{ background: "transparent", border: "none", color: tg.done ? C.ramp : C.textMuted, cursor: "pointer", display: "flex", padding: 0 }}
+                            >
+                              {tg.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                            </button>
+                            <span style={{ fontSize: 14.5, fontWeight: 500, textDecoration: tg.done ? "line-through" : "none", color: tg.done ? C.textMuted : C.textPrimary }}>
+                              {tg.text}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => deleteTarget(tg.id)}
+                            style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+
+                        {/* Metadata Row: Difficulty, Time, Deadline */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 11.5, paddingLeft: 30 }}>
+                          <span style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${diffColor}`, color: diffColor, padding: "2px 7px", borderRadius: 4, fontWeight: 600 }}>
+                            {diffLabel}
+                          </span>
+                          <span style={{ color: C.textMuted }}>
+                            ⏱️ {tg.estimatedMinutes || 30} mins
+                          </span>
+                          {tg.deadline && (
+                            <span style={{ color: C.textMuted }}>
+                              🎯 Deadline: <strong style={{ color: C.textPrimary }}>{tg.deadline}</strong>
+                            </span>
+                          )}
+
+                          {!tg.linkedTaskId && !tg.done && (
+                            <button
+                              onClick={() => scheduleTargetIntoRamp(tg)}
+                              style={{
+                                marginLeft: "auto",
+                                background: "rgba(63,214,196,0.12)",
+                                border: `1px solid ${C.ramp}`,
+                                color: C.ramp,
+                                borderRadius: 4,
+                                padding: "2px 8px",
+                                fontSize: 11,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4
+                              }}
+                            >
+                              <Sparkles size={11} /> Auto-Slot into Timeline
+                            </button>
+                          )}
+                          {tg.linkedTaskId && (
+                            <span style={{ marginLeft: "auto", fontSize: 11, color: C.ramp, fontWeight: 500 }}>
+                              ✓ Slotted in Ramp Timeline
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
+                <button
+                  onClick={openAddTargetModal}
+                  style={{
+                    flex: 1,
+                    background: C.boulder,
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "10px 0",
+                    color: "#2A1206",
+                    fontSize: 13.5,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6
+                  }}
+                >
+                  <Plus size={15} /> Add Target Card
+                </button>
+                <button
+                  onClick={() => setStage("dashboard")}
+                  style={{
+                    flex: 1,
+                    background: C.panelAlt,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 6,
+                    padding: "10px 0",
+                    color: C.textPrimary,
+                    fontSize: 13.5,
+                    cursor: "pointer"
+                  }}
+                >
+                  Back to Dashboard
+                </button>
               </div>
             </div>
           </div>
         );
       } else if (stage === "settings-page") {
+        const hhStr = String(debriefTime.hour).padStart(2, "0");
+        const mmStr = String(debriefTime.minute).padStart(2, "0");
+        const debriefTimeInputValue = `${hhStr}:${mmStr}`;
+
         pageBody = (
           <div className="rp-shell">
-            <div style={{ maxWidth: 480, margin: "0 auto" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 600 }}>Trained OCR & System Settings</div>
-                <button onClick={() => setStage("dashboard")} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}><X size={18} /></button>
-              </div>
-              {settingsMsg && <div style={{ fontSize: 12, color: C.ramp, marginBottom: 14 }}>{settingsMsg}</div>}
-              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: C.ramp }}>
-                    <Brain size={16} /> {ocrModel.modelName}
+            <div style={{ maxWidth: 540, margin: "0 auto" }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Settings size={18} color={C.ramp} />
                   </div>
-                  <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
-                    100% In-Browser & Local
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700 }}>
+                      Settings & Preferences
+                    </div>
+                    <div style={{ fontSize: 12, color: C.textMuted }}>
+                      Account authentication, auto-debrief schedule, and timetable OCR
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => setStage("dashboard")} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              {settingsMsg && (
+                <div style={{ fontSize: 12.5, color: C.ramp, background: "rgba(63,214,196,0.1)", border: `1px solid ${C.ramp}`, padding: "9px 12px", borderRadius: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
+                  <CheckCircle2 size={15} /> {settingsMsg}
+                </div>
+              )}
+
+              {/* 1. Account Profile & Session Section */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,138,92,0.15)", border: `1.5px solid ${C.boulder}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: C.boulder }}>
+                      {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary }}>
+                        {profile.name || "Student"}
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textMuted }}>
+                        {profile.email || "student@jecrc.edu.in"}
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 11, background: "rgba(63,214,196,0.12)", color: C.ramp, border: `1px solid rgba(63,214,196,0.3)`, padding: "3px 8px", borderRadius: 4, fontWeight: 600 }}>
+                    Active Session
                   </span>
                 </div>
-                <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 14, lineHeight: 1.5 }}>
-                  This timetable image-to-text model runs client-side with zero external API dependencies or fees. You can train the model on your college timetable layout and custom subject abbreviations.
+
+                <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 14 }}>
+                  University / Program: <strong style={{ color: C.textPrimary }}>{profile.university || "JECRC University · B.Tech Sec-C"}</strong>
                 </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    style={{
+                      background: "rgba(224,82,75,0.12)",
+                      border: `1px solid ${C.crisis}`,
+                      color: "#FF8C8C",
+                      borderRadius: 6,
+                      padding: "8px 14px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    <LogIn size={13} /> Sign Out (Switch Account)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStage("auth");
+                    }}
+                    style={{
+                      background: C.panelAlt,
+                      border: `1px solid ${C.border}`,
+                      color: C.textMuted,
+                      borderRadius: 6,
+                      padding: "8px 12px",
+                      fontSize: 12.5,
+                      cursor: "pointer"
+                    }}
+                  >
+                    Open Sign In / Sign Up
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Auto-Debrief Daily Timing Section */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: C.boulder }}>
+                    <Bell size={16} /> Daily Auto-Debrief Timing
+                  </div>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: autoDebriefEnabled ? C.ramp : C.textMuted, fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={autoDebriefEnabled}
+                      onChange={(e) => {
+                        setAutoDebriefEnabled(e.target.checked);
+                        setSettingsMsg(`Auto-debrief ${e.target.checked ? "enabled" : "disabled"}.`);
+                      }}
+                    />
+                    {autoDebriefEnabled ? "Auto-Trigger Enabled" : "Disabled"}
+                  </label>
+                </div>
+
+                <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 14, lineHeight: 1.5 }}>
+                  Set the daily hour when HabitLoop automatically triggers an assignment debrief session right after your classes conclude. Prompts for newly announced labs & homework and auto-slots them into your timeline.
+                </div>
+
+                <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary }}>
+                        Daily Trigger Time
+                      </div>
+                      <div style={{ fontSize: 11.5, color: C.textMuted }}>
+                        Current scheduled time: <strong style={{ color: C.ramp }}>{fmtTime(debriefTime.hour * 60 + debriefTime.minute)}</strong>
+                      </div>
+                    </div>
+                    <input
+                      type="time"
+                      value={debriefTimeInputValue}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) return;
+                        const [hh, mm] = val.split(":");
+                        const newTime = { hour: parseInt(hh, 10), minute: parseInt(mm, 10) };
+                        setDebriefTime(newTime);
+                        setSettingsMsg(`Auto-debrief scheduled for ${fmtTime(newTime.hour * 60 + newTime.minute)} daily.`);
+                      }}
+                      style={{
+                        background: C.panel,
+                        border: `1.5px solid ${C.ramp}`,
+                        borderRadius: 6,
+                        padding: "8px 12px",
+                        color: C.textPrimary,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: "pointer"
+                      }}
+                    />
+                  </div>
+
+                  {/* Preset Time Buttons */}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {[
+                      { label: "12:50 PM (After Sec-C Classes)", h: 12, m: 50 },
+                      { label: "5:00 PM (Evening)", h: 17, m: 0 },
+                      { label: "9:00 PM (Nightly Review)", h: 21, m: 0 },
+                    ].map((p) => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => {
+                          setDebriefTime({ hour: p.h, minute: p.m });
+                          setSettingsMsg(`Auto-debrief set to ${fmtTime(p.h * 60 + p.m)}.`);
+                        }}
+                        style={{
+                          background: debriefTime.hour === p.h && debriefTime.minute === p.m ? "rgba(63,214,196,0.18)" : C.panel,
+                          border: `1px solid ${debriefTime.hour === p.h && debriefTime.minute === p.m ? C.ramp : C.border}`,
+                          color: debriefTime.hour === p.h && debriefTime.minute === p.m ? C.ramp : C.textMuted,
+                          borderRadius: 5,
+                          padding: "5px 9px",
+                          fontSize: 11.5,
+                          cursor: "pointer"
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    startDebrief();
+                  }}
+                  style={{
+                    width: "100%",
+                    background: "transparent",
+                    border: `1px solid ${C.border}`,
+                    color: C.textPrimary,
+                    borderRadius: 6,
+                    padding: "8px 0",
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6
+                  }}
+                >
+                  <Bell size={13} color={C.boulder} /> ▶️ Test / Trigger Debrief Dialog Now
+                </button>
+              </div>
+
+              {/* 3. Edit Schedule Interface Button & Timetable Overview */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: C.ramp }}>
+                    <Calendar size={16} /> Class Schedule & Timetable
+                  </div>
+                  <span style={{ fontSize: 11.5, color: C.textMuted }}>
+                    {scheduleAll.length} weekly blocks
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 14 }}>
+                  Open the schedule editor to add manual class periods, edit timings, or scan timetable images with Sarvam AI Vision or the in-browser model.
+                </div>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setStage("edit-schedule")}
+                    style={{
+                      flex: 1,
+                      background: C.boulder,
+                      border: "none",
+                      color: "#2A1206",
+                      borderRadius: 6,
+                      padding: "10px 0",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Pencil size={14} /> ✏️ Open Schedule Editor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDashboardTab("schedule");
+                      setStage("dashboard");
+                      setShowScheduleUploadCard(true);
+                    }}
+                    style={{
+                      flex: 1,
+                      background: C.panelAlt,
+                      border: `1px solid ${C.border}`,
+                      color: C.textPrimary,
+                      borderRadius: 6,
+                      padding: "10px 0",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Camera size={14} color={C.ramp} /> Timetable Scanner
+                  </button>
+                </div>
+              </div>
+
+              {/* 4. Trainable OCR & Sarvam AI Model Configuration */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: C.ramp }}>
+                    <Brain size={16} /> AI Timetable Scanning Engine
+                  </div>
+                  <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                    {ocrEngine === "sarvam" ? "Sarvam Vision 1.5" : "Local In-Browser AI"}
+                  </span>
+                </div>
+
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, background: C.panelAlt, padding: 12, borderRadius: 6, marginBottom: 14, textAlign: "center" }}>
                   <div>
                     <div style={{ fontSize: 11, color: C.textMuted }}>ACCURACY</div>
@@ -1571,13 +2556,21 @@
                     <div style={{ fontSize: 16, fontWeight: 700, color: C.boulder, marginTop: 2 }}>{(ocrModel.dictionary || []).length} terms</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
                     type="button"
                     onClick={() => { setStage("dashboard"); setShowTrainerModal(true); }}
-                    style={{ flex: 1, background: C.boulder, border: "none", color: "#2A1206", borderRadius: 6, padding: "9px 0", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                    style={{ flex: 1, minWidth: 160, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "9px 0", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                   >
-                    <Sliders size={14} /> Open Model Trainer Studio
+                    <Sliders size={13} color={C.ramp} /> Model Trainer Studio
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKeyModal(true)}
+                    style={{ flex: 1, minWidth: 160, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "9px 0", fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  >
+                    <Key size={13} color={C.boulder} /> Sarvam API Key
                   </button>
                   <button
                     type="button"
@@ -1591,7 +2584,9 @@
                   </button>
                 </div>
               </div>
-              <button onClick={() => setStage("dashboard")} style={{ width: "100%", background: C.boulder, border: "none", borderRadius: 6, padding: "10px 0", color: "#2A1206", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Done</button>
+
+              {/* Done Button */}
+              <button onClick={() => setStage("dashboard")} style={{ width: "100%", background: C.boulder, border: "none", borderRadius: 6, padding: "11px 0", color: "#2A1206", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Done / Return to Dashboard</button>
             </div>
           </div>
         );
@@ -1673,7 +2668,7 @@
                   <button onClick={() => setStage("targets-page")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Target size={13} /> Targets{todaysTargets.length > 0 ? ` ${doneTargetsCount}/${todaysTargets.length}` : ""}</button>
                   <button onClick={() => setStage("energy-log")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: ENERGY_COLORS[effectiveEnergy - 1], borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Zap size={13} /> Energy {effectiveEnergy}/5</button>
                   <button onClick={openPomodoroSetup} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Timer size={13} /> Focus</button>
-                  <button onClick={() => setStage("edit-schedule")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Pencil size={13} /> Classes</button>
+                  <button onClick={() => setStage("edit-schedule")} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,138,92,0.12)", border: `1px solid ${C.boulder}`, color: C.boulder, borderRadius: 6, padding: "6px 11px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><Pencil size={13} /> Edit Schedule</button>
                   <button onClick={() => setStage("settings-page")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 13, cursor: "pointer" }}><Settings size={13} /></button>
                   <button onClick={() => setModalOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "6px 12px", fontSize: 13, cursor: "pointer" }}><Command size={13} /> Capture <span style={{ color: C.textMuted }}>⌘K</span></button>
                 </div>
@@ -1926,6 +2921,94 @@
                             })}
                         </div>
                       </div>
+
+                      {/* Today's Academic Targets Widget */}
+                      <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginTop: 16 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                              <Target size={15} color={C.boulder} /> Today's Targets
+                            </div>
+                            <div style={{ fontSize: 11.5, color: C.textMuted }}>
+                              {todaysTargets.filter((t) => t.done).length} of {todaysTargets.length} completed
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={openAddTargetModal}
+                            style={{
+                              background: C.boulder,
+                              border: "none",
+                              color: "#2A1206",
+                              borderRadius: 5,
+                              padding: "5px 10px",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4
+                            }}
+                          >
+                            <Plus size={13} /> Add Target
+                          </button>
+                        </div>
+
+                        {todaysTargets.length === 0 ? (
+                          <div style={{ fontSize: 12.5, color: C.textMuted, padding: "8px 0" }}>
+                            No targets set for today. Click "+ Add Target" to set a goal with deadline and difficulty.
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                            {todaysTargets.map((tg) => (
+                              <div
+                                key={tg.id}
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 4,
+                                  background: C.panelAlt,
+                                  border: `1px solid ${C.border}`,
+                                  borderRadius: 6,
+                                  padding: "8px 10px"
+                                }}
+                              >
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flex: 1, fontSize: 13, textDecoration: tg.done ? "line-through" : "none", color: tg.done ? C.textMuted : C.textPrimary }}>
+                                    <input type="checkbox" checked={tg.done} onChange={() => toggleTarget(tg.id)} />
+                                    <span>{tg.text}</span>
+                                  </label>
+                                  <button onClick={() => deleteTarget(tg.id)} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}>
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11, paddingLeft: 22 }}>
+                                  <span style={{ color: tg.difficulty === "easy" ? C.ramp : tg.difficulty === "hard" ? "#FF5E5B" : C.boulder, fontWeight: 600 }}>
+                                    {tg.difficulty === "easy" ? "15m Ramp" : tg.difficulty === "hard" ? "90m Deep Focus" : "45m Boulder"}
+                                  </span>
+                                  <span style={{ color: C.textMuted }}>•</span>
+                                  <span style={{ color: C.textMuted }}>⏱️ {tg.estimatedMinutes || 30}m</span>
+                                  {tg.deadline && (
+                                    <>
+                                      <span style={{ color: C.textMuted }}>•</span>
+                                      <span style={{ color: C.textMuted }}>🎯 {tg.deadline}</span>
+                                    </>
+                                  )}
+                                  {!tg.linkedTaskId && !tg.done && (
+                                    <button
+                                      type="button"
+                                      onClick={() => scheduleTargetIntoRamp(tg)}
+                                      style={{ marginLeft: "auto", background: "transparent", border: `1px solid ${C.border}`, color: C.ramp, borderRadius: 4, padding: "1px 6px", fontSize: 10.5, cursor: "pointer" }}
+                                    >
+                                      Slot into Ramp
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1950,6 +3033,25 @@
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => setStage("edit-schedule")}
+                          style={{
+                            background: C.boulder,
+                            border: "none",
+                            color: "#2A1206",
+                            borderRadius: 6,
+                            padding: "6px 12px",
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                          }}
+                        >
+                          <Pencil size={13} /> Edit Schedule
+                        </button>
                         <span style={{ fontSize: 12, color: C.textMuted }}>
                           {scheduleAll.length} classes loaded
                         </span>
@@ -2428,24 +3530,45 @@
                     )}
                   </div>
 
-                  <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
-                    {DAY_ORDER.map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => setSelectedDay(d)}
-                        style={{
-                          fontSize: 12.5,
-                          padding: "5px 12px",
-                          borderRadius: 5,
-                          border: `1px solid ${selectedDay === d ? C.boulder : C.border}`,
-                          background: selectedDay === d ? "rgba(255,138,92,0.12)" : "transparent",
-                          color: selectedDay === d ? C.boulder : C.textMuted,
-                          cursor: "pointer",
-                        }}
-                      >
-                        {DAY_LABEL[d]}
-                      </button>
-                    ))}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {DAY_ORDER.map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => setSelectedDay(d)}
+                          style={{
+                            fontSize: 12.5,
+                            padding: "5px 12px",
+                            borderRadius: 5,
+                            border: `1px solid ${selectedDay === d ? C.boulder : C.border}`,
+                            background: selectedDay === d ? "rgba(255,138,92,0.12)" : "transparent",
+                            color: selectedDay === d ? C.boulder : C.textMuted,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {DAY_LABEL[d]}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStage("edit-schedule")}
+                      style={{
+                        background: "rgba(255,138,92,0.12)",
+                        border: `1px solid ${C.boulder}`,
+                        color: C.boulder,
+                        borderRadius: 6,
+                        padding: "6px 12px",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6
+                      }}
+                    >
+                      <Pencil size={13} /> Edit Schedule ({classesForSelectedDay.length} classes)
+                    </button>
                   </div>
 
                   <div className="rp-grid">
@@ -2550,6 +3673,229 @@
                 <button onClick={submitTask} disabled={captureBusy} style={{ width: "100%", background: C.boulder, border: "none", borderRadius: 6, padding: "10px 0", color: "#2A1206", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                   {captureBusy ? "Classifying…" : "Capture & Schedule"}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Add Target Modal Card */}
+          {showAddTargetModal && (
+            <div className="rp-overlay" onClick={() => setShowAddTargetModal(false)}>
+              <div
+                className="rp-modal-card"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  maxWidth: 500,
+                  width: "100%",
+                  background: C.panel,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 12,
+                  padding: 24,
+                  boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
+                }}
+              >
+                {/* Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(255,138,92,0.15)", border: `1px solid ${C.boulder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Target size={18} color={C.boulder} />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700 }}>
+                        Add Daily Target & Goal
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textMuted }}>
+                        Specify deadline, difficulty rating, and estimated completion time.
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAddTargetModal(false)} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}>
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Target Title Input */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Target Title / Objective
+                  </label>
+                  <input
+                    autoFocus
+                    value={targetFormText}
+                    onChange={(e) => setTargetFormText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveTargetFromModal()}
+                    placeholder="e.g. Complete AI Assignment 3 or Revise Compiler Design"
+                    style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.textPrimary, fontSize: 14, boxSizing: "border-box" }}
+                  />
+                </div>
+
+                {/* Difficulty of Target */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Difficulty of Target
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                    {[
+                      { id: "easy", label: "Easy (Ramp)", desc: "Quick win / review", mins: 15, color: C.ramp },
+                      { id: "medium", label: "Medium (Boulder)", desc: "Core lab / assignment", mins: 45, color: C.boulder },
+                      { id: "hard", label: "Hard (Deep Focus)", desc: "Complex exam prep", mins: 90, color: "#FF5E5B" },
+                    ].map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => {
+                          setTargetFormDifficulty(d.id);
+                          setTargetFormMinutes(d.mins);
+                        }}
+                        style={{
+                          background: targetFormDifficulty === d.id ? "rgba(255,255,255,0.06)" : C.panelAlt,
+                          border: `1.5px solid ${targetFormDifficulty === d.id ? d.color : C.border}`,
+                          borderRadius: 7,
+                          padding: "8px 6px",
+                          textAlign: "center",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ fontSize: 12, fontWeight: 700, color: targetFormDifficulty === d.id ? d.color : C.textPrimary }}>
+                          {d.label}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 2 }}>
+                          {d.desc}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Time it will take to complete */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted }}>
+                      Time It Will Take to Complete
+                    </label>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.ramp }}>
+                      {targetFormMinutes} minutes
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {[15, 30, 45, 60, 90, 120].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => setTargetFormMinutes(mins)}
+                        style={{
+                          flex: 1,
+                          minWidth: 44,
+                          padding: "6px 0",
+                          borderRadius: 5,
+                          border: `1px solid ${targetFormMinutes === mins ? C.ramp : C.border}`,
+                          background: targetFormMinutes === mins ? "rgba(63,214,196,0.15)" : C.panelAlt,
+                          color: targetFormMinutes === mins ? C.ramp : C.textMuted,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {mins}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Deadline of Target */}
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Deadline of Target
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 8 }}>
+                    {[
+                      { id: "eod", label: "End of Day", sub: "11:59 PM" },
+                      { id: "evening", label: "Evening", sub: "6:00 PM" },
+                      { id: "custom", label: "Specific Time", sub: "Custom hour" },
+                    ].map((dl) => (
+                      <button
+                        key={dl.id}
+                        type="button"
+                        onClick={() => setTargetFormDeadlineType(dl.id)}
+                        style={{
+                          background: targetFormDeadlineType === dl.id ? "rgba(255,138,92,0.12)" : C.panelAlt,
+                          border: `1px solid ${targetFormDeadlineType === dl.id ? C.boulder : C.border}`,
+                          color: targetFormDeadlineType === dl.id ? C.boulder : C.textMuted,
+                          borderRadius: 6,
+                          padding: "7px 6px",
+                          fontSize: 12,
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        <div style={{ fontWeight: 600 }}>{dl.label}</div>
+                        <div style={{ fontSize: 10, opacity: 0.8 }}>{dl.sub}</div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {targetFormDeadlineType === "custom" && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                      <span style={{ fontSize: 12, color: C.textMuted }}>Pick Deadline Time:</span>
+                      <input
+                        type="time"
+                        value={targetFormDeadlineCustom}
+                        onChange={(e) => setTargetFormDeadlineCustom(e.target.value)}
+                        style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.textPrimary, fontSize: 13 }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Auto-Schedule Option */}
+                <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", marginBottom: 18 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 12.5, color: C.textPrimary }}>
+                    <input
+                      type="checkbox"
+                      checked={targetFormAutoSchedule}
+                      onChange={(e) => setTargetFormAutoSchedule(e.target.checked)}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Auto-Schedule into Ramp Timeline</div>
+                      <div style={{ fontSize: 11.5, color: C.textMuted }}>
+                        Algorithm automatically slots this task into today's class schedule based on your energy curve.
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Modal Footer Actions */}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddTargetModal(false)}
+                    style={{ flex: 1, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "9px 0", fontSize: 13, cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveTargetFromModal}
+                    disabled={!targetFormText.trim()}
+                    style={{
+                      flex: 2,
+                      background: targetFormText.trim() ? C.boulder : C.panelAlt,
+                      border: "none",
+                      color: targetFormText.trim() ? "#2A1206" : C.textMuted,
+                      borderRadius: 6,
+                      padding: "9px 0",
+                      fontSize: 13.5,
+                      fontWeight: 700,
+                      cursor: targetFormText.trim() ? "pointer" : "not-allowed",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <CheckCircle2 size={15} /> Save & Add Target
+                  </button>
+                </div>
               </div>
             </div>
           )}
