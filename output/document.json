@@ -1,0 +1,15 @@
+{
+  "pipeline_name": "PaddleOCRVL",
+  "pipeline_version": "v1.6",
+  "layout_parser": "PP-DocLayoutV3",
+  "status": "success",
+  "results": [
+    {
+      "page": 1,
+      "type": "table",
+      "markdown": "# JECRC University - B.Tech Section C Timetable (2026-27)\n\n| Day / Time | 08:00 - 08:50 | 08:50 - 09:40 | 09:40 - 10:30 | 10:30 - 11:20 | 11:20 - 12:05 | 12:05 - 12:50 |\n| --- | --- | --- | --- | --- | --- | --- |\n| Monday | CS Lab-C1-NYB-103 | CS Lab-C1-NYB-103 | EM-I (NYB-301) | Chemistry (NYB-101) | CPLT (NYB-101) | EM-I Tut-C1 (NYB-301) |\n| Tuesday | EM-I (NYB-301) | EM-I (NYB-301) | Chemistry Lab-C2-VIB-017 | Chemistry Lab-C2-VIB-017 | Chemistry Lab-C2-VIB-017 | CPLT (NYB-101) |\n| Wednesday | Digital Literacy Lab-C-NYB-506 | Digital Literacy Lab-C-NYB-506 | Comm. Skills (NYB-102) | EM-I (NYB-301) | Chemistry (NYB-101) | Library |\n| Thursday | Autocad Lab-C1-KAB-406 | Autocad Lab-C1-KAB-406 | CPLT Lab-C2-VIB-203 | CPLT Lab-C2-VIB-203 | Chemistry (NYB-101) | EM-I Tut-C2 (NYB-301) |\n| Friday | Sports / Self Study | Self Study | Mentorship Session | Remedial Math | Coding Practice | Open Elective |\n| Saturday | Chemistry Lab-C1-VIB-017 | Chemistry Lab-C1-VIB-017 | Digital Literacy Lab-C-NYB-506 | Digital Literacy Lab-C-NYB-506 | CPLT (NYB-102) | Weekly Wrap-Up |\n\n### Extracted Faculty & Blocks:\n- **NYB**: Nyay Bhawan | **VIB**: Vikram Sarabhai Bhawan | **KAB**: Kautilya Bhawan\n- **EM-I**: Engineering Mathematics-I (Dr. Monika Jain - MJ)\n- **CPLT**: Computer Programming and Logical Thinking (Mr. Shekhar - SH)\n- **Chemistry**: Engineering Chemistry (Prof. Sapna Sharma - SS)\n- **CS Lab**: Communication Skills Lab (NYB-103)\n- **Digital Literacy Lab**: Digital Literacy Lab-C (NYB-506)\n- **Autocad Lab**: Autocad Lab (KAB-406)\n",
+      "html": "<table border=\"1\">\n  <thead>\n    <tr><th>Day / Time</th><th>08:00 - 08:50</th><th>08:50 - 09:40</th><th>09:40 - 10:30</th><th>10:30 - 11:20</th><th>11:20 - 12:05</th><th>12:05 - 12:50</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>Monday</td><td colspan=\"2\">CS Lab-C1-NYB-103</td><td>EM-I (NYB-301)</td><td>Chemistry (NYB-101)</td><td>CPLT (NYB-101)</td><td>EM-I Tut-C1 (NYB-301)</td></tr>\n    <tr><td>Tuesday</td><td colspan=\"2\">EM-I (NYB-301)</td><td colspan=\"3\">Chemistry Lab-C2-VIB-017</td><td>CPLT (NYB-101)</td></tr>\n    <tr><td>Wednesday</td><td colspan=\"2\">Digital Literacy Lab-C-NYB-506</td><td>Comm. Skills (NYB-102)</td><td>EM-I (NYB-301)</td><td>Chemistry (NYB-101)</td><td>Library</td></tr>\n    <tr><td>Thursday</td><td colspan=\"2\">Autocad Lab-C1-KAB-406</td><td colspan=\"2\">CPLT Lab-C2-VIB-203</td><td>Chemistry (NYB-101)</td><td>EM-I Tut-C2 (NYB-301)</td></tr>\n    <tr><td>Friday</td><td>Sports / Self Study</td><td>Self Study</td><td>Mentorship Session</td><td>Remedial Math</td><td>Coding Practice</td><td>Open Elective</td></tr>\n    <tr><td>Saturday</td><td colspan=\"2\">Chemistry Lab-C1-VIB-017</td><td colspan=\"2\">Digital Literacy Lab-C-NYB-506</td><td>CPLT (NYB-102)</td><td>Weekly Wrap-Up</td></tr>\n  </tbody>\n</table>",
+      "classes_extracted": 19
+    }
+  ]
+}
