@@ -92,8 +92,8 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        # Support /api/paddleocr/scan as well as /api/ocr/scan and /api/sarvam/scan
-        if self.path in ["/api/paddleocr/scan", "/api/ocr/scan", "/api/sarvam/scan"]:
+        # Support /api/paddleocr/scan and /api/ocr/scan
+        if self.path in ["/api/paddleocr/scan", "/api/ocr/scan"]:
             try:
                 content_len = int(self.headers.get("Content-Length", 0))
                 post_data = self.rfile.read(content_len)

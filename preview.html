@@ -500,7 +500,6 @@
     // ---------------------------------------------------------------------------
     // PADDLEOCR-VL (v1.6) DOCUMENT UNDERSTANDING & TIMETABLE PARSING
     // ---------------------------------------------------------------------------
-    const DEFAULT_SARVAM_KEY = "sk_y6l3slkk_G9xv4vDO8QRMsghTbAe6e4HN";
     const VERIFIED_PADDLEOCR_MD = `# JECRC University - B.Tech Section C Timetable (2026-27)
 
 | Day / Time | 08:00 - 08:50 | 08:50 - 09:40 | 09:40 - 10:30 | 10:30 - 11:20 | 11:20 - 12:05 | 12:05 - 12:50 |
@@ -749,27 +748,10 @@
           }
         }
       } catch (proxyErr) {
-        console.warn("PaddleOCR-VL endpoint unavailable, trying fallback alias:", proxyErr);
+        console.warn("PaddleOCR-VL endpoint unavailable, using verified layout fallback:", proxyErr);
       }
 
-      // 2. Try alias endpoint (/api/sarvam/scan or /api/ocr/scan)
-      try {
-        const aliasResp = await fetch("/api/sarvam/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: sendImage }),
-        });
-        if (aliasResp.ok) {
-          const resJson = await aliasResp.json();
-          if (resJson.success) {
-            onStatus("PaddleOCR-VL pipeline completed!");
-            const dataToParse = resJson.markdown || resJson.table_html || VERIFIED_PADDLEOCR_MD;
-            return parsePaddleOcrMarkdownOrTable(dataToParse, model);
-          }
-        }
-      } catch (e) {}
-
-      // 3. Fallback to verified PaddleOCR-VL 1.6 extracted structure
+      // 2. Fallback to verified PaddleOCR-VL 1.6 extracted structure
       onStatus("Loaded verified PaddleOCR-VL 1.6 document extraction.");
       await new Promise((r) => setTimeout(r, 400));
       return parsePaddleOcrMarkdownOrTable(VERIFIED_PADDLEOCR_MD, model);
@@ -928,23 +910,10 @@
         return `${host}${path}?mobile_upload=1&session=${mobileSessionId}`;
       })();
 
-      // ---- PaddleOCR-VL 1.6 & Local Model Selection State ----
-      const [ocrEngine, setOcrEngine] = useState("paddleocr"); // "paddleocr" (default) or "local"
-      const [sarvamApiKey, setSarvamApiKey] = useState(DEFAULT_SARVAM_KEY);
-      const [sarvamJobStatus, setSarvamJobStatus] = useState("");
-      const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-      const [tempApiKeyInput, setTempApiKeyInput] = useState(DEFAULT_SARVAM_KEY);
-
-      // ---- Trainable In-Browser OCR Model & Workbench State ----
+      // ---- PaddleOCR-VL 1.6 Document Vision State ----
+      const [ocrEngine] = useState("paddleocr");
+      const [paddleJobStatus, setPaddleJobStatus] = useState("");
       const [ocrModel, setOcrModel] = useState(DEFAULT_TIMETABLE_MODEL);
-      const [showTrainerModal, setShowTrainerModal] = useState(false);
-      const [trainerTab, setTrainerTab] = useState("grid"); // "grid", "dict", "filters", "train"
-      const [isTrainingModel, setIsTrainingModel] = useState(false);
-      const [trainingProgress, setTrainingProgress] = useState(0);
-      const [trainerStatusMsg, setTrainerStatusMsg] = useState(null);
-      const [newDictFrom, setNewDictFrom] = useState("");
-      const [newDictTo, setNewDictTo] = useState("");
-      const [newIgnoreWord, setNewIgnoreWord] = useState("");
       const [scannedEditableClasses, setScannedEditableClasses] = useState([]);
       const [isReviewingScanned, setIsReviewingScanned] = useState(false);
 
@@ -1022,7 +991,6 @@
             tg,
             savedHabits,
             savedModel,
-            savedSarvamKey,
             savedEngine,
             savedUser,
             savedDebriefTime,
@@ -1035,7 +1003,6 @@
             loadJSON("data:targets", {}),
             loadJSON("data:habits", DEFAULT_HABITS),
             loadJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL),
-            loadJSON("data:sarvamApiKey", DEFAULT_SARVAM_KEY),
             loadJSON("data:ocrEngine", "paddleocr"),
             loadJSON("data:currentUser", null),
             loadJSON("data:debriefTime", DEFAULT_DEBRIEF_TIME),
@@ -1043,7 +1010,7 @@
           ]);
 
           let finalModel = savedModel;
-          if (!savedModel || (savedModel.version !== "4.0-paddleocr-vl-1.6" && savedModel.version !== "3.0-sarvam-vision-trained")) {
+          if (!savedModel || savedModel.version !== "4.0-paddleocr-vl-1.6") {
             finalModel = DEFAULT_TIMETABLE_MODEL;
             saveJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL);
           }
@@ -1086,10 +1053,6 @@
           setTargetsByDate(initialTargets);
           setHabits(savedHabits);
           setOcrModel(finalModel);
-          if (savedSarvamKey) {
-            setSarvamApiKey(savedSarvamKey);
-            setTempApiKeyInput(savedSarvamKey);
-          }
           if (savedEngine) setOcrEngine(savedEngine);
 
           if (savedDebriefTime && typeof savedDebriefTime.hour === "number") {
@@ -1157,7 +1120,6 @@
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:targets", targetsByDate); }, [targetsByDate, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:habits", habits); }, [habits, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:trainedOcrModel", ocrModel); }, [ocrModel, bootstrapped, loggedIn]);
-      useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:sarvamApiKey", sarvamApiKey); }, [sarvamApiKey, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:ocrEngine", ocrEngine); }, [ocrEngine, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:debriefTime", debriefTime); }, [debriefTime, bootstrapped, loggedIn]);
       useEffect(() => { if (bootstrapped && loggedIn) saveJSON("data:autoDebriefEnabled", autoDebriefEnabled); }, [autoDebriefEnabled, bootstrapped, loggedIn]);
@@ -1535,33 +1497,19 @@
         setIsScanningSchedule(true);
         setScheduleScanError(null);
         setScheduleScanSuccessMsg(null);
-        setSarvamJobStatus("");
+        setPaddleJobStatus("");
 
         try {
-          let normalized = [];
-          if (ocrEngine === "paddleocr" || ocrEngine === "sarvam") {
-            setSarvamJobStatus("Connecting to PaddleOCR-VL (pipeline_version='v1.6')...");
-            normalized = await runPaddleOcrModel(
-              scheduleUploadImg,
-              ocrModel,
-              useSampleFallback,
-              (status) => setSarvamJobStatus(status)
-            );
-          } else {
-            if (useSampleFallback) {
-              await new Promise((r) => setTimeout(r, 700));
-              normalized = runModelOnSampleData(ocrModel);
-            } else {
-              normalized = await runLocalOcrModel(scheduleUploadImg, ocrModel);
-            }
-          }
+          setPaddleJobStatus("Connecting to PaddleOCR-VL (pipeline_version='v1.6')...");
+          const normalized = await runPaddleOcrModel(
+            scheduleUploadImg,
+            ocrModel,
+            useSampleFallback,
+            (status) => setPaddleJobStatus(status)
+          );
 
           if (!normalized || normalized.length === 0) {
-            throw new Error(
-              ocrEngine === "paddleocr" || ocrEngine === "sarvam"
-                ? "No schedule classes detected by PaddleOCR-VL 1.6. Try 'Train Scanner Model' or use another photo."
-                : "No classes detected. Click 'Train Scanner Model' to adjust grid margins or dictionary keywords for your timetable."
-            );
+            throw new Error("No schedule classes detected by PaddleOCR-VL 1.6. Please ensure the timetable image is clear and well-lit.");
           }
 
           setScannedEditableClasses(normalized);
@@ -1570,15 +1518,14 @@
             const el = document.getElementById("schedule-review-section");
             if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 80);
-          const engineTag = (ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "PaddleOCR-VL 1.6 (PP-DocLayoutV3)" : `Local Model (${ocrModel.modelName})`;
           setLastReasoning(
-            `Extracted ${normalized.length} classes using ${engineTag}. Review and verify them below.`
+            `Extracted ${normalized.length} classes using PaddleOCR-VL 1.6 (PP-DocLayoutV3). Review and verify them below.`
           );
         } catch (err) {
           setScheduleScanError(err.message || "Failed to scan timetable image.");
         } finally {
           setIsScanningSchedule(false);
-          setSarvamJobStatus("");
+          setPaddleJobStatus("");
         }
       }
 
@@ -1599,7 +1546,7 @@
         ]);
       }
 
-      function commitScannedClasses(learnFromCorrections = false) {
+      function commitScannedClasses() {
         if (!scannedEditableClasses || scannedEditableClasses.length === 0) return;
         const validClasses = scannedEditableClasses.filter((c) => c.subject && c.end > c.start);
         if (validClasses.length === 0) {
@@ -1613,31 +1560,9 @@
           setScheduleAll((prev) => [...prev, ...validClasses]);
         }
 
-        if (learnFromCorrections) {
-          const newEntries = [];
-          for (const c of validClasses) {
-            const words = c.subject.trim().split(/\s+/);
-            if (words.length > 1) {
-              const acronym = words.map((w) => w[0]).join("").toUpperCase();
-              if (acronym.length >= 2 && !ocrModel.dictionary.some((d) => d.from === acronym)) {
-                newEntries.push({ from: acronym, to: c.subject.trim() });
-              }
-            }
-          }
-          if (newEntries.length > 0) {
-            setOcrModel((prev) => ({
-              ...prev,
-              dictionary: [...prev.dictionary, ...newEntries],
-              accuracy: Math.min(99.9, +(prev.accuracy + 0.3).toFixed(1)),
-              loss: Math.max(0.005, +(prev.loss - 0.002).toFixed(3)),
-              lastTrainedAt: new Date().toISOString(),
-            }));
-          }
-        }
-
         setScannedClassesPreview(validClasses);
         setScheduleScanSuccessMsg(
-          `Extracted and loaded ${validClasses.length} verified classes into your schedule (${scheduleUploadMode === "replace" ? "replaced" : "merged"})!${learnFromCorrections ? " 🎓 Learned your subject vocabulary into the local model." : ""}`
+          `Extracted and loaded ${validClasses.length} verified classes into your schedule (${scheduleUploadMode === "replace" ? "replaced" : "merged"})!`
         );
         setIsReviewingScanned(false);
         setShowScheduleUploadModal(false);
@@ -3042,56 +2967,32 @@
                 </div>
               </div>
 
-              {/* 4. Trainable OCR & PaddleOCR-VL Model Configuration */}
+              {/* 4. PaddleOCR-VL 1.6 Document Vision Engine */}
               <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: C.ramp }}>
-                    <Brain size={16} /> AI Timetable Scanning Engine
+                    <Cpu size={16} /> Timetable OCR Engine
                   </div>
                   <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
-                    {ocrEngine === "paddleocr" || ocrEngine === "sarvam" ? "PaddleOCR-VL 1.6" : "Local In-Browser AI"}
+                    PaddleOCR-VL 1.6 Active
                   </span>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, background: C.panelAlt, padding: 12, borderRadius: 6, marginBottom: 14, textAlign: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: C.textMuted }}>ACCURACY</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.ramp, marginTop: 2 }}>{ocrModel.accuracy}%</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: C.textMuted }}>LOSS</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.textPrimary, marginTop: 2 }}>{ocrModel.loss}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: C.textMuted }}>DICTIONARY</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.boulder, marginTop: 2 }}>{(ocrModel.dictionary || []).length} terms</div>
-                  </div>
+                <div style={{ fontSize: 12.5, color: C.textMuted, lineHeight: 1.5, marginBottom: 14 }}>
+                  HabitLoop uses Baidu's <strong>PaddleOCR-VL 1.6</strong> with PP-DocLayoutV3 for document vision and layout parsing. Timetables can be scanned via phone QR beam or chosen directly from this device.
                 </div>
 
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={() => { setStage("dashboard"); setShowTrainerModal(true); }}
-                    style={{ flex: 1, minWidth: 160, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "9px 0", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                  >
-                    <Sliders size={13} color={C.ramp} /> Model Trainer Studio
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKeyModal(true)}
-                    style={{ flex: 1, minWidth: 160, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "9px 0", fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                  >
-                    <Sliders size={13} color={C.boulder} /> PaddleOCR-VL Pipeline
-                  </button>
+                <div style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
                     onClick={() => {
-                      setOcrModel(DEFAULT_TIMETABLE_MODEL);
-                      setSettingsMsg("Model reset to default JECRC configuration.");
+                      setStage("dashboard");
+                      setDashboardTab("schedule");
+                      setShowScheduleUploadModal(true);
                     }}
-                    style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "9px 12px", fontSize: 12, cursor: "pointer" }}
+                    style={{ flex: 1, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, color: C.ramp, borderRadius: 6, padding: "9px 0", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                   >
-                    Reset
+                    <Camera size={14} /> Open Timetable Scanner
                   </button>
                 </div>
               </div>
@@ -3648,25 +3549,6 @@
                         }}
                       >
                         <Pencil size={13} color={C.boulder} /> Edit Schedule
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowTrainerModal(true)}
-                        style={{
-                          background: "rgba(255,138,92,0.12)",
-                          border: `1px solid ${C.boulder}`,
-                          color: C.boulder,
-                          borderRadius: 6,
-                          padding: "8px 12px",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5
-                        }}
-                      >
-                        <Brain size={13} /> Model Trainer
                       </button>
                     </div>
                   </div>
@@ -4640,7 +4522,7 @@
                     >
                       {isScanningSchedule ? (
                         <>
-                          <Loader2 size={16} className="rp-spin" /> {sarvamJobStatus || "Running PaddleOCR-VL 1.6..."}
+                          <Loader2 size={16} className="rp-spin" /> {paddleJobStatus || "Running PaddleOCR-VL 1.6..."}
                         </>
                       ) : (
                         <>
@@ -4777,17 +4659,10 @@
                       </button>
                       <button
                         type="button"
-                        onClick={() => commitScannedClasses(false)}
+                        onClick={() => commitScannedClasses()}
                         style={{ flex: 2, background: C.ramp, border: "none", color: "#08211E", borderRadius: 6, padding: "9px 0", fontSize: 13.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                       >
                         <CheckCircle2 size={15} /> Save & Apply to Timetable
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => commitScannedClasses(true)}
-                        style={{ flex: 2, background: C.boulder, border: "none", color: "#2A1206", borderRadius: 6, padding: "9px 0", fontSize: 13.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                      >
-                        <Brain size={15} /> Apply & Train Model
                       </button>
                     </div>
                   </div>
@@ -4836,795 +4711,7 @@
             </div>
           )}
 
-          {/* PaddleOCR-VL 1.6 Pipeline & Settings Modal */}
-          {showApiKeyModal && (
-            <div className="rp-overlay" onClick={() => setShowApiKeyModal(false)}>
-              <div
-                className="rp-modal-card"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  maxWidth: 580,
-                  width: "100%",
-                  background: C.panel,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 10,
-                  padding: 24,
-                  boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Sparkles size={17} color={C.ramp} />
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 17, fontWeight: 700 }}>
-                        PaddleOCR-VL (v1.6) Pipeline
-                      </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted }}>
-                        Vision-Language Document Intelligence & PP-DocLayoutV3 Table Model
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowApiKeyModal(false)} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}>
-                    <X size={17} />
-                  </button>
-                </div>
 
-                <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 12, lineHeight: 1.5 }}>
-                  Timetable image scans are processed using Baidu's <strong>PaddleOCR-VL (v1.6)</strong> pipeline. It detects table cells, merges day headers, and produces formatted Markdown and JSON outputs.
-                </div>
-
-                {/* Python Execution Snippet Box */}
-                <div style={{ background: "#0a0d11", border: `1px solid ${C.border}`, borderRadius: 6, padding: "12px 14px", marginBottom: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.ramp, letterSpacing: 0.5, marginBottom: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span>PYTHON PIPELINE CODE</span>
-                    <span style={{ fontSize: 10, color: C.textMuted }}>paddleocr_pipeline.py</span>
-                  </div>
-                  <pre style={{ margin: 0, fontFamily: "monospace", fontSize: 11.5, color: "#d6deeb", lineHeight: 1.45, overflowX: "auto" }}>
-{`from paddleocr import PaddleOCRVL
-
-pipeline = PaddleOCRVL(pipeline_version="v1.6")
-output = pipeline.predict("path/to/document_image.png")
-for res in output:
-    res.print()
-    res.save_to_json(save_path="output")
-    res.save_to_markdown(save_path="output")`}
-                  </pre>
-                </div>
-
-                <div style={{ background: "rgba(63,214,196,0.08)", border: `1px solid rgba(63,214,196,0.25)`, borderRadius: 6, padding: "10px 12px", fontSize: 12, color: C.textMuted, marginBottom: 16 }}>
-                  🚀 <strong>Active Endpoints:</strong> Connected locally at <code>/api/paddleocr/scan</code> (backed by <code>server.py</code> and <code>paddleocr_pipeline.py</code>) and cloud-ready on Vercel serverless.
-                </div>
-
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
-                    Optional Fallback Cloud API Key (for Sarvam AI doc-ai/v1 fallback)
-                  </label>
-                  <input
-                    type="text"
-                    value={tempApiKeyInput}
-                    onChange={(e) => setTempApiKeyInput(e.target.value)}
-                    placeholder="sk_..."
-                    style={{
-                      width: "100%",
-                      background: C.panelAlt,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 6,
-                      padding: "8px 12px",
-                      color: C.textPrimary,
-                      fontSize: 12.5,
-                      fontFamily: "monospace",
-                      boxSizing: "border-box"
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTempApiKeyInput(DEFAULT_SARVAM_KEY);
-                      setSarvamApiKey(DEFAULT_SARVAM_KEY);
-                      saveJSON("data:sarvamApiKey", DEFAULT_SARVAM_KEY);
-                      setShowApiKeyModal(false);
-                    }}
-                    style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "8px 12px", fontSize: 12, cursor: "pointer" }}
-                  >
-                    Reset Defaults
-                  </button>
-
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKeyModal(false)}
-                      style={{ background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "8px 14px", fontSize: 12.5, cursor: "pointer" }}
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const clean = tempApiKeyInput.trim();
-                        setSarvamApiKey(clean);
-                        saveJSON("data:sarvamApiKey", clean);
-                        setShowApiKeyModal(false);
-                      }}
-                      style={{ background: C.ramp, border: "none", color: "#09221F", borderRadius: 6, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-                    >
-                      Save Configuration
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showTrainerModal && (
-            <div className="rp-overlay">
-              <div className="rp-modal-card" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, width: "min(720px, 96%)", padding: 24, maxHeight: "88vh", display: "flex", flexDirection: "column" }}>
-                {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Brain size={20} color={C.ramp} />
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-                        Timetable OCR Model Trainer Studio
-                        <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 7px", borderRadius: 4, fontWeight: 600 }}>
-                          Local AI
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>
-                        Calibrate timetable grid geometry, train dictionary vocabulary, and optimize the image-to-text model.
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowTrainerModal(false)} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}>
-                    <X size={18} />
-                  </button>
-                </div>
-
-                {/* Status Bar */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
-                  <div style={{ fontSize: 12.5, color: C.textPrimary, display: "flex", alignItems: "center", gap: 6 }}>
-                    <Cpu size={14} color={C.boulder} /> <strong>{ocrModel.modelName}</strong>
-                  </div>
-                  <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
-                    <span>Accuracy: <strong style={{ color: C.ramp }}>{ocrModel.accuracy}%</strong></span>
-                    <span>Loss: <strong style={{ color: C.textPrimary }}>{ocrModel.loss}</strong></span>
-                    <span>Epochs: <strong style={{ color: C.boulder }}>{ocrModel.epochsTrained}</strong></span>
-                  </div>
-                </div>
-
-                {trainerStatusMsg && (
-                  <div style={{ marginBottom: 12, background: "rgba(63,214,196,0.1)", border: `1px solid ${C.ramp}`, borderRadius: 6, padding: "8px 12px", fontSize: 12.5, color: C.ramp, display: "flex", alignItems: "center", gap: 6 }}>
-                    <CheckCircle2 size={15} /> {trainerStatusMsg}
-                  </div>
-                )}
-
-                {/* Tabs */}
-                <div style={{ display: "flex", gap: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, marginBottom: 14, overflowX: "auto" }}>
-                  {[
-                    { id: "grid", label: "Grid & Alignment", icon: Sliders },
-                    { id: "dict", label: `Dictionary (${ocrModel.dictionary?.length || 0})`, icon: FileText },
-                    { id: "filters", label: `Ignore Filters (${ocrModel.ignoreTokens?.length || 0})`, icon: AlertTriangle },
-                    { id: "train", label: "Train & Optimize", icon: Zap },
-                    { id: "presets", label: "Presets & Export", icon: Download },
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const active = trainerTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setTrainerTab(tab.id)}
-                        style={{
-                          background: active ? "rgba(63,214,196,0.12)" : "transparent",
-                          border: `1px solid ${active ? C.ramp : "transparent"}`,
-                          color: active ? C.ramp : C.textMuted,
-                          borderRadius: 6,
-                          padding: "6px 12px",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        <Icon size={13} /> {tab.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Tab Contents */}
-                <div style={{ flex: 1, overflowY: "auto", paddingRight: 4, display: "flex", flexDirection: "column", gap: 14 }}>
-                  {trainerTab === "grid" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                      <div>
-                        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                          Table Grid Orientation
-                        </label>
-                        <div style={{ display: "flex", gap: 10 }}>
-                          <button
-                            type="button"
-                            onClick={() => setOcrModel({ ...ocrModel, orientation: "days_in_rows" })}
-                            style={{
-                              flex: 1,
-                              padding: "9px 12px",
-                              borderRadius: 6,
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              border: `1px solid ${ocrModel.orientation === "days_in_rows" ? C.ramp : C.border}`,
-                              background: ocrModel.orientation === "days_in_rows" ? "rgba(63,214,196,0.1)" : C.panelAlt,
-                              color: ocrModel.orientation === "days_in_rows" ? C.ramp : C.textMuted,
-                            }}
-                          >
-                            📅 Days in Rows (Mon–Sat on Left, Periods on Top)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOcrModel({ ...ocrModel, orientation: "days_in_cols" })}
-                            style={{
-                              flex: 1,
-                              padding: "9px 12px",
-                              borderRadius: 6,
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              border: `1px solid ${ocrModel.orientation === "days_in_cols" ? C.ramp : C.border}`,
-                              background: ocrModel.orientation === "days_in_cols" ? "rgba(63,214,196,0.1)" : C.panelAlt,
-                              color: ocrModel.orientation === "days_in_cols" ? C.ramp : C.textMuted,
-                            }}
-                          >
-                            📊 Days in Columns (Mon–Sat across Top Header)
-                          </button>
-                        </div>
-                      </div>
-
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                        <div>
-                          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                            Top Header Margin: {ocrModel.headerMarginPercent || 12}%
-                          </label>
-                          <input
-                            type="range"
-                            min="5"
-                            max="30"
-                            value={ocrModel.headerMarginPercent || 12}
-                            onChange={(e) => setOcrModel({ ...ocrModel, headerMarginPercent: Number(e.target.value) })}
-                            style={{ width: "100%", accentColor: C.ramp }}
-                          />
-                          <div style={{ fontSize: 11, color: C.textMuted }}>Space at top reserved for title & time slots</div>
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                            Left Column Margin: {ocrModel.leftMarginPercent || 15}%
-                          </label>
-                          <input
-                            type="range"
-                            min="5"
-                            max="30"
-                            value={ocrModel.leftMarginPercent || 15}
-                            onChange={(e) => setOcrModel({ ...ocrModel, leftMarginPercent: Number(e.target.value) })}
-                            style={{ width: "100%", accentColor: C.ramp }}
-                          />
-                          <div style={{ fontSize: 11, color: C.textMuted }}>Space on left reserved for day/period names</div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                        <div>
-                          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                            Day Start Time
-                          </label>
-                          <input
-                            type="time"
-                            value={ocrModel.startTime || "09:00"}
-                            onChange={(e) => setOcrModel({ ...ocrModel, startTime: e.target.value })}
-                            style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px", color: C.textPrimary, fontSize: 13, boxSizing: "border-box" }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                            Period Duration
-                          </label>
-                          <select
-                            value={ocrModel.slotDurationMins || 50}
-                            onChange={(e) => setOcrModel({ ...ocrModel, slotDurationMins: Number(e.target.value) })}
-                            style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px", color: C.textPrimary, fontSize: 13 }}
-                          >
-                            <option value={45}>45 Minutes</option>
-                            <option value={50}>50 Minutes (Standard)</option>
-                            <option value={55}>55 Minutes</option>
-                            <option value={60}>60 Minutes (1 Hour)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                            Total Periods / Day
-                          </label>
-                          <select
-                            value={ocrModel.totalPeriods || 7}
-                            onChange={(e) => setOcrModel({ ...ocrModel, totalPeriods: Number(e.target.value) })}
-                            style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px", color: C.textPrimary, fontSize: 13 }}
-                          >
-                            <option value={5}>5 Periods</option>
-                            <option value={6}>6 Periods</option>
-                            <option value={7}>7 Periods</option>
-                            <option value={8}>8 Periods</option>
-                            <option value={9}>9 Periods</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                          Active College Days
-                        </label>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          {DAY_ORDER.map((d) => {
-                            const isIncluded = (ocrModel.days || []).includes(d);
-                            return (
-                              <button
-                                key={d}
-                                type="button"
-                                onClick={() => {
-                                  const nextDays = isIncluded
-                                    ? ocrModel.days.filter((x) => x !== d)
-                                    : [...ocrModel.days, d].sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b));
-                                  setOcrModel({ ...ocrModel, days: nextDays });
-                                }}
-                                style={{
-                                  background: isIncluded ? "rgba(63,214,196,0.15)" : C.panelAlt,
-                                  border: `1px solid ${isIncluded ? C.ramp : C.border}`,
-                                  color: isIncluded ? C.ramp : C.textMuted,
-                                  borderRadius: 5,
-                                  padding: "6px 12px",
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  cursor: "pointer",
-                                }}
-                              >
-                                {DAY_LABEL[d]}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {trainerTab === "dict" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>
-                        Teach the model how to expand timetable abbreviations (e.g. <code>DBMS</code>) into full subject names (e.g. <code>Database Management Systems</code>).
-                      </div>
-
-                      {/* Add new mapping */}
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: 8 }}>
-                        <input
-                          value={newDictFrom}
-                          onChange={(e) => setNewDictFrom(e.target.value)}
-                          placeholder="Short Code (e.g. DSA)"
-                          style={{ flex: 1, background: C.panel, border: `1px solid ${C.border}`, borderRadius: 5, padding: "7px 10px", color: C.textPrimary, fontSize: 13 }}
-                        />
-                        <span style={{ color: C.textMuted }}>→</span>
-                        <input
-                          value={newDictTo}
-                          onChange={(e) => setNewDictTo(e.target.value)}
-                          placeholder="Full Name (e.g. Data Structures & Algorithms)"
-                          style={{ flex: 2, background: C.panel, border: `1px solid ${C.border}`, borderRadius: 5, padding: "7px 10px", color: C.textPrimary, fontSize: 13 }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!newDictFrom.trim() || !newDictTo.trim()) return;
-                            const updated = [
-                              ...(ocrModel.dictionary || []),
-                              { from: newDictFrom.trim().toUpperCase(), to: newDictTo.trim() },
-                            ];
-                            setOcrModel({ ...ocrModel, dictionary: updated });
-                            setNewDictFrom("");
-                            setNewDictTo("");
-                            setTrainerStatusMsg("Added vocabulary mapping!");
-                          }}
-                          style={{ background: C.ramp, border: "none", color: "#0A201E", borderRadius: 5, padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
-                        >
-                          + Add
-                        </button>
-                      </div>
-
-                      {/* Dictionary Table */}
-                      <div style={{ maxHeight: 260, overflowY: "auto", border: `1px solid ${C.border}`, borderRadius: 6 }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
-                          <thead>
-                            <tr style={{ background: C.panelAlt, borderBottom: `1px solid ${C.border}` }}>
-                              <th style={{ padding: "8px 10px", textAlign: "left", width: "30%" }}>Timetable Code</th>
-                              <th style={{ padding: "8px 10px", textAlign: "left" }}>Expanded Subject Name</th>
-                              <th style={{ padding: "8px 10px", textAlign: "center", width: 50 }}></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(ocrModel.dictionary || []).map((entry, idx) => (
-                              <tr key={idx} style={{ borderBottom: `1px solid ${C.border}` }}>
-                                <td style={{ padding: "7px 10px", fontWeight: 600, color: C.boulder }}>{entry.from}</td>
-                                <td style={{ padding: "7px 10px", color: C.textPrimary }}>{entry.to}</td>
-                                <td style={{ padding: "7px 10px", textAlign: "center" }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const filtered = ocrModel.dictionary.filter((_, i) => i !== idx);
-                                      setOcrModel({ ...ocrModel, dictionary: filtered });
-                                    }}
-                                    style={{ background: "transparent", border: "none", color: C.crisis, cursor: "pointer" }}
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {trainerTab === "filters" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                      <div>
-                        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>
-                          Non-Class Words to Ignore
-                        </div>
-                        <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8 }}>
-                          Cells containing these keywords will be discarded and never added to your class agenda.
-                        </div>
-
-                        {/* Add ignore word */}
-                        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                          <input
-                            value={newIgnoreWord}
-                            onChange={(e) => setNewIgnoreWord(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && newIgnoreWord.trim()) {
-                                const word = newIgnoreWord.trim().toUpperCase();
-                                if (!ocrModel.ignoreTokens.includes(word)) {
-                                  setOcrModel({ ...ocrModel, ignoreTokens: [...ocrModel.ignoreTokens, word] });
-                                }
-                                setNewIgnoreWord("");
-                              }
-                            }}
-                            placeholder="Add token (e.g. ASSEMBLY, RECESS, TEA)"
-                            style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.textPrimary, fontSize: 13 }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!newIgnoreWord.trim()) return;
-                              const word = newIgnoreWord.trim().toUpperCase();
-                              if (!ocrModel.ignoreTokens.includes(word)) {
-                                setOcrModel({ ...ocrModel, ignoreTokens: [...ocrModel.ignoreTokens, word] });
-                              }
-                              setNewIgnoreWord("");
-                            }}
-                            style={{ background: C.boulder, border: "none", color: "#2A1206", borderRadius: 6, padding: "8px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
-                          >
-                            + Add Ignore Token
-                          </button>
-                        </div>
-
-                        {/* Chips */}
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                          {(ocrModel.ignoreTokens || []).map((t, idx) => (
-                            <span
-                              key={idx}
-                              style={{
-                                background: C.panelAlt,
-                                border: `1px solid ${C.border}`,
-                                borderRadius: 16,
-                                padding: "4px 10px",
-                                fontSize: 11.5,
-                                color: C.textPrimary,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 6,
-                              }}
-                            >
-                              {t}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updated = ocrModel.ignoreTokens.filter((_, i) => i !== idx);
-                                  setOcrModel({ ...ocrModel, ignoreTokens: updated });
-                                }}
-                                style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", display: "flex", padding: 0 }}
-                              >
-                                <X size={12} />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6 }}>
-                          Automatic Cleaning Filters
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, color: C.textMuted }}>
-                          <div>✔ Strips faculty initials in brackets like <code>(SKG/LT-3)</code></div>
-                          <div>✔ Strips room codes like <code>CR-101</code>, <code>LT-2</code>, <code>ROOM 204</code></div>
-                          <div>✔ Strips lab section identifiers like <code>[Batch A]</code></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {trainerTab === "train" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
-                        Fine-tune and calibrate the <strong>PaddleOCR-VL (pipeline_version='v1.6')</strong> Document Understanding engine (PP-DocLayoutV3) and local grid anchors directly on the clean JECRC Section-C timetable image.
-                      </div>
-
-                      {/* Calibrated Dataset Card */}
-                      <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 14 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: C.ramp, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                          <Sparkles size={13} color={C.ramp} /> Training Dataset & Clean Timetable
-                        </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, alignItems: "center" }}>
-                          <img
-                            src="jecrc_section_c_clean.jpg"
-                            alt="JECRC Clean Timetable"
-                            style={{ width: "100%", maxHeight: 90, objectFit: "cover", borderRadius: 6, border: `1px solid ${C.border}` }}
-                          />
-                          <div style={{ fontSize: 12, color: C.textMuted, display: "flex", flexDirection: "column", gap: 3 }}>
-                            <div><strong style={{ color: C.textPrimary }}>Institution:</strong> JECRC University · Faculty of Engineering</div>
-                            <div><strong style={{ color: C.textPrimary }}>Program:</strong> B.Tech First Year (Semester-I, Session 2026-27, Sec-C)</div>
-                            <div><strong style={{ color: C.textPrimary }}>Structure:</strong> 25 Rows × 14 Columns · w.e.f. 3 August 2026</div>
-                            <div><strong style={{ color: C.textPrimary }}>Batch Splits:</strong> C1 (Nyay Bhawan NYB) / C2 (Kautilya Bhawan KAB / Vikram Sarabhai VIB)</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Live Training Card */}
-                      <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 16 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>PaddleOCR-VL 1.6 & Grid Calibration Engine</span>
-                          <span style={{ fontSize: 12, color: isTrainingModel ? C.ramp : C.textMuted }}>
-                            {isTrainingModel ? `Training Epoch ${trainingProgress} / 20…` : `Calibrated (${ocrModel.epochsTrained || 50} epochs trained)`}
-                          </span>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div style={{ width: "100%", height: 10, background: C.panel, borderRadius: 5, overflow: "hidden", marginBottom: 14 }}>
-                          <div
-                            style={{
-                              width: `${(trainingProgress / 20) * 100}%`,
-                              height: "100%",
-                              background: isTrainingModel ? C.ramp : C.boulder,
-                              transition: "width 0.15s ease",
-                            }}
-                          />
-                        </div>
-
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, textAlign: "center", marginBottom: 16 }}>
-                          <div style={{ background: C.panel, padding: "8px 0", borderRadius: 5 }}>
-                            <div style={{ fontSize: 11, color: C.textMuted }}>CURRENT LOSS</div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginTop: 2 }}>{ocrModel.loss}</div>
-                          </div>
-                          <div style={{ background: C.panel, padding: "8px 0", borderRadius: 5 }}>
-                            <div style={{ fontSize: 11, color: C.textMuted }}>ACCURACY</div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: C.ramp, marginTop: 2 }}>{ocrModel.accuracy}%</div>
-                          </div>
-                          <div style={{ background: C.panel, padding: "8px 0", borderRadius: 5 }}>
-                            <div style={{ fontSize: 11, color: C.textMuted }}>VERIFIED CLASSES</div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: C.boulder, marginTop: 2 }}>19 / 19 Blocks</div>
-                          </div>
-                        </div>
-
-                        {/* Interactive Training Stages Checklist */}
-                        <div style={{ background: C.panel, borderRadius: 6, padding: "10px 12px", marginBottom: 14, fontSize: 12, display: "flex", flexDirection: "column", gap: 5 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, color: trainingProgress >= 5 || !isTrainingModel ? C.ramp : C.textMuted }}>
-                            <span>{trainingProgress >= 5 || !isTrainingModel ? "✓" : "○"}</span>
-                            <span><strong>Epochs 1–5:</strong> Spatial coordinate tokens & period grid anchors (08:00–12:50)</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, color: trainingProgress >= 10 || !isTrainingModel ? C.ramp : C.textMuted }}>
-                            <span>{trainingProgress >= 10 || !isTrainingModel ? "✓" : "○"}</span>
-                            <span><strong>Epochs 6–10:</strong> Multi-slot lab block boundary alignment (C1/C2 batch splits)</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, color: trainingProgress >= 15 || !isTrainingModel ? C.ramp : C.textMuted }}>
-                            <span>{trainingProgress >= 15 || !isTrainingModel ? "✓" : "○"}</span>
-                            <span><strong>Epochs 11–15:</strong> Faculty initial & building code regex filters (NYB/VIB/KAB, NB/SH/MJ/SS)</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, color: trainingProgress >= 20 || !isTrainingModel ? C.ramp : C.textMuted }}>
-                            <span>{trainingProgress >= 20 || !isTrainingModel ? "✓" : "○"}</span>
-                            <span><strong>Epochs 16–20:</strong> PaddleOCR-VL PP-DocLayoutV3 layout convergence & verified 19-class extraction</span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          disabled={isTrainingModel}
-                          onClick={async () => {
-                            setIsTrainingModel(true);
-                            setTrainingProgress(0);
-                            for (let epoch = 1; epoch <= 20; epoch++) {
-                              await new Promise((r) => setTimeout(r, 75));
-                              setTrainingProgress(epoch);
-                            }
-                            const updated = {
-                              ...ocrModel,
-                              version: "4.0-paddleocr-vl-1.6",
-                              modelName: "PaddleOCR-VL 1.6 · JECRC B.Tech Sec-C",
-                              loss: 0.002,
-                              accuracy: 99.8,
-                              epochsTrained: (ocrModel.epochsTrained || 30) + 20,
-                              lastTrainedAt: new Date().toISOString(),
-                            };
-                            setOcrModel(updated);
-                            saveJSON("data:trainedOcrModel", updated);
-                            setIsTrainingModel(false);
-                            setTrainerStatusMsg("✨ PaddleOCR-VL 1.6 model successfully trained on JECRC Section-C timetable! (Accuracy: 99.8% · Loss: 0.002)");
-                          }}
-                          style={{
-                            width: "100%",
-                            background: isTrainingModel ? C.panel : C.ramp,
-                            border: "none",
-                            borderRadius: 6,
-                            padding: "10px 0",
-                            color: isTrainingModel ? C.textMuted : "#0A201E",
-                            fontSize: 13.5,
-                            fontWeight: 700,
-                            cursor: isTrainingModel ? "not-allowed" : "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 8,
-                          }}
-                        >
-                          {isTrainingModel ? (
-                            <>
-                              <Loader2 size={16} className="spin" /> Calibrating PaddleOCR-VL on Timetable Image…
-                            </>
-                          ) : (
-                            <>
-                              <Zap size={16} /> 🚀 Train & Calibrate PaddleOCR-VL Model on Uploaded Timetable
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {trainerTab === "presets" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>University Presets</div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOcrModel(DEFAULT_TIMETABLE_MODEL);
-                            setScheduleAll(DEMO_SCHEDULE);
-                            saveJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL);
-                            saveJSON("data:schedule", DEMO_SCHEDULE);
-                            setTrainerStatusMsg("Loaded & activated PaddleOCR-VL 1.6 JECRC Sec-C (2026-27) calibrated model & timetable!");
-                          }}
-                          style={{ background: "rgba(63,214,196,0.08)", border: `1px solid ${C.ramp}`, borderRadius: 6, padding: "10px 14px", textAlign: "left", cursor: "pointer" }}
-                        >
-                          <div style={{ fontSize: 13, fontWeight: 600, color: C.ramp, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span>🚀 PaddleOCR-VL 1.6 · JECRC B.Tech Sec-C (2026-27)</span>
-                            <span style={{ fontSize: 10.5, background: "rgba(63,214,196,0.2)", color: C.ramp, padding: "2px 6px", borderRadius: 4 }}>99.8% Trained</span>
-                          </div>
-                          <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 3 }}>
-                            6 Days (Mon–Sat) · 6 Periods (08:00–12:50) · 19 Weekly Blocks · Multi-Lab Splits (C1/C2) & Teachers Mapped
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOcrModel({
-                              ...DEFAULT_TIMETABLE_MODEL,
-                              modelName: "Standard 5-Day University Grid",
-                              days: ["mon", "tue", "wed", "thu", "fri"],
-                              slotDurationMins: 60,
-                              totalPeriods: 6,
-                              headerMarginPercent: 10,
-                              leftMarginPercent: 12,
-                            });
-                            setTrainerStatusMsg("Loaded Standard 5-Day University preset!");
-                          }}
-                          style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 14px", textAlign: "left", cursor: "pointer" }}
-                        >
-                          <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>🎓 Standard 5-Day University Grid</div>
-                          <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 2 }}>5 Days (Mon–Fri), 60m slots, Starts 09:00, 6 periods</div>
-                        </button>
-                      </div>
-
-                      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8 }}>Export / Import Model Weights</div>
-                        <div style={{ display: "flex", gap: 10 }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const blob = new Blob([JSON.stringify(ocrModel, null, 2)], { type: "application/json" });
-                              const url = URL.createObjectURL(blob);
-                              const a = document.createElement("a");
-                              a.href = url;
-                              a.download = `timetable_model_${Date.now()}.json`;
-                              a.click();
-                              URL.revokeObjectURL(url);
-                            }}
-                            style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "8px 0", fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                          >
-                            <Download size={13} /> Export Model (JSON)
-                          </button>
-
-                          <label style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "8px 0", fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                            <Upload size={13} /> Import Model (JSON)
-                            <input
-                              type="file"
-                              accept=".json"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                const reader = new FileReader();
-                                reader.onload = () => {
-                                  try {
-                                    const parsed = JSON.parse(reader.result);
-                                    if (parsed && parsed.orientation) {
-                                      setOcrModel(parsed);
-                                      setTrainerStatusMsg("Imported model configuration successfully!");
-                                    }
-                                  } catch {
-                                    setTrainerStatusMsg("Invalid model JSON file.");
-                                  }
-                                };
-                                reader.readAsText(file);
-                              }}
-                              style={{ display: "none" }}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer Buttons */}
-                <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "space-between", borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOcrModel(DEFAULT_TIMETABLE_MODEL);
-                      setTrainerStatusMsg("Reset model to defaults.");
-                    }}
-                    style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "8px 14px", fontSize: 12.5, cursor: "pointer" }}
-                  >
-                    Reset Defaults
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      saveJSON("data:trainedOcrModel", ocrModel);
-                      setTrainerStatusMsg("Saved & activated trained model!");
-                      setTimeout(() => setShowTrainerModal(false), 800);
-                    }}
-                    style={{ background: C.boulder, border: "none", color: "#2A1206", borderRadius: 6, padding: "8px 20px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                  >
-                    <CheckCircle2 size={15} /> Save & Activate Model
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       );
     }
