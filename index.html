@@ -911,7 +911,7 @@
       })();
 
       // ---- PaddleOCR-VL 1.6 Document Vision State ----
-      const [ocrEngine] = useState("paddleocr");
+      const [ocrEngine, setOcrEngine] = useState("paddleocr");
       const [paddleJobStatus, setPaddleJobStatus] = useState("");
       const [ocrModel, setOcrModel] = useState(DEFAULT_TIMETABLE_MODEL);
       const [scannedEditableClasses, setScannedEditableClasses] = useState([]);
