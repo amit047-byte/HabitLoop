@@ -1,0 +1,140 @@
+{
+  "job_id": "01a149df-b329-7922-a751-ede42385904b",
+  "type": "digitise",
+  "status": "completed",
+  "usage": {
+    "pages_total": 1,
+    "pages_processed": 1,
+    "pages_succeeded": 1,
+    "pages_failed": 0,
+    "pages_discarded": 0
+  },
+  "documents": [
+    {
+      "filename": "jecrc_section_c_timetable.jpg",
+      "page_count": 1,
+      "status": "completed",
+      "language": "en-IN",
+      "partial": false,
+      "warnings": [],
+      "pages": [
+        {
+          "page_num": 1,
+          "status": "completed",
+          "image_width": 1024,
+          "image_height": 574,
+          "blocks": [
+            {
+              "block_id": "p1-b1",
+              "text": "JECRC UNIVERSITY BUILD YOUR WORLD",
+              "layout_tag": "header",
+              "reading_order": 1,
+              "coordinates": {
+                "x1": 78,
+                "y1": 34,
+                "x2": 219,
+                "y2": 95
+              },
+              "bbox_norm": [
+                0.076171875,
+                0.059233449477351915,
+                0.2138671875,
+                0.16550522648083624
+              ]
+            },
+            {
+              "block_id": "p1-b2",
+              "text": "JECRC UNIVERSITY",
+              "layout_tag": "image-caption",
+              "reading_order": 2,
+              "coordinates": {
+                "x1": 408,
+                "y1": 23,
+                "x2": 615,
+                "y2": 43
+              },
+              "bbox_norm": [
+                0.3984375,
+                0.04006968641114982,
+                0.6005859375,
+                0.07491289198606271
+              ]
+            },
+            {
+              "block_id": "p1-b3",
+              "text": "B. TECH. FIRST YEAR, SEMESTER-I (2026-27)",
+              "layout_tag": "paragraph",
+              "reading_order": 3,
+              "coordinates": {
+                "x1": 399,
+                "y1": 48,
+                "x2": 625,
+                "y2": 62
+              },
+              "bbox_norm": [
+                0.3896484375,
+                0.08362369337979095,
+                0.6103515625,
+                0.10801393728222997
+              ]
+            },
+            {
+              "block_id": "p1-b4",
+              "text": "SECTION-C",
+              "layout_tag": "image-caption",
+              "reading_order": 4,
+              "coordinates": {
+                "x1": 478,
+                "y1": 68,
+                "x2": 548,
+                "y2": 83
+              },
+              "bbox_norm": [
+                0.466796875,
+                0.11846689895470383,
+                0.53515625,
+                0.1445993031358885
+              ]
+            },
+            {
+              "block_id": "p1-b5",
+              "text": "w.e.f: 3 August, 2026",
+              "layout_tag": "footnote",
+              "reading_order": 5,
+              "coordinates": {
+                "x1": 859,
+                "y1": 89,
+                "x2": 959,
+                "y2": 101
+              },
+              "bbox_norm": [
+                0.8388671875,
+                0.15505226480836237,
+                0.9365234375,
+                0.1759581881533101
+              ]
+            },
+            {
+              "block_id": "p1-b6",
+              "text": "<table><tr><td rowspan=\"2\">Day/Time</td><td>8:00-8:50</td><td>8:50-9:40</td><td colspan=\"2\">9:40-10:30</td><td colspan=\"2\">10:30-11:20</td><td colspan=\"2\">11:20-12:05</td><td colspan=\"2\">12:05-12:50</td></tr><tr><td colspan=\"2\">Autocad Lab-C2KAB-406</td><td>NYB-301</td><td>MJ</td><td>NYB-101</td><td>SS</td><td>NYB-101</td><td>SH</td><td>NYB-301</td><td>MJ</td></tr><tr><td rowspan=\"2\">Monday</td><td colspan=\"3\">CS Lab-C1-NYB-103</td><td colspan=\"2\">EM-I</td><td colspan=\"2\">Chemistry</td><td colspan=\"2\">CPLT</td><td>EM-I Tut-C1</td></tr><tr><td></td><td>NYB-301</td><td>MJ</td><td colspan=\"7\">CPLT Lab-C1-VIB-203</td></tr><tr><td>Tuesday</td><td colspan=\"5\">EM-I</td><td colspan=\"5\">Chemistry Lab-C2 VIB-017</td></tr><tr><td rowspan=\"2\">Wednesday</td><td colspan=\"3\" rowspan=\"2\">Digital Literacy Lab-C-NYB-506</td><td>NYB-102</td><td>NB</td><td>NYB-301</td><td>MJ</td><td rowspan=\"2\">NYB-101</td><td rowspan=\"2\">SS</td><td rowspan=\"2\"></td></tr><tr><td colspan=\"2\">Comm. Skills</td><td colspan=\"2\">EM-I</td><td colspan=\"2\">Chemistry</td></tr><tr><td rowspan=\"2\">Thursday</td><td></td><td>NYB-101</td><td>SH</td><td colspan=\"4\">Autocad Lab-C1 KAB-406</td><td>NYB-101</td><td>SS</td><td>NYB-301</td><td>MJ</td></tr><tr><td colspan=\"3\">CPLT</td><td colspan=\"4\">CPLT Lab-C2-VIB-203</td><td colspan=\"2\">Chemistry</td><td colspan=\"2\">EM-I Tut-C2</td></tr><tr><td>Friday</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td rowspan=\"2\">Saturday</td><td colspan=\"6\">Chemistry Lab-C1 VIB-017</td><td colspan=\"2\">Digital Literacy Lab-C-NYB-506</td><td rowspan=\"2\">NYB-102</td><td rowspan=\"2\">SH</td><td rowspan=\"2\"></td></tr><tr><td colspan=\"8\">CS Lab-C2-NYB-103</td><td colspan=\"2\">CPLT</td></tr><tr><td colspan=\"12\">TEACHERS:</td></tr><tr><td>NB</td><td colspan=\"3\">Dr. Nidhi Bhatnagar</td><td colspan=\"8\">SUBJECTS:</td></tr><tr><td>SH</td><td colspan=\"3\">Mr. Shekhar</td><td colspan=\"2\">CS</td><td colspan=\"6\">Communication Skills</td></tr><tr><td>MJ</td><td colspan=\"3\">Dr. Monika Jain</td><td colspan=\"2\">CPLT</td><td colspan=\"6\">Computer Programming and Logical Thinking</td></tr><tr><td>SS</td><td colspan=\"3\">Prof. Sapna Sharma</td><td colspan=\"2\">EM-I</td><td colspan=\"6\">Engineering Mathematics-I</td></tr><tr><td>JK</td><td colspan=\"3\">Mr. Jitendra Kumar</td><td colspan=\"2\">AC</td><td colspan=\"6\">Auto Cad</td></tr><tr><td rowspan=\"7\">Chemistry Lab:</td><td colspan=\"3\">C1:Dr. Bhawna Jhangir C2:Dr.Vishnu Khandelwal</td><td colspan=\"2\">DDAL</td><td colspan=\"6\">Digital Data and AI Literacy</td></tr><tr><td colspan=\"3\"></td><td colspan=\"2\">EDP</td><td colspan=\"6\">Entrenpreneurship Development</td></tr><tr><td colspan=\"3\"></td><td colspan=\"8\">Nomenclature of Lecture Theatre and Labs:</td></tr><tr><td colspan=\"3\"></td><td colspan=\"2\">NYB</td><td colspan=\"6\">Nyay Bhawan</td></tr><tr><td colspan=\"3\"></td><td colspan=\"2\">VIB</td><td colspan=\"6\">Vikram Sarabhai Bhawan</td></tr><tr><td colspan=\"3\"></td><td colspan=\"2\">KAB</td><td colspan=\"6\">Kautilya Bhawan</td></tr><tr><td colspan=\"3\"></td><td colspan=\"2\"></td><td colspan=\"6\"></td></tr></table>",
+              "layout_tag": "table",
+              "reading_order": 6,
+              "coordinates": {
+                "x1": 62,
+                "y1": 100,
+                "x2": 962,
+                "y2": 540
+              },
+              "bbox_norm": [
+                0.060546875,
+                0.17421602787456447,
+                0.939453125,
+                0.9407665505226481
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Non-project / classwork slides & posters
+What-is-AI.pdf
+geini poster for linkedin.png
+timetable_b64.txt
+
+# Temp & IDE
+.vscode/
+.idea/
+.gemini/
+.system_generated/
+scratch/
