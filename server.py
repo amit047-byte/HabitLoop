@@ -77,81 +77,31 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
             "message": f"Loaded verified timetable for {sec_data.get('name', 'Section ' + detected_sec)}."
         }
 
-    print(f"🚀 Processing document dynamically: {temp_img_path}")
+    print(f"🚀 Processing document dynamically with Qwen-VL + PaddleOCR: {temp_img_path}")
 
-    # 1. Qwen-VL Vision-Language Model Zero-Shot Extraction (Pure AI Vision)
+    # Unified Qwen-VL & PaddleOCR Integrated Extraction Pipeline
     try:
         from qwen_extractor import extract_timetable_with_qwen
-        print("🧠 Attempting zero-shot extraction with Qwen-VL Vision AI...")
+        print("🧠 Running integrated Qwen-VL + PaddleOCR extraction...")
         qwen_res = extract_timetable_with_qwen(temp_img_path)
         if qwen_res and qwen_res.get("success") and qwen_res.get("classes") and len(qwen_res["classes"]) >= 2:
-            print(f"✨ Qwen-VL successfully extracted {len(qwen_res['classes'])} classes zero-shot!")
+            print(f"✨ Successfully extracted {len(qwen_res['classes'])} classes via Qwen-VL + PaddleOCR!")
             return {
                 "success": True,
-                "engine": "Qwen-VL",
-                "pipeline_version": "vlm",
+                "engine": qwen_res.get("engine", "Qwen-VL + PaddleOCR"),
+                "pipeline_version": "v1.6",
                 "classes": qwen_res["classes"],
+                "markdown": qwen_res.get("markdown", ""),
                 "raw_text": qwen_res.get("raw_text", ""),
                 "output_dir": "output",
-                "message": f"Successfully parsed {len(qwen_res['classes'])} classes using Qwen-VL zero-shot vision model."
+                "message": qwen_res.get("message", f"Extracted {len(qwen_res['classes'])} classes using Qwen-VL + PaddleOCR integrated pipeline.")
             }
         elif qwen_res and not qwen_res.get("success"):
-            print(f"ℹ️ Qwen-VL note: {qwen_res.get('error')}")
+            print(f"ℹ️ Qwen-VL + PaddleOCR note: {qwen_res.get('error')}")
     except Exception as qwen_err:
-        print(f"ℹ️ Qwen-VL note: {qwen_err}")
+        print(f"ℹ️ Extraction pipeline note: {qwen_err}")
 
-    # 2. Native PaddleOCRVL execution
-    try:
-        from paddleocr import PaddleOCRVL
-        pipeline = PaddleOCRVL(pipeline_version="v1.6")
-        output = pipeline.predict(temp_img_path)
-        
-        md_text = ""
-        json_data = []
-        for res in output:
-            res.print()
-            res.save_to_json(save_path="output")
-            res.save_to_markdown(save_path="output")
-            if hasattr(res, "markdown"):
-                md_text += str(res.markdown) + "\n"
-            if hasattr(res, "json"):
-                json_data.append(res.json)
-
-        if md_text.strip():
-            print("✨ PaddleOCRVL v1.6 native execution succeeded!")
-            return {
-                "success": True,
-                "engine": "PaddleOCRVL",
-                "pipeline_version": "v1.6",
-                "markdown": md_text,
-                "table_html": None,
-                "json": json_data,
-                "output_dir": "output"
-            }
-    except Exception as e:
-        print(f"ℹ️ PaddleOCRVL pipeline note: {e}")
-
-    # 3. Native PaddleOCR detection fallback
-    try:
-        from paddleocr import PaddleOCR
-        ocr = PaddleOCR(use_angle_cls=True, lang="en")
-        ocr_result = ocr.ocr(temp_img_path, cls=True)
-        if ocr_result and ocr_result[0]:
-            lines = [line[1][0] for line in ocr_result[0] if line and len(line) >= 2]
-            md_text = "\n".join(lines)
-            print(f"✨ PaddleOCR standard extraction extracted {len(lines)} lines!")
-            return {
-                "success": True,
-                "engine": "PaddleOCR",
-                "pipeline_version": "v1.6",
-                "markdown": md_text,
-                "table_html": None,
-                "output_dir": "output"
-            }
-    except Exception as ocr_err:
-        print(f"ℹ️ PaddleOCR fallback note: {ocr_err}")
-
-    # 4. Fall back to client OCR
+    # Fall back to client OCR
     return {
         "success": False,
         "fallback_client_ocr": True,

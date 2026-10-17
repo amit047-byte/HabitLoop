@@ -1012,7 +1012,7 @@
           if (proxyResp.ok) {
             const resJson = await proxyResp.json();
             if (resJson.success && resJson.classes && resJson.classes.length > 0) {
-              const engineName = resJson.engine === "Qwen-VL" ? "Qwen-VL Vision AI" : (resJson.section_name || (resJson.section ? "Section " + resJson.section : "PaddleOCR-VL"));
+              const engineName = resJson.engine ? resJson.engine : (resJson.section_name || (resJson.section ? "Section " + resJson.section : "PaddleOCR-VL"));
               onStatus("✨ Loaded " + resJson.classes.length + " classes via " + engineName + "!");
               return resJson.classes;
             }
