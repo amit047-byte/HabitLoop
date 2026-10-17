@@ -1011,6 +1011,456 @@
       return best;
     }
 
+    // ---------------------------------------------------------------------------
+    // INTERACTIVE CLOCK & TIMER COMPONENTS
+    // ---------------------------------------------------------------------------
+    function AnalogClockFace({ hour = 12, minute = 0, size = 100, accentColor = "#3FD6C4" }) {
+      const h12 = hour % 12;
+      const hourAngle = (h12 + minute / 60) * 30;
+      const minuteAngle = minute * 6;
+      const ticks = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+
+      return (
+        <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
+          <svg width={size} height={size} viewBox="0 0 100 100" style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))" }}>
+            {/* Outer Dial Circle */}
+            <circle cx="50" cy="50" r="46" fill="#1A1D27" stroke="#2E3345" strokeWidth="2.5" />
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+
+            {/* Hour markers */}
+            {ticks.map((deg) => {
+              const isMajor = deg % 90 === 0;
+              const rad = (deg - 90) * (Math.PI / 180);
+              const r1 = isMajor ? 36 : 38;
+              const r2 = 42;
+              const x1 = 50 + r1 * Math.cos(rad);
+              const y1 = 50 + r1 * Math.sin(rad);
+              const x2 = 50 + r2 * Math.cos(rad);
+              const y2 = 50 + r2 * Math.sin(rad);
+              return (
+                <line
+                  key={deg}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={isMajor ? accentColor : "#5A6178"}
+                  strokeWidth={isMajor ? 2.2 : 1.2}
+                  strokeLinecap="round"
+                />
+              );
+            })}
+
+            {/* Hour Hand */}
+            <line
+              x1="50"
+              y1="50"
+              x2={50 + 23 * Math.cos((hourAngle - 90) * (Math.PI / 180))}
+              y2={50 + 23 * Math.sin((hourAngle - 90) * (Math.PI / 180))}
+              stroke="#EEF0F5"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+            />
+
+            {/* Minute Hand */}
+            <line
+              x1="50"
+              y1="50"
+              x2={50 + 33 * Math.cos((minuteAngle - 90) * (Math.PI / 180))}
+              y2={50 + 33 * Math.sin((minuteAngle - 90) * (Math.PI / 180))}
+              stroke={accentColor}
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            />
+
+            {/* Center Pivot Pin */}
+            <circle cx="50" cy="50" r="3.5" fill={accentColor} />
+            <circle cx="50" cy="50" r="1.5" fill="#12141B" />
+          </svg>
+        </div>
+      );
+    }
+
+    function VisualClockPicker({ value = "18:00", onChange, accentColor = "#3FD6C4", title = "Interactive Clock Time" }) {
+      const parts = String(value || "18:00").split(":");
+      let h24 = parseInt(parts[0], 10);
+      if (isNaN(h24)) h24 = 18;
+      let min = parseInt(parts[1], 10);
+      if (isNaN(min)) min = 0;
+
+      const isPM = h24 >= 12;
+      const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+
+      function updateTime(newH12, newMin, newPM) {
+        let final24 = newH12 % 12;
+        if (newPM) final24 += 12;
+        const hhStr = String(final24).padStart(2, "0");
+        const mmStr = String(newMin).padStart(2, "0");
+        onChange(`${hhStr}:${mmStr}`, { hour: final24, minute: newMin });
+      }
+
+      function incHour() {
+        const nextH = h12 === 12 ? 1 : h12 + 1;
+        updateTime(nextH, min, isPM);
+      }
+      function decHour() {
+        const nextH = h12 === 1 ? 12 : h12 - 1;
+        updateTime(nextH, min, isPM);
+      }
+      function incMin(step = 5) {
+        let nextM = min + step;
+        let nextH = h12;
+        let nextPM = isPM;
+        if (nextM >= 60) {
+          nextM = nextM % 60;
+          nextH = h12 === 12 ? 1 : h12 + 1;
+          if (h12 === 11) nextPM = !isPM;
+        }
+        updateTime(nextH, nextM, nextPM);
+      }
+      function decMin(step = 5) {
+        let nextM = min - step;
+        let nextH = h12;
+        let nextPM = isPM;
+        if (nextM < 0) {
+          nextM = (nextM + 60) % 60;
+          nextH = h12 === 1 ? 12 : h12 - 1;
+          if (h12 === 12) nextPM = !isPM;
+        }
+        updateTime(nextH, nextM, nextPM);
+      }
+
+      const ampmStr = isPM ? "PM" : "AM";
+      const displayTime12 = `${h12}:${String(min).padStart(2, "0")} ${ampmStr}`;
+
+      return (
+        <div style={{ background: "#171A23", border: "1px solid #282C3C", borderRadius: 10, padding: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <ClockIcon size={15} color={accentColor} />
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#EEF0F5" }}>{title}</span>
+            </div>
+            <div style={{ background: "rgba(63,214,196,0.12)", border: `1px solid ${accentColor}`, color: accentColor, borderRadius: 6, padding: "3px 9px", fontSize: 13.5, fontWeight: 700, letterSpacing: 0.3 }}>
+              {displayTime12}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", gap: 14, flexWrap: "wrap" }}>
+            {/* Analog Clock Dial */}
+            <AnalogClockFace hour={h24} minute={min} size={98} accentColor={accentColor} />
+
+            {/* Steppers & Digits */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Hours Box */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <button
+                  type="button"
+                  onClick={incHour}
+                  style={{ background: "#202433", border: "1px solid #2E3345", color: "#EEF0F5", borderRadius: 5, width: 44, height: 26, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}
+                  title="Increase hour"
+                >
+                  ▲
+                </button>
+                <div style={{ width: 44, padding: "8px 0", textAlign: "center", fontFamily: "'Space Grotesk', monospace", fontSize: 20, fontWeight: 700, color: "#EEF0F5", background: "#12141B", border: "1px solid #282C3C", borderRadius: 6, margin: "4px 0" }}>
+                  {String(h12).padStart(2, "0")}
+                </div>
+                <button
+                  type="button"
+                  onClick={decHour}
+                  style={{ background: "#202433", border: "1px solid #2E3345", color: "#EEF0F5", borderRadius: 5, width: 44, height: 26, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}
+                  title="Decrease hour"
+                >
+                  ▼
+                </button>
+                <span style={{ fontSize: 9.5, color: "#8E95A8", marginTop: 2, fontWeight: 600 }}>HOUR</span>
+              </div>
+
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#8E95A8", alignSelf: "center", paddingBottom: 16 }}>
+                :
+              </div>
+
+              {/* Minutes Box */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => incMin(5)}
+                  style={{ background: "#202433", border: "1px solid #2E3345", color: "#EEF0F5", borderRadius: 5, width: 44, height: 26, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}
+                  title="Increase minutes by 5"
+                >
+                  ▲
+                </button>
+                <div style={{ width: 44, padding: "8px 0", textAlign: "center", fontFamily: "'Space Grotesk', monospace", fontSize: 20, fontWeight: 700, color: "#EEF0F5", background: "#12141B", border: "1px solid #282C3C", borderRadius: 6, margin: "4px 0" }}>
+                  {String(min).padStart(2, "0")}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => decMin(5)}
+                  style={{ background: "#202433", border: "1px solid #2E3345", color: "#EEF0F5", borderRadius: 5, width: 44, height: 26, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}
+                  title="Decrease minutes by 5"
+                >
+                  ▼
+                </button>
+                <span style={{ fontSize: 9.5, color: "#8E95A8", marginTop: 2, fontWeight: 600 }}>MIN</span>
+              </div>
+
+              {/* AM / PM Toggle Stack */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginLeft: 4, paddingBottom: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => updateTime(h12, min, false)}
+                  style={{
+                    background: !isPM ? accentColor : "#202433",
+                    border: `1px solid ${!isPM ? accentColor : "#2E3345"}`,
+                    color: !isPM ? "#08211E" : "#8E95A8",
+                    borderRadius: 5,
+                    padding: "6px 9px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  AM
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateTime(h12, min, true)}
+                  style={{
+                    background: isPM ? accentColor : "#202433",
+                    border: `1px solid ${isPM ? accentColor : "#2E3345"}`,
+                    color: isPM ? "#08211E" : "#8E95A8",
+                    borderRadius: 5,
+                    padding: "6px 9px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  PM
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Minute Snap Chips */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, borderTop: "1px solid #232736", paddingTop: 10, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, color: "#8E95A8", marginRight: 4 }}>Snap Minutes:</span>
+            {[0, 15, 30, 45].map((mVal) => (
+              <button
+                key={mVal}
+                type="button"
+                onClick={() => updateTime(h12, mVal, isPM)}
+                style={{
+                  background: min === mVal ? "rgba(63,214,196,0.18)" : "#202433",
+                  border: `1px solid ${min === mVal ? accentColor : "#2E3345"}`,
+                  color: min === mVal ? accentColor : "#8E95A8",
+                  borderRadius: 4,
+                  padding: "3px 8px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                :{String(mVal).padStart(2, "0")}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function DeadlineTimerPicker({ value = "18:00", onChange, accentColor = "#3FD6C4", now, defaultTab = "clock" }) {
+      const [pickerTab, setPickerTab] = useState(defaultTab); // "clock" or "timer"
+      const [timerMins, setTimerMins] = useState(120); // default 2 hours from now
+
+      function applyTimer(durationMinutes) {
+        setTimerMins(durationMinutes);
+        const refDate = now || new Date();
+        const targetDate = new Date(refDate.getTime() + durationMinutes * 60000);
+        const hh = String(targetDate.getHours()).padStart(2, "0");
+        const mm = String(targetDate.getMinutes()).padStart(2, "0");
+        onChange(`${hh}:${mm}`);
+      }
+
+      function adjustTimer(deltaMinutes) {
+        const next = Math.max(15, timerMins + deltaMinutes);
+        applyTimer(next);
+      }
+
+      const hrs = Math.floor(timerMins / 60);
+      const minsRemaining = timerMins % 60;
+      const durationLabel = `${hrs > 0 ? `${hrs}h ` : ""}${minsRemaining > 0 || hrs === 0 ? `${minsRemaining}m` : ""}`.trim();
+
+      const refDate = now || new Date();
+      const computedDate = new Date(refDate.getTime() + timerMins * 60000);
+      const computedH24 = computedDate.getHours();
+      const computedMin = computedDate.getMinutes();
+      const computedPM = computedH24 >= 12;
+      const computedH12 = computedH24 % 12 === 0 ? 12 : computedH24 % 12;
+      const computedStr = `${computedH12}:${String(computedMin).padStart(2, "0")} ${computedPM ? "PM" : "AM"}`;
+
+      return (
+        <div style={{ background: "#171A23", border: "1px solid #282C3C", borderRadius: 10, padding: 12, marginTop: 6 }}>
+          {/* Mode Switcher Tabs */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 12, background: "#12141B", padding: 4, borderRadius: 8, border: "1px solid #232736" }}>
+            <button
+              type="button"
+              onClick={() => setPickerTab("clock")}
+              style={{
+                flex: 1,
+                background: pickerTab === "clock" ? accentColor : "transparent",
+                border: "none",
+                color: pickerTab === "clock" ? "#08211E" : "#8E95A8",
+                borderRadius: 6,
+                padding: "7px 0",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+              }}
+            >
+              <ClockIcon size={14} /> Interactive Clock
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPickerTab("timer");
+                applyTimer(timerMins);
+              }}
+              style={{
+                flex: 1,
+                background: pickerTab === "timer" ? accentColor : "transparent",
+                border: "none",
+                color: pickerTab === "timer" ? "#08211E" : "#8E95A8",
+                borderRadius: 6,
+                padding: "7px 0",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+              }}
+            >
+              <Timer size={14} /> Set via Timer (Duration)
+            </button>
+          </div>
+
+          {pickerTab === "clock" ? (
+            <div>
+              <VisualClockPicker
+                value={value}
+                onChange={(hhmm) => onChange(hhmm)}
+                accentColor={accentColor}
+                title="Pick Deadline Time"
+              />
+
+              {/* Quick Preset Chips */}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                {[
+                  { label: "12:00 PM", val: "12:00" },
+                  { label: "3:00 PM", val: "15:00" },
+                  { label: "6:00 PM", val: "18:00" },
+                  { label: "9:00 PM", val: "21:00" },
+                  { label: "11:59 PM", val: "23:59" },
+                ].map((chip) => (
+                  <button
+                    key={chip.val}
+                    type="button"
+                    onClick={() => onChange(chip.val)}
+                    style={{
+                      background: value === chip.val ? "rgba(63,214,196,0.18)" : "#202433",
+                      border: `1px solid ${value === chip.val ? accentColor : "#2E3345"}`,
+                      color: value === chip.val ? accentColor : "#8E95A8",
+                      borderRadius: 4,
+                      padding: "4px 8px",
+                      fontSize: 11,
+                      cursor: "pointer",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div>
+              {/* Timer Duration Controls */}
+              <div style={{ background: "#12141B", border: "1px solid #282C3C", borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                <div style={{ fontSize: 11.5, color: "#8E95A8", marginBottom: 8, textAlign: "center" }}>
+                  Set deadline duration from right now:
+                </div>
+
+                {/* Duration Stepper */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => adjustTimer(-15)}
+                    style={{ background: "#202433", border: "1px solid #2E3345", color: "#EEF0F5", borderRadius: 6, padding: "6px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    -15m
+                  </button>
+                  <div style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 20, fontWeight: 700, color: accentColor, minWidth: 120, textAlign: "center" }}>
+                    {durationLabel}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => adjustTimer(15)}
+                    style={{ background: "#202433", border: "1px solid #2E3345", color: "#EEF0F5", borderRadius: 6, padding: "6px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    +15m
+                  </button>
+                </div>
+
+                {/* Quick Timer Presets */}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                  {[
+                    { label: "+30m", m: 30 },
+                    { label: "+1 hr", m: 60 },
+                    { label: "+2 hrs", m: 120 },
+                    { label: "+3 hrs", m: 180 },
+                    { label: "+4 hrs", m: 240 },
+                    { label: "+6 hrs", m: 360 },
+                    { label: "+8 hrs", m: 480 },
+                  ].map((p) => (
+                    <button
+                      key={p.m}
+                      type="button"
+                      onClick={() => applyTimer(p.m)}
+                      style={{
+                        background: timerMins === p.m ? "rgba(63,214,196,0.18)" : "#202433",
+                        border: `1px solid ${timerMins === p.m ? accentColor : "#2E3345"}`,
+                        color: timerMins === p.m ? accentColor : "#8E95A8",
+                        borderRadius: 5,
+                        padding: "5px 9px",
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Computed Deadline Banner */}
+              <div style={{ background: "rgba(63,214,196,0.12)", border: `1px solid ${accentColor}`, borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                <Timer size={18} color={accentColor} />
+                <div style={{ fontSize: 13, color: "#EEF0F5", lineHeight: 1.4 }}>
+                  Timer sets target deadline to <strong style={{ color: accentColor }}>{computedStr}</strong> ({durationLabel} from now)
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     function App() {
       const [stage, setStage] = useState("loading");
       const [dashboardTab, setDashboardTab] = useState("habits"); // Starts on HabitFlow tab so you can preview both immediately
@@ -1331,8 +1781,16 @@
               setEditTargetText("Complete AI Assignment 3 (Lab Problem Set)");
               setEditTargetDifficulty("medium");
               setEditTargetMinutes(45);
-              setEditTargetDeadlineType("evening");
+              setEditTargetDeadlineType("custom");
+              setEditTargetDeadlineCustom("18:00");
               setShowEditTargetModal(true);
+            } else if (modalParam === "add-target") {
+              setTargetFormText("Study Operating Systems Chapter 4");
+              setTargetFormDifficulty("hard");
+              setTargetFormMinutes(60);
+              setTargetFormDeadlineType("custom");
+              setTargetFormDeadlineCustom("18:00");
+              setShowAddTargetModal(true);
             }
           } else {
             setLoggedIn(false);
@@ -3133,42 +3591,19 @@
                   Set the daily hour when HabitLoop automatically triggers an assignment debrief session right after your classes conclude. Prompts for newly announced labs & homework and auto-slots them into your timeline.
                 </div>
 
-                <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 14 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary }}>
-                        Daily Trigger Time
-                      </div>
-                      <div style={{ fontSize: 11.5, color: C.textMuted }}>
-                        Current scheduled time: <strong style={{ color: C.ramp }}>{fmtTime(debriefTime.hour * 60 + debriefTime.minute)}</strong>
-                      </div>
-                    </div>
-                    <input
-                      type="time"
-                      value={debriefTimeInputValue}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (!val) return;
-                        const [hh, mm] = val.split(":");
-                        const newTime = { hour: parseInt(hh, 10), minute: parseInt(mm, 10) };
-                        setDebriefTime(newTime);
-                        setSettingsMsg(`Auto-debrief scheduled for ${fmtTime(newTime.hour * 60 + newTime.minute)} daily.`);
-                      }}
-                      style={{
-                        background: C.panel,
-                        border: `1.5px solid ${C.ramp}`,
-                        borderRadius: 6,
-                        padding: "8px 12px",
-                        color: C.textPrimary,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: "pointer"
-                      }}
-                    />
-                  </div>
+                <div style={{ marginBottom: 14 }}>
+                  <VisualClockPicker
+                    value={debriefTimeInputValue}
+                    onChange={(hhmm, timeObj) => {
+                      setDebriefTime(timeObj);
+                      setSettingsMsg(`Auto-debrief scheduled for ${fmtTime(timeObj.hour * 60 + timeObj.minute)} daily.`);
+                    }}
+                    accentColor={C.boulder}
+                    title="Daily Auto-Debrief Clock"
+                  />
 
                   {/* Preset Time Buttons */}
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
                     {[
                       { label: "1:00 PM (After Classes)", h: 13, m: 0 },
                       { label: "5:00 PM (Evening)", h: 17, m: 0 },
@@ -3182,13 +3617,14 @@
                           setSettingsMsg(`Auto-debrief set to ${fmtTime(p.h * 60 + p.m)}.`);
                         }}
                         style={{
-                          background: debriefTime.hour === p.h && debriefTime.minute === p.m ? "rgba(63,214,196,0.18)" : C.panel,
-                          border: `1px solid ${debriefTime.hour === p.h && debriefTime.minute === p.m ? C.ramp : C.border}`,
-                          color: debriefTime.hour === p.h && debriefTime.minute === p.m ? C.ramp : C.textMuted,
+                          background: debriefTime.hour === p.h && debriefTime.minute === p.m ? "rgba(255,138,92,0.18)" : C.panel,
+                          border: `1px solid ${debriefTime.hour === p.h && debriefTime.minute === p.m ? C.boulder : C.border}`,
+                          color: debriefTime.hour === p.h && debriefTime.minute === p.m ? C.boulder : C.textMuted,
                           borderRadius: 5,
                           padding: "5px 9px",
                           fontSize: 11.5,
-                          cursor: "pointer"
+                          cursor: "pointer",
+                          fontWeight: 600
                         }}
                       >
                         {p.label}
@@ -4300,15 +4736,12 @@
                   </div>
 
                   {targetFormDeadlineType === "custom" && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-                      <span style={{ fontSize: 12, color: C.textMuted }}>Pick Deadline Time:</span>
-                      <input
-                        type="time"
-                        value={targetFormDeadlineCustom}
-                        onChange={(e) => setTargetFormDeadlineCustom(e.target.value)}
-                        style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.textPrimary, fontSize: 13 }}
-                      />
-                    </div>
+                    <DeadlineTimerPicker
+                      value={targetFormDeadlineCustom || "18:00"}
+                      onChange={(hhmm) => setTargetFormDeadlineCustom(hhmm)}
+                      accentColor={C.boulder}
+                      now={now}
+                    />
                   )}
                 </div>
 
@@ -4534,63 +4967,16 @@
                   </div>
 
                   {editTargetDeadlineType !== "none" && (
-                    <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 12, marginTop: 4 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary, display: "flex", alignItems: "center", gap: 5 }}>
-                          <ClockIcon size={13} color={C.ramp} /> Pick Deadline Time:
-                        </span>
-                        <input
-                          type="time"
-                          value={editTargetDeadlineCustom || "18:00"}
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              setEditTargetDeadlineCustom(e.target.value);
-                              setEditTargetDeadlineType("custom");
-                            }
-                          }}
-                          style={{
-                            background: C.panel,
-                            border: `1.5px solid ${C.ramp}`,
-                            borderRadius: 6,
-                            padding: "6px 12px",
-                            color: C.textPrimary,
-                            fontSize: 13.5,
-                            fontWeight: 600,
-                            cursor: "pointer"
-                          }}
-                        />
-                      </div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {[
-                          { label: "12:00 PM", val: "12:00" },
-                          { label: "3:00 PM", val: "15:00" },
-                          { label: "6:00 PM", val: "18:00" },
-                          { label: "9:00 PM", val: "21:00" },
-                          { label: "11:59 PM", val: "23:59" },
-                        ].map((chip) => (
-                          <button
-                            key={chip.val}
-                            type="button"
-                            onClick={() => {
-                              setEditTargetDeadlineCustom(chip.val);
-                              setEditTargetDeadlineType("custom");
-                            }}
-                            style={{
-                              background: editTargetDeadlineCustom === chip.val ? "rgba(63,214,196,0.18)" : C.panel,
-                              border: `1px solid ${editTargetDeadlineCustom === chip.val ? C.ramp : C.border}`,
-                              color: editTargetDeadlineCustom === chip.val ? C.ramp : C.textMuted,
-                              borderRadius: 4,
-                              padding: "4px 8px",
-                              fontSize: 11,
-                              cursor: "pointer",
-                              fontWeight: 500
-                            }}
-                          >
-                            {chip.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    <DeadlineTimerPicker
+                      value={editTargetDeadlineCustom || "18:00"}
+                      onChange={(hhmm) => {
+                        setEditTargetDeadlineCustom(hhmm);
+                        setEditTargetDeadlineType("custom");
+                      }}
+                      accentColor={C.ramp}
+                      now={now}
+                      defaultTab={new URLSearchParams(window.location.search).get("picker_tab") || "clock"}
+                    />
                   )}
                 </div>
 
