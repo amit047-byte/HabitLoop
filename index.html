@@ -648,13 +648,29 @@
 
       const key = apiKey || DEFAULT_SARVAM_KEY;
 
-      // 1. Try local proxy endpoint first (running with python3 server.py)
+      // Ensure imageSrc is converted to base64 data URL so serverless function always receives standard payload
+      let sendImage = imageSrc;
+      if (imageSrc && !imageSrc.startsWith("data:")) {
+        try {
+          const resp = await fetch(imageSrc);
+          const b = await resp.blob();
+          sendImage = await new Promise((resolve) => {
+            const r = new FileReader();
+            r.onloadend = () => resolve(r.result);
+            r.readAsDataURL(b);
+          });
+        } catch (e) {
+          console.warn("Could not pre-convert imageSrc to dataURL:", e);
+        }
+      }
+
+      // 1. Try proxy endpoint (/api/sarvam/scan - active on Vercel and local server)
       try {
-        onStatus("Connecting to Sarvam AI OCR proxy (http://localhost:8080/api/sarvam/scan)...");
+        onStatus("Connecting to Sarvam AI Document Intelligence API (/api/sarvam/scan)...");
         const proxyResp = await fetch("/api/sarvam/scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: imageSrc, apiKey: key }),
+          body: JSON.stringify({ image: sendImage, apiKey: key }),
         });
         if (proxyResp.ok) {
           const resJson = await proxyResp.json();
@@ -666,7 +682,7 @@
           }
         }
       } catch (proxyErr) {
-        console.warn("Local proxy unavailable, trying direct cloud request:", proxyErr);
+        console.warn("Proxy endpoint unavailable, trying direct cloud request:", proxyErr);
       }
 
       // 2. Direct cloud API call to https://api.sarvam.ai
@@ -2056,7 +2072,7 @@
                             )}
                             {ocrEngine === "sarvam" && (
                               <span style={{ fontSize: 11, color: C.ramp, opacity: 0.85 }}>
-                                • Server Proxy: active on localhost:8080
+                                • {typeof window !== "undefined" && window.location.hostname.includes("vercel.app") ? "Cloud Proxy: Active on Vercel" : "API Proxy: Active on /api/sarvam/scan"}
                               </span>
                             )}
                           </div>
@@ -2634,7 +2650,7 @@
                 </div>
 
                 <div style={{ background: "rgba(63,214,196,0.08)", border: `1px solid rgba(63,214,196,0.25)`, borderRadius: 6, padding: "10px 12px", fontSize: 12, color: C.textMuted, marginBottom: 18 }}>
-                  💡 <strong>Tip:</strong> The local proxy server is running at <code>http://localhost:8080/api/sarvam/scan</code>. Open this app through <code>http://localhost:8080</code> for zero CORS issues.
+                  💡 <strong>Tip:</strong> Sarvam AI Document Intelligence proxy is connected at <code>/api/sarvam/scan</code> (live on Vercel & local server) with zero CORS issues.
                 </div>
 
                 <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
