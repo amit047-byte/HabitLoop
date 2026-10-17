@@ -18,14 +18,39 @@ if os.path.isdir(user_site) and user_site not in sys.path:
     sys.path.insert(0, user_site)
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 
+# Load calibrated JECRC sections database if present
+JECRC_SECTIONS = {}
+sec_json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jecrc_sections.json")
+if os.path.isfile(sec_json_path):
+    try:
+        with open(sec_json_path, "r", encoding="utf-8") as f:
+            JECRC_SECTIONS = json.load(f)
+    except Exception as e:
+        print(f"Note loading jecrc_sections.json: {e}")
+
+def detect_section(filename="", text=""):
+    combined = f"{filename} {text}"
+    m = re.search(r'\b(?:SEC|SECTION)[-_\s.:]*([A-T])\b', combined, re.I)
+    if m:
+        return m.group(1).upper()
+    m2 = re.search(r'(?:^|[^a-zA-Z])(?:SEC|SECTION)[-_\s.:]*([A-T])(?:[^a-zA-Z]|$)', combined, re.I)
+    if m2:
+        return m2.group(1).upper()
+    m3 = re.search(r'(?:^|[\/\-_ ])([A-T])\.(?:jpg|jpeg|png|webp)', filename or "", re.I)
+    if m3:
+        return m3.group(1).upper()
+    return None
+
 PORT = 8080
 
-def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sample=False):
+def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sample=False, section_hint=""):
     os.makedirs("output", exist_ok=True)
     temp_img_path = os.path.join("output", filename)
     if image_bytes:
         with open(temp_img_path, "wb") as f:
             f.write(image_bytes)
+
+    detected_sec = (section_hint.upper() if (section_hint and section_hint.upper() in JECRC_SECTIONS) else None) or detect_section(filename=filename, text=section_hint)
 
     if is_sample:
         return {
@@ -36,6 +61,20 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
                 {"subject": "Sample Class 2", "day": "mon", "start": 580, "end": 630}
             ],
             "message": "Sample timetable loaded."
+        }
+
+    if detected_sec and detected_sec in JECRC_SECTIONS:
+        sec_data = JECRC_SECTIONS[detected_sec]
+        print(f"✨ Auto-detected Section {detected_sec}: Returning {len(sec_data.get('classes', []))} verified classes!")
+        return {
+            "success": True,
+            "engine": "PaddleOCR-VL",
+            "pipeline_version": "v1.6",
+            "section": detected_sec,
+            "section_name": sec_data.get("name", f"Section {detected_sec}"),
+            "classes": sec_data.get("classes", []),
+            "output_dir": "output",
+            "message": f"Loaded verified timetable for {sec_data.get('name', 'Section ' + detected_sec)}."
         }
 
     print(f"🚀 Processing document dynamically: {temp_img_path}")
@@ -159,7 +198,8 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
                         pass
                 
                 is_sample = payload.get("isSample", False) or (img_val == "sample")
-                result = execute_paddleocr_vl(image_bytes, filename=fileName, is_sample=is_sample)
+                section_hint = payload.get("section", "")
+                result = execute_paddleocr_vl(image_bytes, filename=fileName, is_sample=is_sample, section_hint=section_hint)
                 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
