@@ -71,7 +71,7 @@
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
       Download, RefreshCw, FileText, Check, Folder, Smartphone, Copy, ExternalLink,
-      Shield
+      Shield, Activity
     } from "lucide-react";
 
     // ---------------------------------------------------------------------------
@@ -1963,6 +1963,9 @@
       const [newHabitCategory, setNewHabitCategory] = useState("Study");
       const [newHabitMins, setNewHabitMins] = useState(30);
       const [newHabitLoad, setNewHabitLoad] = useState("boulder");
+      const [showAddHabitModal, setShowAddHabitModal] = useState(
+        typeof window !== "undefined" && new URLSearchParams(window.location.search).get("modal") === "habit"
+      );
 
       // ---- Schedule & Energy Settings ----
       const [energy, setEnergy] = useState(3);
@@ -2279,6 +2282,7 @@
         };
         setHabits((prev) => [...prev, h]);
         setNewHabitName("");
+        setShowAddHabitModal(false);
       }
 
       function deleteHabit(habitId) {
@@ -4405,8 +4409,8 @@
                   <div className="rp-grid">
                     <div>
                       <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 20, overflowX: "auto" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "#EEF0F5" }}>
                               7-Day Habit Matrix
                             </div>
@@ -4428,10 +4432,47 @@
                             >
                               <Shield size={12} color="#3CD09B" /> Connected to 28D Loop
                             </span>
+                            {activeMatrixDay && (
+                              <span
+                                onClick={() => setActiveMatrixDay(null)}
+                                style={{
+                                  fontSize: 11,
+                                  background: "rgba(56, 189, 248, 0.14)",
+                                  border: "1px solid rgba(56, 189, 248, 0.35)",
+                                  color: "#38BDF8",
+                                  borderRadius: 12,
+                                  padding: "2px 8px",
+                                  cursor: "pointer",
+                                  fontWeight: 600
+                                }}
+                                title="Click to clear filter"
+                              >
+                                Filter: {activeMatrixDay.toUpperCase()} ✕
+                              </span>
+                            )}
                           </div>
-                          <span style={{ fontSize: 12, color: C.textMuted }}>
-                            {activeMatrixDay ? `Filtered to ${activeMatrixDay.toUpperCase()} · Click day to clear` : "Click cells to log · Updates 28D Matrix live"}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowAddHabitModal(true)}
+                            style={{
+                              background: C.ramp,
+                              border: "none",
+                              borderRadius: 6,
+                              padding: "6px 14px",
+                              color: "#08211E",
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              boxShadow: "0 2px 10px rgba(63, 214, 196, 0.25)",
+                              transition: "all 0.15s ease",
+                              whiteSpace: "nowrap"
+                            }}
+                          >
+                            <Plus size={14} strokeWidth={2.5} /> New Habit
+                          </button>
                         </div>
 
                         <table className="hf-grid-table">
@@ -4562,43 +4603,6 @@
                             </tr>
                           </tfoot>
                         </table>
-                      </div>
-
-                      <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Create New Habit</div>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          <input
-                            value={newHabitName}
-                            onChange={(e) => setNewHabitName(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && addCustomHabit()}
-                            placeholder="Habit name (e.g. 45m Robotics / Arduino prototyping)"
-                            style={{ flex: "2 1 200px", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.textPrimary, fontSize: 13.5 }}
-                          />
-                          <select
-                            value={newHabitCategory}
-                            onChange={(e) => setNewHabitCategory(e.target.value)}
-                            style={{ flex: "1 1 90px", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px", color: C.textPrimary, fontSize: 13 }}
-                          >
-                            <option value="Study">Study</option>
-                            <option value="Fitness">Fitness</option>
-                            <option value="Wellness">Wellness</option>
-                            <option value="Coding">Coding</option>
-                          </select>
-                          <select
-                            value={newHabitLoad}
-                            onChange={(e) => setNewHabitLoad(e.target.value)}
-                            style={{ flex: "1 1 110px", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px", color: C.textPrimary, fontSize: 13 }}
-                          >
-                            <option value="boulder">Boulder (Peak Energy)</option>
-                            <option value="ramp">Ramp (Low Energy)</option>
-                          </select>
-                          <button
-                            onClick={addCustomHabit}
-                            style={{ background: C.ramp, border: "none", borderRadius: 6, padding: "8px 16px", color: "#0B2421", fontSize: 13.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                          >
-                            <Plus size={15} /> Add Habit
-                          </button>
-                        </div>
                       </div>
                     </div>
 
@@ -4948,6 +4952,230 @@
                 <button onClick={submitTask} disabled={captureBusy} style={{ width: "100%", background: C.boulder, border: "none", borderRadius: 6, padding: "10px 0", color: "#2A1206", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                   {captureBusy ? "Classifying…" : "Capture & Schedule"}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Add Habit Modal Card */}
+          {showAddHabitModal && (
+            <div className="rp-overlay" onClick={() => setShowAddHabitModal(false)}>
+              <div
+                className="rp-modal-card"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  maxWidth: 500,
+                  width: "100%",
+                  background: C.panel,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 14,
+                  padding: 24,
+                  boxShadow: "0 24px 60px rgba(0,0,0,0.65)",
+                }}
+              >
+                {/* Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 9, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Activity size={19} color={C.ramp} />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: C.textPrimary }}>
+                        Create New Habit
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textMuted }}>
+                        Add a recurring daily habit to your 7-Day Matrix & 28D Loop
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddHabitModal(false)}
+                    style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Habit Name Input */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Habit Name
+                  </label>
+                  <input
+                    autoFocus
+                    value={newHabitName}
+                    onChange={(e) => setNewHabitName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addCustomHabit()}
+                    placeholder="e.g. 45m Robotics prototyping or morning 20m run"
+                    style={{
+                      width: "100%",
+                      background: C.panelAlt,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 7,
+                      padding: "10px 12px",
+                      color: C.textPrimary,
+                      fontSize: 14,
+                      boxSizing: "border-box",
+                      outline: "none"
+                    }}
+                  />
+                </div>
+
+                {/* Category Selection */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Category
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                    {["Study", "Coding", "Fitness", "Wellness"].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setNewHabitCategory(cat)}
+                        style={{
+                          background: newHabitCategory === cat ? "rgba(63,214,196,0.15)" : C.panelAlt,
+                          border: `1.5px solid ${newHabitCategory === cat ? C.ramp : C.border}`,
+                          color: newHabitCategory === cat ? C.ramp : C.textMuted,
+                          borderRadius: 7,
+                          padding: "8px 0",
+                          fontSize: 12.5,
+                          fontWeight: newHabitCategory === cat ? 700 : 500,
+                          cursor: "pointer",
+                          textAlign: "center",
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cognitive Load */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Cognitive Energy Load
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <button
+                      type="button"
+                      onClick={() => setNewHabitLoad("boulder")}
+                      style={{
+                        background: newHabitLoad === "boulder" ? "rgba(255,138,92,0.12)" : C.panelAlt,
+                        border: `1.5px solid ${newHabitLoad === "boulder" ? C.boulder : C.border}`,
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, color: newHabitLoad === "boulder" ? C.boulder : C.textPrimary, display: "flex", alignItems: "center", gap: 6 }}>
+                        <span>🏔️</span> Boulder
+                      </div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3 }}>
+                        High focus · Best during peak morning hours
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewHabitLoad("ramp")}
+                      style={{
+                        background: newHabitLoad === "ramp" ? "rgba(63,214,196,0.12)" : C.panelAlt,
+                        border: `1.5px solid ${newHabitLoad === "ramp" ? C.ramp : C.border}`,
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, color: newHabitLoad === "ramp" ? C.ramp : C.textPrimary, display: "flex", alignItems: "center", gap: 6 }}>
+                        <span>🌱</span> Ramp
+                      </div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3 }}>
+                        Low friction · Easy to execute even when tired
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Habit Duration */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted }}>
+                      Default Session Duration
+                    </label>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.ramp }}>
+                      {newHabitMins} minutes
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {[15, 20, 30, 45, 60].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => setNewHabitMins(mins)}
+                        style={{
+                          flex: 1,
+                          padding: "7px 0",
+                          borderRadius: 6,
+                          border: `1px solid ${newHabitMins === mins ? C.ramp : C.border}`,
+                          background: newHabitMins === mins ? "rgba(63,214,196,0.15)" : C.panelAlt,
+                          color: newHabitMins === mins ? C.ramp : C.textMuted,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer"
+                        }}
+                      >
+                        {mins}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddHabitModal(false)}
+                    style={{
+                      flex: 1,
+                      background: "transparent",
+                      border: `1px solid ${C.border}`,
+                      color: C.textMuted,
+                      borderRadius: 7,
+                      padding: "10px 0",
+                      fontSize: 13,
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addCustomHabit}
+                    disabled={!newHabitName.trim()}
+                    style={{
+                      flex: 2,
+                      background: newHabitName.trim() ? C.ramp : C.panelAlt,
+                      border: "none",
+                      color: newHabitName.trim() ? "#08211E" : C.textMuted,
+                      borderRadius: 7,
+                      padding: "10px 0",
+                      fontSize: 13.5,
+                      fontWeight: 700,
+                      cursor: newHabitName.trim() ? "pointer" : "not-allowed",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      boxShadow: newHabitName.trim() ? "0 2px 10px rgba(63,214,196,0.25)" : "none"
+                    }}
+                  >
+                    <Plus size={15} strokeWidth={2.5} /> Add Habit to Matrix
+                  </button>
+                </div>
               </div>
             </div>
           )}
