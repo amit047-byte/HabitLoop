@@ -209,7 +209,13 @@
       return "mon";
     }
     function minutesToHHMM(mins) {
-      return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+      if (typeof mins !== "number" || isNaN(mins)) return "08:00";
+      const h = Math.floor(mins / 60) % 24;
+      const m = Math.floor(mins % 60);
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+    function formatTime(mins) {
+      return minutesToHHMM(mins);
     }
     function getWeekdayKey(date) {
       return WEEKDAY_MAP[date.getDay()];
@@ -721,7 +727,13 @@
       // 1. Try local or Vercel PaddleOCR-VL endpoint (/api/paddleocr/scan)
       try {
         onStatus("Connecting to PaddleOCR-VL (v1.6) at /api/paddleocr/scan…");
-        const proxyResp = await fetch("/api/paddleocr/scan", {
+        const isHttp = typeof window !== "undefined" && window.location && window.location.origin && window.location.origin.startsWith("http");
+        const isLocal = typeof window !== "undefined" && window.location && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:");
+        const paddleApiUrl = (isHttp && !isLocal)
+          ? "/api/paddleocr/scan"
+          : "https://habit-loop-flame.vercel.app/api/paddleocr/scan";
+
+        const proxyResp = await fetch(paddleApiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: sendImage }),
@@ -1115,6 +1127,12 @@
 
             if (modalParam === "schedule-upload") {
               setShowScheduleUploadModal(true);
+            } else if (modalParam === "schedule-review") {
+              setShowScheduleUploadModal(true);
+              setScheduleUploadImg("sample_timetable.png");
+              setScheduleUploadFileName("timetable_sample.png");
+              setScannedEditableClasses(runModelOnSampleData(DEFAULT_TIMETABLE_MODEL));
+              setIsReviewingScanned(true);
             } else if (modalParam === "edit-target") {
               setEditingTargetId("sample-target-1");
               setEditTargetText("Complete AI Assignment 3 (Lab Problem Set)");
@@ -1548,6 +1566,10 @@
 
           setScannedEditableClasses(normalized);
           setIsReviewingScanned(true);
+          setTimeout(() => {
+            const el = document.getElementById("schedule-review-section");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 80);
           const engineTag = (ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "PaddleOCR-VL 1.6 (PP-DocLayoutV3)" : `Local Model (${ocrModel.modelName})`;
           setLastReasoning(
             `Extracted ${normalized.length} classes using ${engineTag}. Review and verify them below.`
@@ -4631,7 +4653,7 @@
 
                 {/* Review & Verification Table */}
                 {isReviewingScanned && scannedEditableClasses.length > 0 && (
-                  <div style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                  <div id="schedule-review-section" style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary }}>
@@ -4697,10 +4719,17 @@
                               <td style={{ padding: "6px 8px" }}>
                                 <input
                                   type="time"
-                                  value={formatTime(item.start)}
+                                  value={minutesToHHMM(item.start)}
                                   onChange={(e) => {
-                                    const [h, m] = e.target.value.split(":").map(Number);
-                                    updateScannedClass(idx, "start", h * 60 + m);
+                                    if (!e.target.value) return;
+                                    const parts = e.target.value.split(":");
+                                    if (parts.length === 2) {
+                                      const h = parseInt(parts[0], 10);
+                                      const m = parseInt(parts[1], 10);
+                                      if (!isNaN(h) && !isNaN(m)) {
+                                        updateScannedClass(idx, "start", h * 60 + m);
+                                      }
+                                    }
                                   }}
                                   style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 4px", color: C.textPrimary, fontSize: 12 }}
                                 />
@@ -4708,10 +4737,17 @@
                               <td style={{ padding: "6px 8px" }}>
                                 <input
                                   type="time"
-                                  value={formatTime(item.end)}
+                                  value={minutesToHHMM(item.end)}
                                   onChange={(e) => {
-                                    const [h, m] = e.target.value.split(":").map(Number);
-                                    updateScannedClass(idx, "end", h * 60 + m);
+                                    if (!e.target.value) return;
+                                    const parts = e.target.value.split(":");
+                                    if (parts.length === 2) {
+                                      const h = parseInt(parts[0], 10);
+                                      const m = parseInt(parts[1], 10);
+                                      if (!isNaN(h) && !isNaN(m)) {
+                                        updateScannedClass(idx, "end", h * 60 + m);
+                                      }
+                                    }
                                   }}
                                   style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 4px", color: C.textPrimary, fontSize: 12 }}
                                 />
@@ -5593,8 +5629,62 @@ for res in output:
       );
     }
 
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      componentDidCatch(error, errorInfo) {
+        console.error("HabitLoop UI Crash Prevented:", error, errorInfo);
+      }
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div style={{ minHeight: "100vh", background: "#12141B", color: "#EEF0F5", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+              <div style={{ maxWidth: 500, width: "100%", background: "#1A1D27", border: "1px solid #FF5E5B", borderRadius: 14, padding: 24, textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.7)" }}>
+                <div style={{ fontSize: 32, marginBottom: 10 }}>⚠️</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#FF5E5B", marginBottom: 8 }}>
+                  UI Exception Intercepted
+                </div>
+                <div style={{ fontSize: 13, color: "#8B92A5", marginBottom: 18, lineHeight: 1.5 }}>
+                  {this.state.error?.message || "An unexpected rendering issue occurred."}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    this.setState({ hasError: false, error: null });
+                    window.location.reload();
+                  }}
+                  style={{
+                    background: "#3FD6C4",
+                    border: "none",
+                    color: "#08211E",
+                    borderRadius: 8,
+                    padding: "10px 22px",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Reload Workstation
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
     const root = createRoot(document.getElementById("root"));
-    root.render(<App />);
+    root.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
   </script>
 </body>
 </html>
