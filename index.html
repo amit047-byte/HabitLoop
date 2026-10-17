@@ -1541,27 +1541,12 @@
             color = "#3CD09B";
             border = "1px solid #3CD09B";
             glow = true;
-            glowColor = isToday ? "0 0 16px rgba(60, 208, 155, 0.9)" : "0 0 8px rgba(60, 208, 155, 0.45)";
-            if (isToday) {
-              border = "1.5px solid #FFFFFF";
-            }
+            glowColor = "0 0 8px rgba(60, 208, 155, 0.45)";
           } else {
-            if (isToday) {
-              color = "#182635";
-              border = "1.5px solid #38BDF8";
-              glow = true;
-              glowColor = "0 0 12px rgba(56, 189, 248, 0.65)";
-            } else if (isPast) {
-              color = "#141722";
-              border = "1px solid #1D212E";
-            } else {
-              color = "#161925";
-              border = "1px solid #222636";
-            }
-          }
-
-          if (isSelected && !glow) {
-            border = "1px solid #38BDF8";
+            color = "#161925";
+            border = "1px solid #222636";
+            glow = false;
+            glowColor = "none";
           }
 
           const label = `${h.name} (${h.category}) • ${dayNames[cIdx]}: ${isDone ? "Done ✓" : "Pending"} • Click to toggle`;
@@ -4742,24 +4727,6 @@
                             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "#EEF0F5" }}>
                               7-Day Habit Matrix
                             </div>
-                            <span
-                              style={{
-                                fontSize: 11,
-                                background: "rgba(60,208,155,0.12)",
-                                border: "1px solid rgba(60,208,155,0.35)",
-                                color: "#3CD09B",
-                                borderRadius: 12,
-                                padding: "3px 9px",
-                                fontWeight: 700,
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 5,
-                                fontFamily: "'Space Grotesk', monospace"
-                              }}
-                              title="Every habit checkmark directly updates its corresponding row in the Consistency Matrix and the Anti-Procrastination Buffer in real time"
-                            >
-                              <Shield size={12} color="#3CD09B" /> Connected to 28D Loop
-                            </span>
                             {activeMatrixDay && (
                               <span
                                 onClick={() => setActiveMatrixDay(null)}
@@ -4943,20 +4910,96 @@
                         onToggleHabitDay={toggleHabitDay}
                       />
 
-                      <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Streak Leaderboard</div>
+                      <div style={{
+                        background: "#111420",
+                        border: "1px solid #1D2232",
+                        borderRadius: 12,
+                        padding: "18px 20px"
+                      }}>
+                        <div style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#6D758B",
+                          letterSpacing: 1.4,
+                          textTransform: "uppercase",
+                          marginBottom: 4,
+                          fontFamily: "'Space Grotesk', monospace"
+                        }}>
+                          ACTIVE MOMENTUM
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "#EEF0F5", display: "flex", alignItems: "center", gap: 7 }}>
+                            <Flame size={17} color="#FF8A5C" /> Streak Leaderboard
+                          </div>
+                          <span style={{ fontSize: 11.5, color: "#8E95A8", fontFamily: "'Space Grotesk', monospace" }}>
+                            Top: {topStreak}d active
+                          </span>
+                        </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {[...habits]
                             .sort((a, b) => computeHabitStreak(b.logs) - computeHabitStreak(a.logs))
-                            .map((h) => {
+                            .map((h, rank) => {
                               const s = computeHabitStreak(h.logs);
+                              const isTop = rank === 0 && s > 0;
                               return (
-                                <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.panelAlt, borderRadius: 6, padding: "8px 12px", fontSize: 13 }}>
-                                  <span>{h.name}</span>
-                                  <span style={{ color: C.boulder, fontWeight: 600 }}>{s} day streak</span>
+                                <div
+                                  key={h.id}
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    background: "#161925",
+                                    border: `1px solid ${isTop ? "rgba(227, 178, 60, 0.35)" : "#202434"}`,
+                                    borderRadius: 8,
+                                    padding: "10px 14px",
+                                    fontSize: 13,
+                                    transition: "all 0.15s ease"
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                                    <span style={{
+                                      width: 7,
+                                      height: 7,
+                                      borderRadius: "50%",
+                                      background: h.color || "#3CD09B",
+                                      flexShrink: 0,
+                                      boxShadow: `0 0 6px ${h.color || "#3CD09B"}`
+                                    }} />
+                                    <div style={{ minWidth: 0 }}>
+                                      <div style={{ fontWeight: 600, color: "#EEF0F5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        {h.name}
+                                      </div>
+                                      <div style={{ fontSize: 11, color: "#6D758B", marginTop: 2 }}>
+                                        {h.category} · {h.load === "boulder" ? "🏔️ Boulder" : "🌱 Ramp"}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div style={{ flexShrink: 0, marginLeft: 10 }}>
+                                    <span style={{
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      color: s >= 5 ? "#3CD09B" : s > 0 ? "#FF8A5C" : "#6D758B",
+                                      background: s > 0 ? "rgba(255, 138, 92, 0.1)" : "rgba(255,255,255,0.03)",
+                                      border: s > 0 ? "1px solid rgba(255, 138, 92, 0.28)" : "1px solid #232838",
+                                      padding: "3px 10px",
+                                      borderRadius: 9999,
+                                      fontFamily: "'Space Grotesk', monospace",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: 4
+                                    }}>
+                                      🔥 {s}d active
+                                    </span>
+                                  </div>
                                 </div>
                               );
                             })}
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, fontSize: 11.5, color: "#8E95A8" }}>
+                          <span>Consecutive consistency</span>
+                          <span style={{ color: topStreak >= 3 ? "#3CD09B" : "#FF8A5C", fontWeight: 600 }}>
+                            {topStreak >= 5 ? "🔥 High Momentum" : topStreak >= 3 ? "⚡ Solid Building" : "🌱 Early Stage"}
+                          </span>
                         </div>
                       </div>
 
