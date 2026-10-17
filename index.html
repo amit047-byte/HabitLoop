@@ -3315,18 +3315,18 @@
 
       const endpoints = [];
       if (isFileProto) {
-        endpoints.push("http://localhost:8080/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
+        endpoints.push("http://localhost:8080/api/qwen/scan", "http://localhost:8080/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
       } else if (isLocal) {
-        endpoints.push("/api/paddleocr/scan", "http://localhost:8080/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
+        endpoints.push("/api/qwen/scan", "/api/paddleocr/scan", "http://localhost:8080/api/qwen/scan", "http://localhost:8080/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
       } else {
-        endpoints.push("/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
+        endpoints.push("/api/qwen/scan", "/api/paddleocr/scan", "https://habit-loop-flame.vercel.app/api/paddleocr/scan");
       }
 
       for (const endpoint of endpoints) {
         try {
-          onStatus(`Connecting to PaddleOCR-VL (v1.6) at ${endpoint}…`);
+          onStatus(`Connecting to Vision & OCR engine at ${endpoint}…`);
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 12000);
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
 
           const proxyResp = await fetch(endpoint, {
             method: "POST",
@@ -3344,7 +3344,8 @@
           if (proxyResp.ok) {
             const resJson = await proxyResp.json();
             if (resJson.success && resJson.classes && resJson.classes.length > 0) {
-              onStatus(`Loaded ${resJson.classes.length} verified classes for ${resJson.section_name || 'Section ' + resJson.section}!`);
+              const engineName = resJson.engine === "Qwen-VL" ? "Qwen-VL Vision AI" : (resJson.section_name || 'Section ' + resJson.section);
+              onStatus(`✨ Loaded ${resJson.classes.length} classes via ${engineName}!`);
               return resJson.classes;
             }
             if (resJson.success && (resJson.markdown || resJson.table_html)) {

@@ -64,8 +64,28 @@ def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sa
             "message": f"Loaded verified timetable for {sec_data.get('name', 'Section ' + sec_key)}."
         }
 
-    print(f"🚀 Initializing PaddleOCRVL (pipeline_version='v1.6')...")
-    print(f"📄 Processing document: {temp_img_path}")
+    print(f"🚀 Processing document: {temp_img_path}")
+
+    # 0. Qwen-VL Vision-Language Model Zero-Shot Extraction
+    try:
+        from qwen_extractor import extract_timetable_with_qwen
+        print("🧠 Attempting zero-shot extraction with Qwen-VL Vision AI...")
+        qwen_res = extract_timetable_with_qwen(temp_img_path)
+        if qwen_res and qwen_res.get("success") and qwen_res.get("classes") and len(qwen_res["classes"]) >= 2:
+            print(f"✨ Qwen-VL successfully extracted {len(qwen_res['classes'])} classes zero-shot!")
+            return {
+                "success": True,
+                "engine": "Qwen-VL",
+                "pipeline_version": "vlm",
+                "classes": qwen_res["classes"],
+                "raw_text": qwen_res.get("raw_text", ""),
+                "output_dir": "output",
+                "message": f"Successfully parsed {len(qwen_res['classes'])} classes using Qwen-VL zero-shot vision model."
+            }
+        elif qwen_res and not qwen_res.get("success"):
+            print(f"ℹ️ Qwen-VL note: {qwen_res.get('error')}")
+    except Exception as qwen_err:
+        print(f"ℹ️ Qwen-VL note: {qwen_err}")
 
     # 1. Native PaddleOCRVL execution
     try:
@@ -165,8 +185,8 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        # Support /api/paddleocr/scan and /api/ocr/scan
-        if self.path in ["/api/paddleocr/scan", "/api/ocr/scan"]:
+        # Support /api/paddleocr/scan, /api/ocr/scan, and /api/qwen/scan
+        if self.path in ["/api/paddleocr/scan", "/api/ocr/scan", "/api/qwen/scan"]:
             try:
                 content_len = int(self.headers.get("Content-Length", 0))
                 post_data = self.rfile.read(content_len)
