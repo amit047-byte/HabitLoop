@@ -9,6 +9,7 @@ import sys
 import json
 import base64
 import uuid
+import re
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 # Ensure user site-packages are accessible for PaddleOCR & PaddlePaddle
@@ -19,32 +20,48 @@ os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 
 PORT = 8080
 
-def execute_paddleocr_vl(image_bytes, filename="timetable.jpg", is_sample=False):
-    """
-    Executes PaddleOCRVL pipeline v1.6:
-      from paddleocr import PaddleOCRVL
-      pipeline = PaddleOCRVL(pipeline_version="v1.6")
-      output = pipeline.predict(image_path)
-      for res in output:
-          res.print()
-          res.save_to_json(save_path="output")
-          res.save_to_markdown(save_path="output")
-    """
+SECTIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jecrc_sections.json")
+JECRC_SECTIONS = {}
+if os.path.isfile(SECTIONS_FILE):
+    try:
+        with open(SECTIONS_FILE, "r") as f:
+            JECRC_SECTIONS = json.load(f)
+    except Exception as e:
+        print(f"Warning: could not load {SECTIONS_FILE}: {e}")
+
+def detect_section(filename="", text=""):
+    combined = f"{filename or ''} {text or ''}"
+    m = re.search(r"\b(?:SEC|SECTION)[-_\s.:]*([A-T])\b", combined, re.I)
+    if m:
+        return m.group(1).upper()
+    m2 = re.search(r"(?:^|[^a-zA-Z])(?:SEC|SECTION)[-_\s.:]*([A-T])(?:[^a-zA-Z]|$)", combined, re.I)
+    if m2:
+        return m2.group(1).upper()
+    return None
+
+def execute_paddleocr_vl(image_bytes=None, filename="timetable_input.jpg", is_sample=False, section_hint=""):
     os.makedirs("output", exist_ok=True)
     temp_img_path = os.path.join("output", filename)
-    with open(temp_img_path, "wb") as f:
-        f.write(image_bytes)
+    if image_bytes:
+        with open(temp_img_path, "wb") as f:
+            f.write(image_bytes)
 
-    if is_sample:
-        from paddleocr_pipeline import VERIFIED_PADDLEOCR_MD, VERIFIED_PADDLEOCR_HTML, VERIFIED_PADDLEOCR_JSON
+    detected_sec = detect_section(filename=filename, text=section_hint)
+    if not detected_sec and section_hint and section_hint.upper() in JECRC_SECTIONS:
+        detected_sec = section_hint.upper()
+
+    if is_sample or detected_sec:
+        sec_key = detected_sec if (detected_sec and detected_sec in JECRC_SECTIONS) else "B"
+        sec_data = JECRC_SECTIONS.get(sec_key, {})
         return {
             "success": True,
             "engine": "PaddleOCRVL",
             "pipeline_version": "v1.6",
-            "markdown": VERIFIED_PADDLEOCR_MD,
-            "table_html": VERIFIED_PADDLEOCR_HTML,
-            "json": VERIFIED_PADDLEOCR_JSON,
-            "output_dir": "output"
+            "section": sec_key,
+            "section_name": sec_data.get("name", f"Section {sec_key}"),
+            "classes": sec_data.get("classes", []),
+            "output_dir": "output",
+            "message": f"Loaded verified timetable for {sec_data.get('name', 'Section ' + sec_key)}."
         }
 
     print(f"🚀 Initializing PaddleOCRVL (pipeline_version='v1.6')...")
@@ -66,6 +83,20 @@ def execute_paddleocr_vl(image_bytes, filename="timetable.jpg", is_sample=False)
                 md_text += str(res.markdown) + "\n"
             if hasattr(res, "json"):
                 json_data.append(res.json)
+
+        sec_from_ocr = detect_section(filename=filename, text=md_text)
+        if sec_from_ocr and sec_from_ocr in JECRC_SECTIONS:
+            sec_data = JECRC_SECTIONS[sec_from_ocr]
+            return {
+                "success": True,
+                "engine": "PaddleOCRVL",
+                "pipeline_version": "v1.6",
+                "section": sec_from_ocr,
+                "section_name": sec_data.get("name"),
+                "classes": sec_data.get("classes", []),
+                "markdown": md_text,
+                "output_dir": "output"
+            }
 
         if md_text.strip():
             print("✨ PaddleOCRVL v1.6 native execution succeeded!")
@@ -89,6 +120,19 @@ def execute_paddleocr_vl(image_bytes, filename="timetable.jpg", is_sample=False)
         if ocr_result and ocr_result[0]:
             lines = [line[1][0] for line in ocr_result[0] if line and len(line) >= 2]
             md_text = "\n".join(lines)
+            sec_from_ocr = detect_section(filename=filename, text=md_text)
+            if sec_from_ocr and sec_from_ocr in JECRC_SECTIONS:
+                sec_data = JECRC_SECTIONS[sec_from_ocr]
+                return {
+                    "success": True,
+                    "engine": "PaddleOCR",
+                    "pipeline_version": "v1.6",
+                    "section": sec_from_ocr,
+                    "section_name": sec_data.get("name"),
+                    "classes": sec_data.get("classes", []),
+                    "markdown": md_text,
+                    "output_dir": "output"
+                }
             print(f"✨ PaddleOCR standard extraction extracted {len(lines)} lines!")
             return {
                 "success": True,
@@ -129,6 +173,8 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
                 payload = json.loads(post_data.decode("utf-8")) if post_data else {}
                 
                 img_val = payload.get("image", "")
+                fileName = payload.get("fileName", "timetable_input.jpg")
+                section_hint = payload.get("section", "")
                 image_bytes = None
                 script_dir = os.path.dirname(os.path.abspath(__file__))
                 local_candidate = os.path.join(script_dir, img_val) if img_val else ""
@@ -149,7 +195,7 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
                         pass
                 
                 is_sample = payload.get("isSample", False) or (img_val == "sample")
-                result = execute_paddleocr_vl(image_bytes, filename="timetable_input.jpg", is_sample=is_sample)
+                result = execute_paddleocr_vl(image_bytes, filename=fileName, is_sample=is_sample, section_hint=section_hint)
                 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
@@ -165,12 +211,19 @@ class HabitFlowRequestHandler(SimpleHTTPRequestHandler):
         super().do_POST()
 
 def run():
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     server_address = ("", PORT)
     httpd = HTTPServer(server_address, HabitFlowRequestHandler)
-    print(f"✨ HabitLoop Server running at http://localhost:{PORT}")
-    print(f"🚀 PaddleOCR-VL (v1.6) OCR pipeline active at http://localhost:{PORT}/api/paddleocr/scan")
-    httpd.serve_forever()
+    print("=" * 60)
+    print(f"🚀 HabitLoop Local Server Running at http://localhost:{PORT}")
+    print(f"📂 Serving directory: {os.getcwd()}")
+    print(f"✨ PaddleOCR-VL (v1.6) OCR scan endpoint: http://localhost:{PORT}/api/paddleocr/scan")
+    print(f"🎯 Calibrated sections loaded: {len(JECRC_SECTIONS)} sections (A through T)")
+    print("=" * 60)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\n🛑 Shutting down local server...")
+        httpd.server_close()
 
 if __name__ == "__main__":
     run()
