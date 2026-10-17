@@ -288,6 +288,14 @@
         { from: "EM-I", to: "Engineering Mathematics-I" },
         { from: "EM-1", to: "Engineering Mathematics-I" },
         { from: "EM-I TUT", to: "Engineering Mathematics-I Tutorial" },
+        { from: "MATHS", to: "Engineering Mathematics-I" },
+        { from: "MATHS-I", to: "Engineering Mathematics-I" },
+        { from: "PHYSICS", to: "Engineering Physics" },
+        { from: "EP", to: "Engineering Physics" },
+        { from: "BEE", to: "Basic Electrical Engineering" },
+        { from: "BEE LAB", to: "Basic Electrical Engineering Lab" },
+        { from: "PHYSICS LAB", to: "Engineering Physics Lab" },
+        { from: "MECHANICS", to: "Engineering Mechanics" },
         { from: "CHEMISTRY", to: "Engineering Chemistry" },
         { from: "COMM. SKILLS", to: "Communication Skills" },
         { from: "AC", to: "Auto Cad" },
@@ -297,6 +305,7 @@
         { from: "CPLT LAB", to: "Computer Programming & Logical Thinking Lab" },
         { from: "DIGITAL LITERACY LAB", to: "Digital Data and AI Literacy Lab" },
         { from: "DDAL", to: "Digital Data and AI Literacy" },
+        { from: "WORKSHOP", to: "Engineering Workshop Practice" },
         { from: "EDP", to: "Entrepreneurship Development" }
       ],
       cleanRegexList: [
@@ -308,27 +317,17 @@
       ]
     };
 
-    function preprocessImageToCanvas(img, maxDim = 1500) {
-      const scale = Math.min(1, maxDim / Math.max(img.width || 800, img.height || 600));
+    function preprocessImageToCanvas(img, maxDim = 2000) {
+      const origW = img.naturalWidth || img.width || 800;
+      const origH = img.naturalHeight || img.height || 600;
+      const scale = Math.min(2.0, Math.max(1.0, maxDim / Math.max(origW, origH)));
       const canvas = document.createElement("canvas");
-      canvas.width = Math.round((img.width || 800) * scale);
-      canvas.height = Math.round((img.height || 600) * scale);
-      const ctx = canvas.getContext("2d");
+      canvas.width = Math.round(origW * scale);
+      canvas.height = Math.round(origH * scale);
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Enhance contrast & binarize
-      try {
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const d = imgData.data;
-        for (let i = 0; i < d.length; i += 4) {
-          const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-          const contrast = 1.35;
-          const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
-          const v = Math.min(255, Math.max(0, factor * (gray - 128) + 128));
-          d[i] = v; d[i + 1] = v; d[i + 2] = v;
-        }
-        ctx.putImageData(imgData, 0, 0);
-      } catch {}
       return canvas;
     }
 
@@ -336,14 +335,25 @@
       if (!rawText) return null;
       let cleaned = String(rawText).trim();
 
-      // Check ignore keywords
-      const upper = cleaned.toUpperCase();
-      for (const ign of (model.ignoreTokens || [])) {
-        if (upper.includes(ign.toUpperCase())) return null;
+      // Check if the entire cell is only an ignore token
+      const upper = cleaned.toUpperCase().trim();
+      const exactIgnore = [
+        "LUNCH", "RECESS", "BREAK", "TEA", "LIBRARY", "SPORTS",
+        "ASSEMBLY", "FREE", "TIME TABLE", "DAY/TIME", "BUILD YOUR WORLD"
+      ];
+      if (exactIgnore.includes(upper)) return null;
+
+      // Remove administrative headers if embedded in cell text
+      const stripTokens = [
+        "NOMENCLATURE", "TIME TABLE", "COORDINATOR", "HOD",
+        "DEAN", "W.E.F", "FIRST YEAR", "BUILD YOUR WORLD", "SEMESTER", "SESSION"
+      ];
+      for (const tok of stripTokens) {
+        cleaned = cleaned.replace(new RegExp(`\\b${tok}\\b`, "gi"), " ");
       }
 
       // Remove unwanted tokens using clean regexes
-      for (const pattern of (model.cleanRegexList || [])) {
+      for (const pattern of (model?.cleanRegexList || [])) {
         try {
           const re = new RegExp(pattern, "gi");
           cleaned = cleaned.replace(re, " ");
@@ -353,7 +363,7 @@
 
       // Check dictionary expansions
       const cleanUpper = cleaned.toUpperCase();
-      for (const entry of (model.dictionary || [])) {
+      for (const entry of (model?.dictionary || [])) {
         if (!entry.from || !entry.to) continue;
         const fromRe = new RegExp(`\\b${entry.from}\\b`, "i");
         if (fromRe.test(cleaned)) {
@@ -409,29 +419,97 @@
           img.onload = async () => {
             const canvas = preprocessImageToCanvas(img);
             const w = canvas.width, h = canvas.height;
-            const startMin = hhmmToMinutes(model.startTime || "08:00");
-            const slot = model.slotDurationMins || 50;
-            const days = model.days || ["mon", "tue", "wed", "thu", "fri", "sat"];
-            const totalPeriods = model.totalPeriods || 6;
+            const startMin = hhmmToMinutes(model?.startTime || "08:00");
+            const slot = model?.slotDurationMins || 50;
+            const days = model?.days || ["mon", "tue", "wed", "thu", "fri", "sat"];
+            const totalPeriods = model?.totalPeriods || 6;
 
             const structured = [];
 
-            // Run in-browser Tesseract.js directly on image canvas
-            if (typeof window !== "undefined" && window.Tesseract) {
-              try {
-                const ocrResult = await window.Tesseract.recognize(canvas, "eng", {
-                  logger: (m) => {
-                    if (m.status === "recognizing text" && onProgress && typeof m.progress === "number") {
-                      onProgress(m.progress);
+            if (typeof window === "undefined" || !window.Tesseract) {
+              return reject(new Error("OCR engine (Tesseract.js) is loading. Please try again in a few moments."));
+            }
+
+            try {
+              onProgress(0.1);
+              const ocrResult = await window.Tesseract.recognize(canvas, "eng", {
+                logger: (m) => {
+                  if (m.status === "recognizing text" && onProgress && typeof m.progress === "number") {
+                    onProgress(0.1 + m.progress * 0.85);
+                  }
+                },
+              });
+              onProgress(1.0);
+
+              const words = ocrResult?.data?.words || [];
+              const lines = ocrResult?.data?.lines || [];
+              const fullText = ocrResult?.data?.text || "";
+
+              // 1. Try passing full text to universal table parser
+              if (fullText && (fullText.includes("|") || fullText.toLowerCase().includes("mon"))) {
+                const parsedFromText = parsePaddleOcrMarkdownOrTable(fullText, model);
+                if (parsedFromText && parsedFromText.length >= 2) {
+                  return resolve(parsedFromText);
+                }
+              }
+
+              // 2. Line-by-line intelligent schedule parsing
+              const DAY_REGEX = /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?)\b/i;
+              let curDay = "mon";
+              let pIdx = 0;
+
+              for (const line of lines) {
+                const lText = (line.text || "").trim();
+                if (!lText) continue;
+
+                const dMatch = lText.match(DAY_REGEX);
+                if (dMatch) {
+                  curDay = dMatch[1].toLowerCase().substring(0, 3);
+                  pIdx = 0;
+                  const restOfLine = lText.replace(DAY_REGEX, "").replace(/[|\-*•:]+/g, " ").trim();
+                  if (restOfLine.length >= 3) {
+                    const cleaned = cleanSubjectWithModel(restOfLine, model);
+                    if (cleaned && cleaned.length >= 2) {
+                      const sMin = startMin + pIdx * slot;
+                      const eMin = sMin + slot;
+                      structured.push({ subject: cleaned, day: curDay, start: sMin, end: eMin });
+                      pIdx = (pIdx + 1) % totalPeriods;
                     }
-                  },
-                });
+                  }
+                  continue;
+                }
 
-                const words = ocrResult?.data?.words || [];
-                const lines = ocrResult?.data?.lines || [];
+                const cleanLine = lText.replace(/[|\-*•:]+/g, " ").trim();
+                if (cleanLine.length >= 3 && !/^(time|recess|lunch|break|table|period|section|room|university|b\.?tech)/i.test(cleanLine)) {
+                  const timeMatch = cleanLine.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+                  let sMin = startMin + pIdx * slot;
+                  let eMin = sMin + slot;
+                  let subjectText = cleanLine;
 
-                // 1. Grid cell spatial detection
-                const cellMap = {};
+                  if (timeMatch) {
+                    let [, sh, sm, eh, em] = timeMatch.map(Number);
+                    if (sh < 7) sh += 12;
+                    if (eh < 7) eh += 12;
+                    sMin = sh * 60 + sm;
+                    eMin = eh * 60 + em;
+                    subjectText = cleanLine.replace(timeMatch[0], "").trim();
+                  }
+
+                  const cleaned = cleanSubjectWithModel(subjectText, model);
+                  if (cleaned && cleaned.length >= 2 && !/^(recess|lunch|break|library|free)$/i.test(cleaned)) {
+                    structured.push({
+                      subject: cleaned,
+                      day: curDay,
+                      start: sMin,
+                      end: eMin,
+                    });
+                    pIdx = (pIdx + 1) % totalPeriods;
+                  }
+                }
+              }
+
+              // 3. Grid spatial cell fallback if line parser returned fewer than 3 classes
+              if (structured.length < 3 && words.length > 5) {
                 let minX = w, maxX = 0, minY = h, maxY = 0;
                 for (const word of words) {
                   if (word.text && word.text.trim().length > 1) {
@@ -443,9 +521,10 @@
                 }
                 const gridW = Math.max(100, maxX - minX);
                 const gridH = Math.max(100, maxY - minY);
-                const leftOffset = minX + gridW * 0.12;
-                const topOffset = minY + gridH * 0.12;
+                const leftOffset = minX + gridW * 0.10;
+                const topOffset = minY + gridH * 0.10;
 
+                const cellMap = {};
                 for (const word of words) {
                   const text = word.text?.trim();
                   if (!text || text.length < 2) continue;
@@ -467,54 +546,33 @@
                   const p = parseInt(pStr, 10);
                   const rawCombined = cellMap[key].join(" ");
                   const cleaned = cleanSubjectWithModel(rawCombined, model);
-                  if (cleaned && cleaned.length >= 2) {
-                    const sMin = startMin + p * slot;
-                    const eMin = sMin + slot;
+                  if (cleaned && cleaned.length >= 2 && !/^(recess|lunch|break|library|free)$/i.test(cleaned)) {
                     structured.push({
                       subject: cleaned,
                       day,
-                      start: sMin,
-                      end: eMin,
+                      start: startMin + p * slot,
+                      end: startMin + (p + 1) * slot,
                     });
                   }
                 }
-
-                // 2. Line-by-line fallback if grid was sparse
-                if (structured.length < 2 && lines.length > 0) {
-                  const DAY_REGEX = /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?)\b/i;
-                  let curDay = "mon";
-                  let pIdx = 0;
-                  for (const line of lines) {
-                    const lText = (line.text || "").trim();
-                    const dMatch = lText.match(DAY_REGEX);
-                    if (dMatch) {
-                      const dRaw = dMatch[1].toLowerCase().substring(0, 3);
-                      curDay = dRaw;
-                      pIdx = 0;
-                    }
-                    const cleanLine = lText.replace(DAY_REGEX, "").replace(/[|\-*•:]+/g, " ").trim();
-                    if (cleanLine.length >= 3 && !/^(time|recess|lunch|table|period|section|room)/i.test(cleanLine)) {
-                      const cleaned = cleanSubjectWithModel(cleanLine, model) || cleanLine;
-                      if (cleaned && cleaned.length >= 2) {
-                        const sMin = startMin + pIdx * slot;
-                        const eMin = sMin + slot;
-                        structured.push({
-                          subject: cleaned,
-                          day: curDay,
-                          start: sMin,
-                          end: eMin,
-                        });
-                        pIdx = (pIdx + 1) % totalPeriods;
-                      }
-                    }
-                  }
-                }
-              } catch (tessErr) {
-                console.warn("Tesseract OCR execution error:", tessErr);
               }
-            }
 
-            resolve(structured);
+              // Deduplicate
+              const uniqueClasses = [];
+              const seen = new Set();
+              for (const c of structured) {
+                const k = `${c.day}:${c.start}:${c.subject}`;
+                if (!seen.has(k)) {
+                  seen.add(k);
+                  uniqueClasses.push(c);
+                }
+              }
+
+              resolve(uniqueClasses);
+            } catch (tessErr) {
+              console.warn("Tesseract OCR execution error:", tessErr);
+              resolve([]);
+            }
           };
           img.onerror = () => reject(new Error("Failed to load timetable image for scanning."));
           img.src = imageSrc;
@@ -1497,6 +1555,8 @@
         setScheduleScanError(null);
         setScheduleScanSuccessMsg(null);
         setScheduleUploadFileName(file.name);
+        setIsReviewingScanned(false);
+        setScannedEditableClasses([]);
         const reader = new FileReader();
         reader.onload = () => {
           setScheduleUploadImg(reader.result);
@@ -1519,12 +1579,16 @@
         setScheduleScanError(null);
         setScheduleScanSuccessMsg(null);
         setScannedClassesPreview([]);
+        setIsReviewingScanned(false);
+        setScannedEditableClasses([]);
         setMobileSyncStatus("waiting");
         setMobileSyncNotice(null);
       }
 
       function handleReceivedMobileImage(imgData, fileName) {
         if (!imgData) return;
+        setIsReviewingScanned(false);
+        setScannedEditableClasses([]);
         setScheduleUploadImg(imgData);
         setScheduleUploadFileName(fileName || "mobile_timetable_scan.jpg");
         setMobileSyncStatus("received");
@@ -1634,9 +1698,13 @@
         setScheduleScanError(null);
         setScheduleScanSuccessMsg(null);
         setPaddleJobStatus("");
+        if (!useSampleFallback) {
+          setIsReviewingScanned(false);
+          setScannedEditableClasses([]);
+        }
 
         try {
-          setPaddleJobStatus("Connecting to PaddleOCR-VL (pipeline_version='v1.6')...");
+          setPaddleJobStatus("Analyzing timetable layout with document OCR…");
           const normalized = await runPaddleOcrModel(
             scheduleUploadImg,
             ocrModel,
@@ -1645,7 +1713,7 @@
           );
 
           if (!normalized || normalized.length === 0) {
-            throw new Error("No schedule classes detected by PaddleOCR-VL 1.6. Please ensure the timetable image is clear and well-lit.");
+            throw new Error("No timetable classes could be detected from this image. Please ensure the timetable image is clear, sharp, and well-lit.");
           }
 
           setScannedEditableClasses(normalized);
@@ -1655,9 +1723,11 @@
             if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 80);
           setLastReasoning(
-            `Extracted ${normalized.length} classes using PaddleOCR-VL 1.6 (PP-DocLayoutV3). Review and verify them below.`
+            `Extracted ${normalized.length} classes from your timetable. Review and verify them below.`
           );
         } catch (err) {
+          setIsReviewingScanned(false);
+          setScannedEditableClasses([]);
           setScheduleScanError(err.message || "Failed to scan timetable image.");
         } finally {
           setIsScanningSchedule(false);
