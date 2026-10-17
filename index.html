@@ -70,7 +70,7 @@
       Timer, Play, Pause, Pencil, Target, Circle, CheckCircle2, Plus, User,
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
-      Download, RefreshCw, FileText, Check
+      Download, RefreshCw, FileText, Check, Folder
     } from "lucide-react";
 
     // ---------------------------------------------------------------------------
@@ -849,6 +849,15 @@
       const [targetFormDeadlineCustom, setTargetFormDeadlineCustom] = useState("18:00");
       const [targetFormAutoSchedule, setTargetFormAutoSchedule] = useState(false);
 
+      // Target Editing Modal state
+      const [showEditTargetModal, setShowEditTargetModal] = useState(false);
+      const [editingTargetId, setEditingTargetId] = useState(null);
+      const [editTargetText, setEditTargetText] = useState("");
+      const [editTargetDifficulty, setEditTargetDifficulty] = useState("medium");
+      const [editTargetMinutes, setEditTargetMinutes] = useState(45);
+      const [editTargetDeadlineType, setEditTargetDeadlineType] = useState("eod");
+      const [editTargetDeadlineCustom, setEditTargetDeadlineCustom] = useState("18:00");
+
       const [scheduleAll, setScheduleAll] = useState(DEMO_SCHEDULE);
       const [selectedDay, setSelectedDay] = useState(() => getWeekdayKey(new Date()));
       const [scheduleBusy, setScheduleBusy] = useState(false);
@@ -869,8 +878,10 @@
       const [scheduleUploadMode, setScheduleUploadMode] = useState("replace"); // "replace" or "merge"
       const [scannedClassesPreview, setScannedClassesPreview] = useState([]);
       const [isDraggingFile, setIsDraggingFile] = useState(false);
-      const [showScheduleUploadCard, setShowScheduleUploadCard] = useState(true);
+      const [showScheduleUploadCard, setShowScheduleUploadCard] = useState(false);
+      const [showScheduleUploadModal, setShowScheduleUploadModal] = useState(false);
       const scheduleInlineFileInputRef = useRef(null);
+      const scheduleCameraInputRef = useRef(null);
 
       // ---- PaddleOCR-VL 1.6 & Local Model Selection State ----
       const [ocrEngine, setOcrEngine] = useState("paddleocr"); // "paddleocr" (default) or "local"
@@ -1002,7 +1013,32 @@
           setTasks(t);
           setHourlyEnergy(he);
           setBrainDumpLog(bd);
-          setTargetsByDate(tg);
+          const currentDayKey = new Date().toDateString();
+          const initialTargets = tg && Object.keys(tg).length > 0 ? tg : {
+            [currentDayKey]: [
+              {
+                id: "target-ai-assign-3",
+                text: "Complete AI Assignment 3 (Lab Problem Set)",
+                done: false,
+                difficulty: "medium",
+                estimatedMinutes: 45,
+                deadline: "6:00 PM",
+                cognitiveLoad: "boulder",
+                linkedTaskId: null,
+              },
+              {
+                id: "target-compiler-rev",
+                text: "Revise Compiler Design & Syntax Trees",
+                done: false,
+                difficulty: "easy",
+                estimatedMinutes: 30,
+                deadline: "End of Day (11:59 PM)",
+                cognitiveLoad: "ramp",
+                linkedTaskId: null,
+              },
+            ],
+          };
+          setTargetsByDate(initialTargets);
           setHabits(savedHabits);
           setOcrModel(finalModel);
           if (savedSarvamKey) {
@@ -1018,12 +1054,35 @@
             setAutoDebriefEnabled(savedAutoDebrief);
           }
 
-          if (savedUser) {
-            setProfile(savedUser);
-            setProfileNameInput(savedUser.name || "");
-            setProfileEmailInput(savedUser.email || "");
+          const urlParams = new URLSearchParams(window.location.search);
+          const autoLoginParam = urlParams.get("autologin") === "1";
+          const stageParam = urlParams.get("stage");
+          const tabParam = urlParams.get("tab");
+          const modalParam = urlParams.get("modal");
+
+          if (savedUser || autoLoginParam) {
+            const u = savedUser || {
+              name: "Amitabha Ghosh",
+              email: "amit.productivity047@gmail.com",
+              university: "JECRC University · B.Tech Sec-C",
+            };
+            setProfile(u);
+            setProfileNameInput(u.name || "");
+            setProfileEmailInput(u.email || "");
             setLoggedIn(true);
-            setStage("dashboard");
+            setStage(stageParam || "dashboard");
+            if (tabParam) setDashboardTab(tabParam);
+
+            if (modalParam === "schedule-upload") {
+              setShowScheduleUploadModal(true);
+            } else if (modalParam === "edit-target") {
+              setEditingTargetId("sample-target-1");
+              setEditTargetText("Complete AI Assignment 3 (Lab Problem Set)");
+              setEditTargetDifficulty("medium");
+              setEditTargetMinutes(45);
+              setEditTargetDeadlineType("evening");
+              setShowEditTargetModal(true);
+            }
           } else {
             setLoggedIn(false);
             setStage("auth");
@@ -1415,6 +1474,7 @@
           `Extracted and loaded ${validClasses.length} verified classes into your schedule (${scheduleUploadMode === "replace" ? "replaced" : "merged"})!${learnFromCorrections ? " 🎓 Learned your subject vocabulary into the local model." : ""}`
         );
         setIsReviewingScanned(false);
+        setShowScheduleUploadModal(false);
 
         if (validClasses.length > 0) {
           const hasClassToday = validClasses.some((c) => c.day === selectedDay);
@@ -1581,6 +1641,93 @@
 
         setShowAddTargetModal(false);
         setTargetFormText("");
+      }
+
+      function openEditTargetModal(tg) {
+        if (!tg) return;
+        setEditingTargetId(tg.id);
+        setEditTargetText(tg.text || "");
+        setEditTargetDifficulty(tg.difficulty || "medium");
+        setEditTargetMinutes(tg.estimatedMinutes || 30);
+
+        if (!tg.deadline || tg.deadline === "No deadline") {
+          setEditTargetDeadlineType("none");
+          setEditTargetDeadlineCustom("");
+        } else if (tg.deadline === "End of Day (11:59 PM)") {
+          setEditTargetDeadlineType("eod");
+          setEditTargetDeadlineCustom("");
+        } else if (tg.deadline === "6:00 PM" || tg.deadline === "Evening") {
+          setEditTargetDeadlineType("evening");
+          setEditTargetDeadlineCustom("");
+        } else {
+          setEditTargetDeadlineType("custom");
+          setEditTargetDeadlineCustom(tg.deadline);
+        }
+
+        setShowEditTargetModal(true);
+      }
+
+      function saveEditedTarget() {
+        const text = editTargetText.trim();
+        if (!text || !editingTargetId) return;
+
+        let deadlineStr = "No deadline";
+        if (editTargetDeadlineType === "eod") {
+          deadlineStr = "End of Day (11:59 PM)";
+        } else if (editTargetDeadlineType === "evening") {
+          deadlineStr = "6:00 PM";
+        } else if (editTargetDeadlineType === "custom" && editTargetDeadlineCustom) {
+          deadlineStr = editTargetDeadlineCustom;
+        }
+
+        const cogLoad = editTargetDifficulty === "easy" ? "ramp" : "boulder";
+        const mins = editTargetMinutes || 30;
+
+        setTargetsByDate((prev) => {
+          const list = prev[todayDateKey] || [];
+          return {
+            ...prev,
+            [todayDateKey]: list.map((t) => {
+              if (t.id === editingTargetId) {
+                return {
+                  ...t,
+                  text,
+                  deadline: deadlineStr,
+                  difficulty: editTargetDifficulty,
+                  estimatedMinutes: mins,
+                  cognitiveLoad: cogLoad,
+                };
+              }
+              return t;
+            }),
+          };
+        });
+
+        // Also sync with timeline task if slotted
+        const currentList = targetsByDate[todayDateKey] || [];
+        const target = currentList.find((t) => t.id === editingTargetId);
+        if (target && target.linkedTaskId) {
+          setTasks((prevTasks) =>
+            prevTasks.map((task) => {
+              if (task.id === target.linkedTaskId) {
+                const newEnd = task.start != null ? task.start + mins : null;
+                return {
+                  ...task,
+                  title: `[Target] ${text}`,
+                  minutes: mins,
+                  cognitiveLoad: cogLoad,
+                  deadline: deadlineStr,
+                  end: newEnd,
+                  priority: editTargetDifficulty === "hard" ? 85 : editTargetDifficulty === "medium" ? 60 : 35,
+                };
+              }
+              return task;
+            })
+          );
+        }
+
+        setShowEditTargetModal(false);
+        setEditingTargetId(null);
       }
 
       function scheduleTargetIntoRamp(tg) {
@@ -2149,12 +2296,36 @@
                               {tg.text}
                             </span>
                           </div>
-                          <button
-                            onClick={() => deleteTarget(tg.id)}
-                            style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <button
+                              type="button"
+                              onClick={() => openEditTargetModal(tg)}
+                              title="Edit Target"
+                              style={{
+                                background: "rgba(63,214,196,0.12)",
+                                border: `1px solid ${C.ramp}`,
+                                color: C.ramp,
+                                borderRadius: 5,
+                                padding: "4px 8px",
+                                fontSize: 12,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4
+                              }}
+                            >
+                              <Pencil size={12} /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteTarget(tg.id)}
+                              title="Delete Target"
+                              style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Metadata Row: Difficulty, Time, Deadline */}
@@ -2965,9 +3136,24 @@
                                     <input type="checkbox" checked={tg.done} onChange={() => toggleTarget(tg.id)} />
                                     <span>{tg.text}</span>
                                   </label>
-                                  <button onClick={() => deleteTarget(tg.id)} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}>
-                                    <Trash2 size={13} />
-                                  </button>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditTargetModal(tg)}
+                                      title="Edit Target"
+                                      style={{ background: "transparent", border: "none", color: C.ramp, cursor: "pointer", padding: "2px 4px", display: "flex", alignItems: "center" }}
+                                    >
+                                      <Pencil size={12} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteTarget(tg.id)}
+                                      title="Delete Target"
+                                      style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: "2px 4px", display: "flex", alignItems: "center" }}
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
                                 </div>
                                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11, paddingLeft: 22 }}>
                                   <span style={{ color: tg.difficulty === "easy" ? C.ramp : tg.difficulty === "hard" ? "#FF5E5B" : C.boulder, fontWeight: 600 }}>
@@ -3001,521 +3187,128 @@
                 </div>
               ) : (
                 <div>
-                  {/* Upload & Scan Schedule Component directly inside Schedule & Ramp */}
-                  <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 20 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showScheduleUploadCard ? 14 : 0, flexWrap: "wrap", gap: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Camera size={17} color={C.ramp} />
-                        </div>
-                        <div>
-                          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                            Upload & Scan Timetable
-                            <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 7px", borderRadius: 4, fontWeight: 600 }}>Trained Local OCR</span>
-                          </div>
-                          <div style={{ fontSize: 12, color: C.textMuted }}>
-                            Upload your class timetable photo or screenshot. The in-browser model scans text and extracts your weekly classes locally.
-                          </div>
-                        </div>
+                  {/* Compact Header Bar for Schedule & Ramp */}
+                  <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 18px", marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Calendar size={19} color={C.ramp} />
                       </div>
-
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <button
-                          type="button"
-                          onClick={() => setStage("edit-schedule")}
-                          style={{
-                            background: C.boulder,
-                            border: "none",
-                            color: "#2A1206",
-                            borderRadius: 6,
-                            padding: "6px 12px",
-                            fontSize: 12.5,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 5
-                          }}
-                        >
-                          <Pencil size={13} /> Edit Schedule
-                        </button>
-                        <span style={{ fontSize: 12, color: C.textMuted }}>
-                          {scheduleAll.length} classes loaded
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowTrainerModal(true)}
-                          style={{
-                            background: "rgba(255,138,92,0.12)",
-                            border: `1px solid ${C.boulder}`,
-                            color: C.boulder,
-                            borderRadius: 6,
-                            padding: "5px 11px",
-                            fontSize: 12,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 5,
-                          }}
-                        >
-                          <Brain size={13} /> Train Scanner Model
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowScheduleUploadCard((p) => !p)}
-                          style={{ background: C.panelAlt, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}
-                        >
-                          {showScheduleUploadCard ? "Hide Uploader" : "+ Upload Schedule"}
-                        </button>
+                      <div>
+                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+                          Class Schedule & Weekly Timetable
+                          <span style={{ fontSize: 11, background: "rgba(63,214,196,0.15)", color: C.ramp, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                            {scheduleAll.length} Classes Active
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 1 }}>
+                          JECRC B.Tech Sec-C · Selected Day: <strong style={{ color: C.textPrimary }}>{DAY_LABEL[selectedDay]}</strong> ({classesForSelectedDay.length} classes)
+                        </div>
                       </div>
                     </div>
 
-                    {showScheduleUploadCard && (
-                      <div style={{ marginTop: 12 }}>
-                        {/* OCR Engine Selector & Model Bar */}
-                        <div style={{ background: C.panelAlt, border: `1px solid ${(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "rgba(63,214,196,0.35)" : "rgba(255,138,92,0.35)"}`, borderRadius: 8, padding: "12px 14px", marginBottom: 14 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-                            {/* Engine Switcher */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, background: C.panel, padding: "3px 4px", borderRadius: 6, border: `1px solid ${C.border}` }}>
-                              <button
-                                type="button"
-                                onClick={() => setOcrEngine("paddleocr")}
-                                style={{
-                                  background: (ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "rgba(63,214,196,0.18)" : "transparent",
-                                  border: `1px solid ${(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? C.ramp : "transparent"}`,
-                                  color: (ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? C.ramp : C.textMuted,
-                                  borderRadius: 5,
-                                  padding: "4px 10px",
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 5
-                                }}
-                              >
-                                <Sparkles size={12} color={(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? C.ramp : C.textMuted} /> 🚀 PaddleOCR-VL (v1.6)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setOcrEngine("local")}
-                                style={{
-                                  background: ocrEngine === "local" ? "rgba(255,138,92,0.18)" : "transparent",
-                                  border: `1px solid ${ocrEngine === "local" ? C.boulder : "transparent"}`,
-                                  color: ocrEngine === "local" ? C.boulder : C.textMuted,
-                                  borderRadius: 5,
-                                  padding: "4px 10px",
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 5
-                                }}
-                              >
-                                <Brain size={12} color={ocrEngine === "local" ? C.boulder : C.textMuted} /> 🏛️ In-Browser Model (Offline)
-                              </button>
-                            </div>
-
-                            {/* Details & Actions per engine */}
-                            {(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? (
-                              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                                <span style={{ fontSize: 11.5, background: "rgba(63,214,196,0.12)", color: C.ramp, padding: "2px 7px", borderRadius: 4, fontWeight: 600 }}>
-                                  Pipeline: PaddleOCRVL v1.6
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowApiKeyModal(true)}
-                                  style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 5, padding: "4px 8px", fontSize: 11.5, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
-                                >
-                                  <Sliders size={11} /> Pipeline Details
-                                </button>
-                              </div>
-                            ) : (
-                              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                                <span style={{ fontSize: 11.5, background: "rgba(255,138,92,0.12)", color: C.boulder, padding: "2px 7px", borderRadius: 4, fontWeight: 600 }}>
-                                  Acc: {ocrModel.accuracy}%
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowTrainerModal(true)}
-                                  style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.boulder, borderRadius: 5, padding: "4px 10px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontWeight: 600 }}
-                                >
-                                  <Sliders size={12} /> Train Model
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Engine Description Line */}
-                          <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-                            {(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? (
-                              <span>
-                                🚀 <strong>PaddleOCR-VL 1.6:</strong> Document Vision-Language understanding with PP-DocLayoutV3 for markdown tables & structure.
-                              </span>
-                            ) : (
-                              <span>
-                                🏛️ <strong>Trained Local Model:</strong> 100% in-browser WebAssembly & coordinate grid parser. Zero cloud dependencies.
-                              </span>
-                            )}
-                            {(ocrEngine === "paddleocr" || ocrEngine === "sarvam") && (
-                              <span style={{ fontSize: 11, color: C.ramp, opacity: 0.85 }}>
-                                • {typeof window !== "undefined" && window.location.hostname.includes("vercel.app") ? "Cloud Proxy: Active on Vercel" : "API Proxy: Active on /api/paddleocr/scan"}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <input
-                          ref={scheduleInlineFileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleScheduleImageSelect(e.target.files?.[0])}
-                          style={{ display: "none" }}
-                        />
-
-                        {!scheduleUploadImg ? (
-                          <div
-                            onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
-                            onDragLeave={() => setIsDraggingFile(false)}
-                            onDrop={handleScheduleDrop}
-                            onClick={() => scheduleInlineFileInputRef.current?.click()}
-                            style={{
-                              border: `2px dashed ${isDraggingFile ? C.ramp : C.border}`,
-                              background: isDraggingFile ? "rgba(63,214,196,0.06)" : C.panelAlt,
-                              borderRadius: 8,
-                              padding: "26px 20px",
-                              textAlign: "center",
-                              cursor: "pointer",
-                              transition: "all 0.2s ease",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              gap: 10,
-                            }}
-                          >
-                            <div style={{ width: 44, height: 44, borderRadius: "50%", background: C.panel, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}` }}>
-                              <Upload size={20} color={C.ramp} />
-                            </div>
-                            <div>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>
-                                Click to select timetable image or drag & drop here
-                              </div>
-                              <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>
-                                Supports PNG, JPG, JPEG, WEBP · Classroom posters, university charts, college portal timetables
-                              </div>
-                            </div>
-                            <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); scheduleInlineFileInputRef.current?.click(); }}
-                                style={{ background: C.ramp, border: "none", color: "#0B2421", borderRadius: 6, padding: "6px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                              >
-                                <Upload size={13} /> Select Image
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setScheduleUploadImg("jecrc_section_c_clean.jpg");
-                                  setScheduleUploadFileName("jecrc_section_c_clean.jpg (Clean Digital Timetable)");
-                                }}
-                                style={{ background: "rgba(63,214,196,0.18)", border: `1.5px solid ${C.ramp}`, color: C.ramp, borderRadius: 6, padding: "6px 13px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                              >
-                                <Sparkles size={13} color={C.ramp} /> Load JECRC Sec-C Clean Timetable
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setScheduleUploadImg("jecrc_section_c_timetable.jpg");
-                                  setScheduleUploadFileName("jecrc_section_c_timetable.jpg (Classroom Photo)");
-                                }}
-                                style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "6px 12px", fontSize: 12.5, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                              >
-                                📷 Classroom Photo
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); scanAndApplySchedule(true); }}
-                                style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 12px", fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                              >
-                                Quick Parse Demo
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 8, padding: 14 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: "space-between", marginBottom: 12 }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                <img
-                                  src={scheduleUploadImg}
-                                  alt="Timetable upload"
-                                  style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 6, border: `1px solid ${C.border}` }}
-                                />
-                                <div>
-                                  <div style={{ fontSize: 13.5, fontWeight: 600, color: C.textPrimary, wordBreak: "break-all" }}>
-                                    {scheduleUploadFileName || "Selected Timetable Image"}
-                                  </div>
-                                  <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>
-                                    Ready to scan with {ocrModel.modelName}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div style={{ display: "flex", gap: 8 }}>
-                                <button
-                                  onClick={() => scheduleInlineFileInputRef.current?.click()}
-                                  style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 5, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}
-                                >
-                                  Change Image
-                                </button>
-                                <button
-                                  onClick={resetScheduleUpload}
-                                  style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.crisis, borderRadius: 5, padding: "5px 10px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
-                                >
-                                  <Trash2 size={12} /> Remove
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Mode & Action */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14, flexWrap: "wrap", borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
-                              <span style={{ fontSize: 12.5, color: C.textMuted }}>Upload Mode:</span>
-                              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer" }}>
-                                <input
-                                  type="radio"
-                                  name="uploadMode"
-                                  checked={scheduleUploadMode === "replace"}
-                                  onChange={() => setScheduleUploadMode("replace")}
-                                />
-                                Replace Current Schedule
-                              </label>
-                              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer" }}>
-                                <input
-                                  type="radio"
-                                  name="uploadMode"
-                                  checked={scheduleUploadMode === "merge"}
-                                  onChange={() => setScheduleUploadMode("merge")}
-                                />
-                                Merge With Existing Classes
-                              </label>
-                            </div>
-
-                            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                              <button
-                                onClick={() => scanAndApplySchedule(false)}
-                                disabled={isScanningSchedule}
-                                style={{
-                                  background: (ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? C.ramp : C.boulder,
-                                  border: "none",
-                                  borderRadius: 6,
-                                  padding: "9px 18px",
-                                  color: (ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "#08211E" : "#2A1206",
-                                  fontSize: 13.5,
-                                  fontWeight: 600,
-                                  cursor: isScanningSchedule ? "not-allowed" : "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                {isScanningSchedule ? (
-                                  <>
-                                    <Loader2 size={15} className="spin" /> {(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "Processing with PaddleOCR-VL 1.6…" : "Scanning with Local Model…"}
-                                  </>
-                                ) : (
-                                  <>
-                                    <Camera size={15} /> {(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "🚀 Extract with PaddleOCR-VL 1.6" : "Scan & Extract Schedule"}
-                                  </>
-                                )}
-                              </button>
-
-                              <button
-                                onClick={() => scanAndApplySchedule(true)}
-                                disabled={isScanningSchedule}
-                                style={{
-                                  background: "transparent",
-                                  border: `1px solid ${C.border}`,
-                                  borderRadius: 6,
-                                  padding: "9px 14px",
-                                  color: C.textMuted,
-                                  fontSize: 13,
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                }}
-                              >
-                                <Sparkles size={14} color={(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? C.ramp : C.boulder} /> {(ocrEngine === "paddleocr" || ocrEngine === "sarvam") ? "⚡ Test with PaddleOCR-VL 1.6 Output" : "Test with Sample Scan"}
-                              </button>
-                            </div>
-
-                            {sarvamJobStatus && (
-                              <div style={{ marginTop: 12, padding: "9px 12px", background: "rgba(63,214,196,0.1)", border: `1px solid ${C.ramp}`, borderRadius: 6, fontSize: 12.5, color: C.ramp, display: "flex", alignItems: "center", gap: 8 }}>
-                                <Loader2 size={14} className="spin" />
-                                <span>{sarvamJobStatus}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {isReviewingScanned && scannedEditableClasses.length > 0 && (
-                          <div style={{ marginTop: 14, background: C.panelAlt, border: `1.5px solid ${C.ramp}`, borderRadius: 8, padding: 16 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
-                              <div>
-                                <div style={{ fontSize: 14, fontWeight: 600, color: C.ramp, display: "flex", alignItems: "center", gap: 6 }}>
-                                  <Sparkles size={16} /> Review & Verify Extracted Classes ({scannedEditableClasses.length})
-                                </div>
-                                <div style={{ fontSize: 12, color: C.textMuted }}>
-                                  The model detected these classes. Edit titles or times below. Clicking "Learn Corrections & Apply" trains the scanner to remember your corrections!
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={addEmptyScannedClass}
-                                style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 5, padding: "5px 10px", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
-                              >
-                                <Plus size={13} /> Add Missing Class
-                              </button>
-                            </div>
-
-                            <div style={{ maxHeight: 250, overflowY: "auto", border: `1px solid ${C.border}`, borderRadius: 6, background: C.panel }}>
-                              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
-                                <thead>
-                                  <tr style={{ background: C.panelAlt, borderBottom: `1px solid ${C.border}`, color: C.textMuted }}>
-                                    <th style={{ padding: "8px 10px", textAlign: "left" }}>Subject Name</th>
-                                    <th style={{ padding: "8px 10px", textAlign: "left", width: 95 }}>Day</th>
-                                    <th style={{ padding: "8px 10px", textAlign: "left", width: 95 }}>Start</th>
-                                    <th style={{ padding: "8px 10px", textAlign: "left", width: 95 }}>End</th>
-                                    <th style={{ padding: "8px 10px", textAlign: "center", width: 40 }}>Del</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {scannedEditableClasses.map((item, idx) => (
-                                    <tr key={idx} style={{ borderBottom: `1px solid ${C.border}` }}>
-                                      <td style={{ padding: "6px 8px" }}>
-                                        <input
-                                          value={item.subject}
-                                          onChange={(e) => updateScannedClass(idx, "subject", e.target.value)}
-                                          placeholder="Subject Name"
-                                          style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 8px", color: C.textPrimary, fontSize: 12.5, boxSizing: "border-box" }}
-                                        />
-                                      </td>
-                                      <td style={{ padding: "6px 8px" }}>
-                                        <select
-                                          value={item.day}
-                                          onChange={(e) => updateScannedClass(idx, "day", e.target.value)}
-                                          style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px", color: C.textPrimary, fontSize: 12 }}
-                                        >
-                                          {DAY_ORDER.map((d) => (
-                                            <option key={d} value={d}>{DAY_LABEL[d]}</option>
-                                          ))}
-                                        </select>
-                                      </td>
-                                      <td style={{ padding: "6px 8px" }}>
-                                        <input
-                                          type="time"
-                                          value={minutesToHHMM(item.start)}
-                                          onChange={(e) => updateScannedClass(idx, "start", hhmmToMinutes(e.target.value))}
-                                          style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "4px", color: C.textPrimary, fontSize: 12 }}
-                                        />
-                                      </td>
-                                      <td style={{ padding: "6px 8px" }}>
-                                        <input
-                                          type="time"
-                                          value={minutesToHHMM(item.end)}
-                                          onChange={(e) => updateScannedClass(idx, "end", hhmmToMinutes(e.target.value))}
-                                          style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "4px", color: C.textPrimary, fontSize: 12 }}
-                                        />
-                                      </td>
-                                      <td style={{ padding: "6px 8px", textAlign: "center" }}>
-                                        <button
-                                          type="button"
-                                          onClick={() => deleteScannedClass(idx)}
-                                          style={{ background: "transparent", border: "none", color: C.crisis, cursor: "pointer", padding: 4 }}
-                                        >
-                                          <Trash2 size={13} />
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-
-                            <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center" }}>
-                              <button
-                                type="button"
-                                onClick={() => setIsReviewingScanned(false)}
-                                style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "7px 12px", fontSize: 12.5, cursor: "pointer" }}
-                              >
-                                Cancel Review
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => commitScannedClasses(false)}
-                                style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.textPrimary, borderRadius: 6, padding: "7px 14px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                              >
-                                <CheckCircle2 size={14} color={C.ramp} /> Apply to Schedule
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => commitScannedClasses(true)}
-                                style={{ background: C.boulder, border: "none", color: "#2A1206", borderRadius: 6, padding: "7px 16px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                              >
-                                <Brain size={14} /> 🎓 Learn Corrections & Apply
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {scheduleScanError && (
-                          <div style={{ marginTop: 10, background: "rgba(224,82,75,0.12)", border: `1px solid ${C.crisis}`, borderRadius: 6, padding: "9px 12px", fontSize: 12.5, color: "#FF8C8C", display: "flex", alignItems: "center", gap: 8 }}>
-                            <AlertTriangle size={15} color={C.crisis} />
-                            <span>{scheduleScanError}</span>
-                          </div>
-                        )}
-
-                        {scheduleScanSuccessMsg && (
-                          <div style={{ marginTop: 12, background: "rgba(63,214,196,0.1)", border: `1px solid ${C.ramp}`, borderRadius: 6, padding: "10px 14px" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: C.ramp, display: "flex", alignItems: "center", gap: 6 }}>
-                                <CheckCircle2 size={16} /> {scheduleScanSuccessMsg}
-                              </div>
-                              <button
-                                onClick={() => setScheduleScanSuccessMsg(null)}
-                                style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
-
-                            {scannedClassesPreview.length > 0 && (
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                                {scannedClassesPreview.map((c, i) => (
-                                  <div
-                                    key={i}
-                                    style={{
-                                      fontSize: 11.5,
-                                      background: C.panelAlt,
-                                      border: `1px solid ${C.border}`,
-                                      borderRadius: 4,
-                                      padding: "3px 8px",
-                                      color: C.textPrimary,
-                                    }}
-                                  >
-                                    <span style={{ color: C.boulder, fontWeight: 600 }}>{DAY_LABEL[c.day]}</span>: {c.subject} ({fmtTime(c.start)}–{fmtTime(c.end)})
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowScheduleUploadModal(true)}
+                        style={{
+                          background: C.ramp,
+                          border: "none",
+                          color: "#08211E",
+                          borderRadius: 6,
+                          padding: "8px 16px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          boxShadow: "0 2px 10px rgba(63,214,196,0.22)"
+                        }}
+                      >
+                        <Camera size={14} /> Scan & Upload Timetable
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStage("edit-schedule")}
+                        style={{
+                          background: C.panelAlt,
+                          border: `1px solid ${C.border}`,
+                          color: C.textPrimary,
+                          borderRadius: 6,
+                          padding: "8px 14px",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                      >
+                        <Pencil size={13} color={C.boulder} /> Edit Schedule
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowTrainerModal(true)}
+                        style={{
+                          background: "rgba(255,138,92,0.12)",
+                          border: `1px solid ${C.boulder}`,
+                          color: C.boulder,
+                          borderRadius: 6,
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5
+                        }}
+                      >
+                        <Brain size={13} /> Model Trainer
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Scan Success Banner */}
+                  {scheduleScanSuccessMsg && (
+                    <div style={{ marginBottom: 16, background: "rgba(63,214,196,0.1)", border: `1px solid ${C.ramp}`, borderRadius: 8, padding: "12px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ramp, display: "flex", alignItems: "center", gap: 8 }}>
+                          <CheckCircle2 size={17} /> {scheduleScanSuccessMsg}
+                        </div>
+                        <button
+                          onClick={() => setScheduleScanSuccessMsg(null)}
+                          style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 2 }}
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+
+                      {scannedClassesPreview.length > 0 && (
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                          {scannedClassesPreview.slice(0, 8).map((c, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                fontSize: 11.5,
+                                background: C.panelAlt,
+                                border: `1px solid ${C.border}`,
+                                borderRadius: 4,
+                                padding: "3px 8px",
+                                color: C.textPrimary,
+                              }}
+                            >
+                              <span style={{ color: C.boulder, fontWeight: 600 }}>{DAY_LABEL[c.day]}</span>: {c.subject} ({fmtTime(c.start)}–{fmtTime(c.end)})
+                            </div>
+                          ))}
+                          {scannedClassesPreview.length > 8 && (
+                            <div style={{ fontSize: 11.5, color: C.textMuted, padding: "3px 6px" }}>
+                              +{scannedClassesPreview.length - 8} more classes
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -3883,6 +3676,627 @@
                     <CheckCircle2 size={15} /> Save & Add Target
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Target Modal Card */}
+          {showEditTargetModal && (
+            <div className="rp-overlay" onClick={() => setShowEditTargetModal(false)}>
+              <div
+                className="rp-modal-card"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  maxWidth: 500,
+                  width: "100%",
+                  background: C.panel,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 12,
+                  padding: 24,
+                  boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
+                }}
+              >
+                {/* Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Pencil size={18} color={C.ramp} />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700 }}>
+                        Edit Target & Goal
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textMuted }}>
+                        Update target title, difficulty level, completion time, and deadline.
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowEditTargetModal(false)} style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }}>
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Target Title Input */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Target Title / Objective
+                  </label>
+                  <input
+                    autoFocus
+                    value={editTargetText}
+                    onChange={(e) => setEditTargetText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveEditedTarget()}
+                    placeholder="e.g. Complete AI Assignment 3 or Revise Compiler Design"
+                    style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.textPrimary, fontSize: 14, boxSizing: "border-box" }}
+                  />
+                </div>
+
+                {/* Difficulty of Target */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Difficulty of Target
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                    {[
+                      { id: "easy", label: "Easy (Ramp)", desc: "Quick win / review", mins: 15, color: C.ramp },
+                      { id: "medium", label: "Medium (Boulder)", desc: "Core lab / assignment", mins: 45, color: C.boulder },
+                      { id: "hard", label: "Hard (Deep Focus)", desc: "Complex exam prep", mins: 90, color: "#FF5E5B" },
+                    ].map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => {
+                          setEditTargetDifficulty(d.id);
+                          setEditTargetMinutes(d.mins);
+                        }}
+                        style={{
+                          background: editTargetDifficulty === d.id ? "rgba(255,255,255,0.06)" : C.panelAlt,
+                          border: `1.5px solid ${editTargetDifficulty === d.id ? d.color : C.border}`,
+                          borderRadius: 7,
+                          padding: "8px 6px",
+                          textAlign: "center",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ fontSize: 12, fontWeight: 700, color: editTargetDifficulty === d.id ? d.color : C.textPrimary }}>
+                          {d.label}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 2 }}>
+                          {d.desc}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Time it will take to complete */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted }}>
+                      Time It Will Take to Complete
+                    </label>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.ramp }}>
+                      {editTargetMinutes} minutes
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {[15, 30, 45, 60, 90, 120].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => setEditTargetMinutes(mins)}
+                        style={{
+                          flex: 1,
+                          minWidth: 44,
+                          padding: "6px 0",
+                          borderRadius: 5,
+                          border: `1px solid ${editTargetMinutes === mins ? C.ramp : C.border}`,
+                          background: editTargetMinutes === mins ? "rgba(63,214,196,0.15)" : C.panelAlt,
+                          color: editTargetMinutes === mins ? C.ramp : C.textMuted,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {mins}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Deadline of Target */}
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, display: "block", marginBottom: 6 }}>
+                    Deadline of Target
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 8 }}>
+                    {[
+                      { id: "eod", label: "End of Day", sub: "11:59 PM" },
+                      { id: "evening", label: "Evening", sub: "6:00 PM" },
+                      { id: "custom", label: "Specific", sub: "Custom" },
+                      { id: "none", label: "No Deadline", sub: "Open" },
+                    ].map((dl) => (
+                      <button
+                        key={dl.id}
+                        type="button"
+                        onClick={() => setEditTargetDeadlineType(dl.id)}
+                        style={{
+                          background: editTargetDeadlineType === dl.id ? "rgba(63,214,196,0.12)" : C.panelAlt,
+                          border: `1px solid ${editTargetDeadlineType === dl.id ? C.ramp : C.border}`,
+                          color: editTargetDeadlineType === dl.id ? C.ramp : C.textMuted,
+                          borderRadius: 6,
+                          padding: "7px 4px",
+                          fontSize: 11.5,
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        <div style={{ fontWeight: 600 }}>{dl.label}</div>
+                        <div style={{ fontSize: 10, opacity: 0.8 }}>{dl.sub}</div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {editTargetDeadlineType === "custom" && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                      <span style={{ fontSize: 12, color: C.textMuted }}>Pick Deadline Time:</span>
+                      <input
+                        type="time"
+                        value={editTargetDeadlineCustom}
+                        onChange={(e) => setEditTargetDeadlineCustom(e.target.value)}
+                        style={{ flex: 1, background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.textPrimary, fontSize: 13 }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer Actions */}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditTargetModal(false)}
+                    style={{ flex: 1, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "9px 0", fontSize: 13, cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveEditedTarget}
+                    disabled={!editTargetText.trim()}
+                    style={{
+                      flex: 2,
+                      background: editTargetText.trim() ? C.ramp : C.panelAlt,
+                      border: "none",
+                      color: editTargetText.trim() ? "#08211E" : C.textMuted,
+                      borderRadius: 6,
+                      padding: "9px 0",
+                      fontSize: 13.5,
+                      fontWeight: 700,
+                      cursor: editTargetText.trim() ? "pointer" : "not-allowed",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <CheckCircle2 size={15} /> Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scan & Upload Timetable Modal */}
+          {showScheduleUploadModal && (
+            <div className="rp-overlay" onClick={() => setShowScheduleUploadModal(false)}>
+              <div
+                className="rp-modal-card"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  maxWidth: 720,
+                  width: "min(720px, 94%)",
+                  maxHeight: "90vh",
+                  overflowY: "auto",
+                  background: C.panel,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 14,
+                  padding: 24,
+                  boxShadow: "0 24px 60px rgba(0,0,0,0.7)",
+                }}
+              >
+                {/* Hidden File Inputs: Camera for Scan & Upload, File Picker for Device File */}
+                <input
+                  ref={scheduleCameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleScheduleImageSelect(e.target.files[0]);
+                    }
+                  }}
+                />
+                <input
+                  ref={scheduleInlineFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleScheduleImageSelect(e.target.files[0]);
+                    }
+                  }}
+                />
+
+                {/* Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(63,214,196,0.15)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Camera size={22} color={C.ramp} />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: C.textPrimary }}>
+                        Scan & Upload Timetable
+                      </div>
+                      <div style={{ fontSize: 13, color: C.textMuted }}>
+                        PaddleOCR-VL 1.6 Document Vision • Scan via Camera or Choose File from Device
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowScheduleUploadModal(false)}
+                    style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Two Distinct Upload Options */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
+                  {/* Option 1: Scan & Upload (Camera) */}
+                  <button
+                    type="button"
+                    onClick={() => scheduleCameraInputRef.current?.click()}
+                    style={{
+                      background: "linear-gradient(145deg, rgba(63,214,196,0.14) 0%, rgba(63,214,196,0.04) 100%)",
+                      border: `1.5px solid ${C.ramp}`,
+                      borderRadius: 12,
+                      padding: "18px 16px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      transition: "all 0.18s ease",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(63,214,196,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Camera size={20} color={C.ramp} />
+                      </div>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", background: "rgba(63,214,196,0.2)", color: C.ramp, padding: "3px 8px", borderRadius: 12 }}>
+                        Camera
+                      </span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>
+                        📷 Scan & Upload
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.4 }}>
+                        Snap photo directly with phone or tablet camera from college noticeboard or paper printout.
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Choose File from Device */}
+                  <button
+                    type="button"
+                    onClick={() => scheduleInlineFileInputRef.current?.click()}
+                    style={{
+                      background: "linear-gradient(145deg, rgba(255,138,92,0.14) 0%, rgba(255,138,92,0.04) 100%)",
+                      border: `1.5px solid ${C.boulder}`,
+                      borderRadius: 12,
+                      padding: "18px 16px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      transition: "all 0.18s ease",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 8, background: "rgba(255,138,92,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Folder size={20} color={C.boulder} />
+                      </div>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", background: "rgba(255,138,92,0.2)", color: C.boulder, padding: "3px 8px", borderRadius: 12 }}>
+                        Device Storage
+                      </span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>
+                        📁 Choose File from Device
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.4 }}>
+                        Browse screenshot, WhatsApp image, PDF export or photo saved on your computer or phone.
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Drag & Drop Zone */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
+                  onDragLeave={() => setIsDraggingFile(false)}
+                  onDrop={handleScheduleDrop}
+                  style={{
+                    border: `2px dashed ${isDraggingFile ? C.ramp : C.border}`,
+                    borderRadius: 10,
+                    padding: "16px 20px",
+                    textAlign: "center",
+                    background: isDraggingFile ? "rgba(63,214,196,0.08)" : C.panelAlt,
+                    marginBottom: 16,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => scheduleInlineFileInputRef.current?.click()}
+                >
+                  <div style={{ fontSize: 13, color: C.textPrimary, fontWeight: 600 }}>
+                    Or drag & drop your timetable image here
+                  </div>
+                  <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 3 }}>
+                    Supports PNG, JPG, JPEG, WebP. High resolution images yield highest OCR accuracy.
+                  </div>
+                </div>
+
+                {/* Quick Demo & Pre-calibrated Timetable Presets */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.03)", border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", marginBottom: 18 }}>
+                  <div style={{ fontSize: 12, color: C.textMuted }}>
+                    <span style={{ fontWeight: 600, color: C.textPrimary }}>Need quick demo?</span> Test with pre-calibrated timetable:
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => scanAndApplySchedule(true)}
+                    disabled={isScanningSchedule}
+                    style={{
+                      background: "rgba(63,214,196,0.15)",
+                      border: `1px solid ${C.ramp}`,
+                      color: C.ramp,
+                      borderRadius: 6,
+                      padding: "5px 12px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: isScanningSchedule ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Sparkles size={13} /> Load Calibrated JECRC Sec-C
+                  </button>
+                </div>
+
+                {/* Image Preview & Run OCR Section */}
+                {scheduleUploadImg && (
+                  <div style={{ background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 14 }}>
+                      <img
+                        src={scheduleUploadImg}
+                        alt="Timetable Preview"
+                        style={{ width: 90, height: 70, objectFit: "cover", borderRadius: 6, border: `1px solid ${C.border}` }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {scheduleUploadFileName || "Selected Timetable Image"}
+                        </div>
+                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>
+                          Ready for PaddleOCR-VL 1.6 processing
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={resetScheduleUpload}
+                        style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    {/* Merge vs Replace Mode */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14, background: "rgba(0,0,0,0.2)", padding: "8px 12px", borderRadius: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.textMuted }}>Import Mode:</span>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer", color: C.textPrimary }}>
+                        <input
+                          type="radio"
+                          name="scheduleUploadModeModal"
+                          value="replace"
+                          checked={scheduleUploadMode === "replace"}
+                          onChange={() => setScheduleUploadMode("replace")}
+                        />
+                        Replace Current Timetable
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer", color: C.textPrimary }}>
+                        <input
+                          type="radio"
+                          name="scheduleUploadModeModal"
+                          value="merge"
+                          checked={scheduleUploadMode === "merge"}
+                          onChange={() => setScheduleUploadMode("merge")}
+                        />
+                        Merge with Existing
+                      </label>
+                    </div>
+
+                    {/* Extract Button */}
+                    <button
+                      type="button"
+                      onClick={() => scanAndApplySchedule(false)}
+                      disabled={isScanningSchedule}
+                      style={{
+                        width: "100%",
+                        background: isScanningSchedule ? C.panel : C.ramp,
+                        border: "none",
+                        color: isScanningSchedule ? C.textMuted : "#08211E",
+                        borderRadius: 8,
+                        padding: "12px 0",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        cursor: isScanningSchedule ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                        boxShadow: isScanningSchedule ? "none" : "0 4px 14px rgba(63,214,196,0.3)"
+                      }}
+                    >
+                      {isScanningSchedule ? (
+                        <>
+                          <Loader2 size={16} className="rp-spin" /> {sarvamJobStatus || "Running PaddleOCR-VL 1.6..."}
+                        </>
+                      ) : (
+                        <>
+                          <Cpu size={16} /> Run PaddleOCR-VL 1.6 Extraction
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Review & Verification Table */}
+                {isReviewingScanned && scannedEditableClasses.length > 0 && (
+                  <div style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary }}>
+                          Review Extracted Classes ({scannedEditableClasses.length})
+                        </div>
+                        <div style={{ fontSize: 12, color: C.textMuted }}>
+                          Verify subject names, days, and start/end times before saving to your timetable.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addEmptyScannedClass}
+                        style={{
+                          background: C.panelAlt,
+                          border: `1px solid ${C.border}`,
+                          color: C.ramp,
+                          borderRadius: 6,
+                          padding: "6px 10px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}
+                      >
+                        <Plus size={13} /> Add Row
+                      </button>
+                    </div>
+
+                    <div style={{ maxHeight: 260, overflowY: "auto", border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 14 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+                        <thead>
+                          <tr style={{ background: C.panelAlt, borderBottom: `1px solid ${C.border}`, color: C.textMuted }}>
+                            <th style={{ padding: "8px 10px", textAlign: "left", width: 90 }}>Day</th>
+                            <th style={{ padding: "8px 10px", textAlign: "left" }}>Subject</th>
+                            <th style={{ padding: "8px 10px", textAlign: "left", width: 100 }}>Start Time</th>
+                            <th style={{ padding: "8px 10px", textAlign: "left", width: 100 }}>End Time</th>
+                            <th style={{ padding: "8px 10px", textAlign: "center", width: 40 }}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {scannedEditableClasses.map((item, idx) => (
+                            <tr key={idx} style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <td style={{ padding: "6px 8px" }}>
+                                <select
+                                  value={item.day}
+                                  onChange={(e) => updateScannedClass(idx, "day", e.target.value)}
+                                  style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 4px", color: C.textPrimary, fontSize: 12 }}
+                                >
+                                  {["mon", "tue", "wed", "thu", "fri", "sat"].map((d) => (
+                                    <option key={d} value={d}>{d.toUpperCase()}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td style={{ padding: "6px 8px" }}>
+                                <input
+                                  value={item.subject}
+                                  onChange={(e) => updateScannedClass(idx, "subject", e.target.value)}
+                                  style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 8px", color: C.textPrimary, fontSize: 12.5 }}
+                                />
+                              </td>
+                              <td style={{ padding: "6px 8px" }}>
+                                <input
+                                  type="time"
+                                  value={formatTime(item.start)}
+                                  onChange={(e) => {
+                                    const [h, m] = e.target.value.split(":").map(Number);
+                                    updateScannedClass(idx, "start", h * 60 + m);
+                                  }}
+                                  style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 4px", color: C.textPrimary, fontSize: 12 }}
+                                />
+                              </td>
+                              <td style={{ padding: "6px 8px" }}>
+                                <input
+                                  type="time"
+                                  value={formatTime(item.end)}
+                                  onChange={(e) => {
+                                    const [h, m] = e.target.value.split(":").map(Number);
+                                    updateScannedClass(idx, "end", h * 60 + m);
+                                  }}
+                                  style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 4, padding: "5px 4px", color: C.textPrimary, fontSize: 12 }}
+                                />
+                              </td>
+                              <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => deleteScannedClass(idx)}
+                                  style={{ background: "transparent", border: "none", color: "#FF5E5B", cursor: "pointer" }}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsReviewingScanned(false)}
+                        style={{ flex: 1, background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "9px 0", fontSize: 13, cursor: "pointer" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => commitScannedClasses(false)}
+                        style={{ flex: 2, background: C.ramp, border: "none", color: "#08211E", borderRadius: 6, padding: "9px 0", fontSize: 13.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                      >
+                        <CheckCircle2 size={15} /> Save & Apply to Timetable
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => commitScannedClasses(true)}
+                        style={{ flex: 2, background: C.boulder, border: "none", color: "#2A1206", borderRadius: 6, padding: "9px 0", fontSize: 13.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                      >
+                        <Brain size={15} /> Apply & Train Model
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Banner */}
+                {scheduleScanError && (
+                  <div style={{ marginTop: 14, background: "rgba(255,94,91,0.12)", border: "1px solid #FF5E5B", borderRadius: 8, padding: "10px 14px", color: "#FF8E8B", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+                    <AlertTriangle size={16} /> {scheduleScanError}
+                  </div>
+                )}
               </div>
             </div>
           )}
