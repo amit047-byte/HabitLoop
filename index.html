@@ -2080,7 +2080,8 @@
       now = new Date(),
       activeDay = null,
       onSelectDay = () => {},
-      onToggleHabitDay = null
+      onToggleHabitDay = null,
+      onAddHabit = null
     }) {
       const days = ["M", "T", "W", "T", "F", "S", "S"];
       const dayKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -2102,12 +2103,15 @@
 
       // Live consistency rate across all active habit slots
       const consistencyRate = totalHabits > 0 ? Math.min(100, Math.max(0, (totalDoneAllHabits / totalSlots) * 100)) : 0;
-      const formattedRate = consistencyRate.toFixed(1) + "%";
+      const formattedRate = totalHabits > 0 ? consistencyRate.toFixed(1) + "%" : "0%";
 
       // Dynamic Lock Status
-      let lockText = "RELOAD";
-      let lockColor = "#FF8A5C";
-      if (consistencyRate >= 80) {
+      let lockText = "START";
+      let lockColor = "#3FD6C4";
+      if (totalHabits === 0) {
+        lockText = "START";
+        lockColor = "#3FD6C4";
+      } else if (consistencyRate >= 80) {
         lockText = "LOCK";
         lockColor = "#3CD09B";
       } else if (consistencyRate >= 50) {
@@ -2132,7 +2136,7 @@
 
       // Dynamic matrix dimension label: 28D for 4 habits, 35D for 5, 42D for 6, etc.
       const matrixDimension = totalHabits * 7;
-      const dimensionLabel = totalHabits === 4 ? "28D" : `${matrixDimension}D`;
+      const dimensionLabel = totalHabits === 0 ? "7-Day" : totalHabits === 4 ? "28D" : `${matrixDimension}D`;
 
       // Matrix Rows: 1 Row per Habit, 7 Columns (M T W T F S S)
       const matrixRows = habits.map((h, rIdx) => {
@@ -2214,7 +2218,7 @@
                 Consistency<br />Matrix ({dimensionLabel})
               </div>
               <div style={{ fontSize: 11.5, color: "#6D758B", marginTop: 4, fontFamily: "'Space Grotesk', monospace" }}>
-                {totalHabits} {totalHabits === 1 ? "habit" : "habits"} × 7 days
+                {totalHabits === 0 ? "0 habits · Log your habits to start" : `${totalHabits} ${totalHabits === 1 ? "habit" : "habits"} × 7 days`}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -2278,8 +2282,42 @@
           {/* Matrix Rows: 1 Row per Habit, 7 Columns (M T W T F S S) */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {matrixRows.length === 0 ? (
-              <div style={{ padding: "18px 0", textAlign: "center", fontSize: 12, color: "#6D758B" }}>
-                No habits yet. Click <b>+ New Habit</b> to start your consistency loop.
+              <div style={{
+                padding: "22px 14px",
+                textAlign: "center",
+                background: "rgba(63, 214, 196, 0.05)",
+                border: "1px dashed rgba(63, 214, 196, 0.3)",
+                borderRadius: 8,
+                margin: "4px 0"
+              }}>
+                <div style={{ fontSize: 22, marginBottom: 4 }}>📋</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#EEF0F5", fontFamily: "'Space Grotesk', sans-serif", marginBottom: 3 }}>
+                  Log your habits
+                </div>
+                <div style={{ fontSize: 11.5, color: "#8E95A8", maxWidth: 220, margin: "0 auto 10px", lineHeight: 1.35 }}>
+                  Add your daily habits to track your 7-day consistency loop.
+                </div>
+                {onAddHabit && (
+                  <button
+                    type="button"
+                    onClick={onAddHabit}
+                    style={{
+                      background: "#3FD6C4",
+                      border: "none",
+                      borderRadius: 5,
+                      padding: "6px 12px",
+                      color: "#08211E",
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4
+                    }}
+                  >
+                    + Log Your Habits
+                  </button>
+                )}
               </div>
             ) : (
               matrixRows.map((row, rIdx) => {
@@ -2447,7 +2485,7 @@
       const [editTargetDeadlineType, setEditTargetDeadlineType] = useState("eod");
       const [editTargetDeadlineCustom, setEditTargetDeadlineCustom] = useState("18:00");
 
-      const [scheduleAll, setScheduleAll] = useState(DEMO_SCHEDULE);
+      const [scheduleAll, setScheduleAll] = useState([]);
       const [selectedDay, setSelectedDay] = useState(() => getWeekdayKey(new Date()));
       const [scheduleBusy, setScheduleBusy] = useState(false);
       const [scheduleErr, setScheduleErr] = useState(null);
@@ -2513,7 +2551,7 @@
       const [isReviewingScanned, setIsReviewingScanned] = useState(false);
 
       // ---- HabitFlow State ----
-      const [habits, setHabits] = useState(DEFAULT_HABITS);
+      const [habits, setHabits] = useState([]);
       const [activeMatrixDay, setActiveMatrixDay] = useState(null);
       const [habitChartMode, setHabitChartMode] = useState("bars");
       const [newHabitName, setNewHabitName] = useState("");
@@ -2529,11 +2567,8 @@
       const [debriefTime, setDebriefTime] = useState(DEFAULT_DEBRIEF_TIME);
       const [settingsMsg, setSettingsMsg] = useState(null);
       const [sleepSettings, setSleepSettings] = useState({ enabled: false, bedtime: "22:30", wake: "07:00" });
-      const [hourlyEnergy, setHourlyEnergy] = useState({ 9: 4, 10: 5, 11: 4, 14: 2, 15: 3, 17: 4, 20: 4 });
-      const [tasks, setTasks] = useState([
-        { id: "t-demo-1", title: "Complete C++ File Handling Lab", cognitiveLoad: "boulder", minutes: 45, priority: 80, status: "scheduled", start: 720, end: 765 },
-        { id: "t-demo-2", title: "Organize GitHub Repository README", cognitiveLoad: "ramp", minutes: 20, priority: 45, status: "scheduled", start: 800, end: 820 },
-      ]);
+      const [hourlyEnergy, setHourlyEnergy] = useState({});
+      const [tasks, setTasks] = useState([]);
 
       const [modalOpen, setModalOpen] = useState(false);
       const [inputText, setInputText] = useState("");
@@ -2591,12 +2626,12 @@
         }, 200);
 
         // 1. Instant local load (0ms from memory/localStorage)
-        const sched = loadLocalJSON("data:schedule", DEMO_SCHEDULE);
-        const t = loadLocalJSON("data:tasks", tasks);
-        const he = loadLocalJSON("data:hourlyEnergy", hourlyEnergy);
+        const sched = loadLocalJSON("data:schedule", null);
+        const t = loadLocalJSON("data:tasks", null);
+        const he = loadLocalJSON("data:hourlyEnergy", {});
         const bd = loadLocalJSON("data:brainDumpLog", []);
-        const tg = loadLocalJSON("data:targets", {});
-        const savedHabits = loadLocalJSON("data:habits", DEFAULT_HABITS);
+        const tg = loadLocalJSON("data:targets", null);
+        const savedHabits = loadLocalJSON("data:habits", null);
         const savedModel = loadLocalJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL);
         const savedEngine = loadLocalJSON("data:ocrEngine", "paddleocr");
         const savedUser = loadLocalJSON("data:currentUser", null);
@@ -2609,43 +2644,59 @@
           saveJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL);
         }
 
-        let finalSched = sched;
-        if (!sched || sched.length === 0) {
-          finalSched = DEMO_SCHEDULE;
-          saveJSON("data:schedule", DEMO_SCHEDULE);
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMobileUpload = urlParams.get("mobile_upload") === "1";
+        const autoLoginParam = urlParams.get("autologin") === "1";
+        const stageParam = urlParams.get("stage");
+        const tabParam = urlParams.get("tab");
+        const modalParam = urlParams.get("modal");
+
+        // OAuth redirect & error detection
+        const hasOAuthToken = typeof window !== "undefined" && (
+          window.location.hash.includes("access_token") ||
+          window.location.hash.includes("id_token") ||
+          window.location.search.includes("code=")
+        );
+        const hashParams = typeof window !== "undefined" ? new URLSearchParams(window.location.hash.substring(1)) : null;
+        const queryParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const oauthError = hashParams?.get("error_description") || queryParams?.get("error_description") || hashParams?.get("error") || queryParams?.get("error");
+
+        if (oauthError) {
+          setAuthError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+          setStage("auth");
+          setLoggedIn(false);
+          setBootstrapped(true);
+          if (typeof window !== "undefined" && window.location.hash) {
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          }
+          return () => {
+            isMounted = false;
+            clearTimeout(safetyTimer);
+          };
         }
 
-        setScheduleAll(finalSched);
-        setTasks(t);
-        setHourlyEnergy(he);
-        setBrainDumpLog(bd);
+        const isDemoSession = (savedUser && savedUser.isDemo) || autoLoginParam;
         const currentDayKey = new Date().toDateString();
-        const initialTargets = tg && Object.keys(tg).length > 0 ? tg : {
+
+        const finalSched = sched !== null ? sched : isDemoSession ? DEMO_SCHEDULE : [];
+        const finalHabits = savedHabits !== null ? savedHabits : isDemoSession ? DEFAULT_HABITS : [];
+        const finalTasks = t !== null ? t : isDemoSession ? [
+          { id: "t-demo-1", title: "Complete C++ File Handling Lab", cognitiveLoad: "boulder", minutes: 45, priority: 80, status: "scheduled", start: 720, end: 765 },
+          { id: "t-demo-2", title: "Organize GitHub Repository README", cognitiveLoad: "ramp", minutes: 20, priority: 45, status: "scheduled", start: 800, end: 820 },
+        ] : [];
+        const finalTargets = tg !== null ? tg : isDemoSession ? {
           [currentDayKey]: [
-            {
-              id: "target-ai-assign-3",
-              text: "Complete AI Assignment 3 (Lab Problem Set)",
-              done: false,
-              difficulty: "medium",
-              estimatedMinutes: 45,
-              deadline: "6:00 PM",
-              cognitiveLoad: "boulder",
-              linkedTaskId: null,
-            },
-            {
-              id: "target-compiler-rev",
-              text: "Revise Compiler Design & Syntax Trees",
-              done: false,
-              difficulty: "easy",
-              estimatedMinutes: 30,
-              deadline: "End of Day (11:59 PM)",
-              cognitiveLoad: "ramp",
-              linkedTaskId: null,
-            },
-          ],
-        };
-        setTargetsByDate(initialTargets);
-        setHabits(savedHabits);
+            { id: "target-ai-assign-3", text: "Complete AI Assignment 3 (Lab Problem Set)", done: false, difficulty: "medium", estimatedMinutes: 45, deadline: "6:00 PM", cognitiveLoad: "boulder", linkedTaskId: null },
+            { id: "target-compiler-rev", text: "Revise Compiler Design & Syntax Trees", done: false, difficulty: "easy", estimatedMinutes: 30, deadline: "End of Day (11:59 PM)", cognitiveLoad: "ramp", linkedTaskId: null },
+          ]
+        } : {};
+
+        setScheduleAll(finalSched);
+        setTasks(finalTasks);
+        setHourlyEnergy(he || {});
+        setBrainDumpLog(bd || []);
+        setTargetsByDate(finalTargets);
+        setHabits(finalHabits);
         setOcrModel(finalModel);
         if (savedEngine) setOcrEngine(savedEngine);
 
@@ -2656,13 +2707,6 @@
           setAutoDebriefEnabled(savedAutoDebrief);
         }
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const isMobileUpload = urlParams.get("mobile_upload") === "1";
-        const autoLoginParam = urlParams.get("autologin") === "1";
-        const stageParam = urlParams.get("stage");
-        const tabParam = urlParams.get("tab");
-        const modalParam = urlParams.get("modal");
-
         if (isMobileUpload) {
           setStage("mobile-upload");
           setBootstrapped(true);
@@ -2672,7 +2716,10 @@
           };
         }
 
-        if (savedUser || autoLoginParam) {
+        if (hasOAuthToken) {
+          // OAuth callback in progress: show loader while exchange completes
+          setStage("loading");
+        } else if (savedUser || autoLoginParam) {
           const u = savedUser || {
             name: "Amitabha Ghosh",
             email: "amit.productivity047@gmail.com",
@@ -2732,12 +2779,16 @@
         if (supabase) {
           (async () => {
             try {
-              const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 1200));
+              const timeoutMs = hasOAuthToken ? 6000 : 1500;
+              const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), timeoutMs));
               const { data: { session } } = await Promise.race([supabase.auth.getSession(), timeoutPromise]);
               if (session && session.user && isMounted) {
                 await syncUserCloudData(session.user);
                 setLoggedIn(true);
-                setStage((prev) => (prev === "auth" || prev === "loading" ? "dashboard" : prev));
+                setStage("dashboard");
+                setAuthLoading(false);
+              } else if (hasOAuthToken && isMounted) {
+                setStage("auth");
               }
             } catch (err) {
               console.warn("Background Supabase session note:", err);
@@ -2754,9 +2805,20 @@
       useEffect(() => {
         if (!supabase) return;
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          if (event === "SIGNED_IN" && session?.user) {
+          if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
             await syncUserCloudData(session.user);
             setLoggedIn(true);
+            setStage("dashboard");
+            setAuthLoading(false);
+            if (typeof window !== "undefined") {
+              if (window.location.hash && (window.location.hash.includes("access_token") || window.location.hash.includes("id_token"))) {
+                window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+              }
+              if (window.location.search && window.location.search.includes("code=")) {
+                const clean = window.location.search.replace(/[?&]code=[^&]+/, "").replace(/^[?&]/, "");
+                window.history.replaceState({}, document.title, window.location.pathname + (clean ? "?" + clean : ""));
+              }
+            }
           } else if (event === "SIGNED_OUT") {
             setActiveCloudUser(null);
             setLoggedIn(false);
@@ -3274,14 +3336,14 @@
             .maybeSingle();
 
           const resolvedProfile = {
-            name: dbProfile?.full_name || cloudUser.user_metadata?.full_name || cloudUser.email?.split("@")[0] || "Student",
+            name: dbProfile?.full_name || cloudUser.user_metadata?.full_name || cloudUser.user_metadata?.name || cloudUser.email?.split("@")[0] || "Student",
             email: cloudUser.email,
-            university: dbProfile?.university || cloudUser.user_metadata?.university || "JECRC University",
-            degree: dbProfile?.degree || "B.Tech Computer Science & Engineering",
-            semester: dbProfile?.semester || "4th Semester",
-            studentId: dbProfile?.student_id || "23BCON047",
+            university: dbProfile?.university || cloudUser.user_metadata?.university || "University Student",
+            degree: dbProfile?.degree || "Undergraduate",
+            semester: dbProfile?.semester || "1st Year",
+            studentId: dbProfile?.student_id || "",
             dailyTargetHours: dbProfile?.daily_target_hours || 4,
-            bio: dbProfile?.bio || "Striving for academic consistency, high-energy focus, and deep work.",
+            bio: dbProfile?.bio || "Building daily consistency, focused study habits, and peak academic momentum.",
             cloudUserId: cloudUser.id,
             loggedInAt: new Date().toISOString()
           };
@@ -3325,11 +3387,39 @@
                 setTargetsByDate(record.value);
               } else if (record.key === "data:hourlyEnergy" && record.value && typeof record.value === "object") {
                 setHourlyEnergy(record.value);
+              } else if (record.key === "data:tasks" && Array.isArray(record.value)) {
+                setTasks(record.value);
               }
             });
           } else {
-            // New user account: Migrate current local state to cloud
-            await migrateLocalDataToCloud(cloudUser.id);
+            // New user account: Give a clean, blank app (empty habits, timetable, targets)
+            setHabits([]);
+            setScheduleAll([]);
+            setTargetsByDate({});
+            setTasks([]);
+            setHourlyEnergy({});
+            setBrainDumpLog([]);
+
+            try {
+              window.localStorage.setItem("data:habits", JSON.stringify([]));
+              window.localStorage.setItem("data:schedule", JSON.stringify([]));
+              window.localStorage.setItem("data:targets", JSON.stringify({}));
+              window.localStorage.setItem("data:tasks", JSON.stringify([]));
+              window.localStorage.setItem("data:hourlyEnergy", JSON.stringify({}));
+            } catch (_) {}
+
+            try {
+              const blankPayload = [
+                { user_id: cloudUser.id, key: "data:habits", value: [], updated_at: new Date().toISOString() },
+                { user_id: cloudUser.id, key: "data:schedule", value: [], updated_at: new Date().toISOString() },
+                { user_id: cloudUser.id, key: "data:targets", value: {}, updated_at: new Date().toISOString() },
+                { user_id: cloudUser.id, key: "data:tasks", value: [], updated_at: new Date().toISOString() },
+                { user_id: cloudUser.id, key: "data:hourlyEnergy", value: {}, updated_at: new Date().toISOString() }
+              ];
+              await supabase.from("user_data").upsert(blankPayload);
+            } catch (initErr) {
+              console.warn("New user cloud data initialization note:", initErr);
+            }
           }
 
           setCloudSyncStatus("synced");
@@ -3481,14 +3571,28 @@
           }
         }
 
-        // Fallback local account creation
+        // Fallback local account creation (starts with clean blank app)
+        setHabits([]);
+        setScheduleAll([]);
+        setTargetsByDate({});
+        setTasks([]);
+        setHourlyEnergy({});
+        setBrainDumpLog([]);
+        try {
+          window.localStorage.setItem("data:habits", JSON.stringify([]));
+          window.localStorage.setItem("data:schedule", JSON.stringify([]));
+          window.localStorage.setItem("data:targets", JSON.stringify({}));
+          window.localStorage.setItem("data:tasks", JSON.stringify([]));
+          window.localStorage.setItem("data:hourlyEnergy", JSON.stringify({}));
+        } catch (_) {}
+
         const userObj = {
           name,
           email,
-          university: signupUniversity.trim() || "JECRC University",
-          degree: "B.Tech Computer Science & Engineering",
-          semester: "4th Semester",
-          studentId: "23BCON047",
+          university: signupUniversity.trim() || "University Student",
+          degree: "Undergraduate",
+          semester: "1st Year",
+          studentId: "",
           dailyTargetHours: 4,
           loggedInAt: new Date().toISOString(),
         };
@@ -3518,27 +3622,7 @@
           return;
         }
 
-        // 2. Pre-check if Google OAuth provider is enabled in Supabase project
-        try {
-          const checkResp = await fetch(
-            "https://pzfvmnsbhqkrtxietlle.supabase.co/auth/v1/authorize?provider=google",
-            { method: "GET" }
-          );
-          if (checkResp.status === 400) {
-            const errJson = await checkResp.json().catch(() => null);
-            if (errJson && errJson.msg && errJson.msg.toLowerCase().includes("not enabled")) {
-              setAuthError(
-                "Google OAuth provider is not enabled yet in your Supabase project. In Supabase Dashboard -> Authentication -> Providers -> Google, toggle it ON with your Google Client ID & Secret."
-              );
-              setAuthLoading(false);
-              return;
-            }
-          }
-        } catch (checkErr) {
-          console.warn("Provider pre-check note:", checkErr);
-        }
-
-        // 3. Initiate Supabase OAuth flow
+        // 2. Initiate Supabase OAuth flow directly
         try {
           const redirectUrl = window.location.origin + window.location.pathname;
           const { data, error } = await supabase.auth.signInWithOAuth({
@@ -3550,6 +3634,10 @@
           if (error) {
             setAuthError(error.message);
             setAuthLoading(false);
+            return;
+          }
+          if (data?.url) {
+            window.location.href = data.url;
           }
         } catch (err) {
           setAuthError(err.message || "Google sign-in error occurred.");
@@ -3568,9 +3656,12 @@
           dailyTargetHours: 4,
           bio: "Striving for academic consistency, high-energy focus, and deep work.",
           provider: "google",
+          isDemo: true,
           loggedInAt: new Date().toISOString()
         };
         setProfile(userObj);
+        setScheduleAll(DEMO_SCHEDULE);
+        setHabits(DEFAULT_HABITS);
         setLoggedIn(true);
         setStage("dashboard");
         saveJSON("data:currentUser", userObj);
@@ -3587,9 +3678,12 @@
           studentId: "23BCON047",
           dailyTargetHours: 4,
           bio: "Striving for academic consistency, high-energy focus, and deep work.",
+          isDemo: true,
           loggedInAt: new Date().toISOString(),
         };
         setProfile(userObj);
+        setScheduleAll(DEMO_SCHEDULE);
+        setHabits(DEFAULT_HABITS);
         setLoggedIn(true);
         setStage("dashboard");
         saveJSON("data:currentUser", userObj);
@@ -3629,10 +3723,23 @@
         setShowAddHabitModal(false);
         setModalOpen(false);
 
+        // Reset user working data to blank
+        setHabits([]);
+        setScheduleAll([]);
+        setTargetsByDate({});
+        setTasks([]);
+        setHourlyEnergy({});
+        setBrainDumpLog([]);
+
         // 2. Clear all local storage session items immediately
         try {
           window.localStorage.removeItem("data:currentUser");
           window.localStorage.removeItem("data:profile");
+          window.localStorage.removeItem("data:habits");
+          window.localStorage.removeItem("data:schedule");
+          window.localStorage.removeItem("data:targets");
+          window.localStorage.removeItem("data:tasks");
+          window.localStorage.removeItem("data:hourlyEnergy");
           const keysToRemove = [];
           for (let i = 0; i < window.localStorage.length; i++) {
             const k = window.localStorage.key(i);
@@ -5929,136 +6036,187 @@
                           </button>
                         </div>
 
-                        <div className="rp-table-scroll">
-                          <table className="hf-grid-table">
-                          <thead>
-                            <tr>
-                              <th style={{ fontSize: 12, color: C.textMuted }}>Habit</th>
-                              {DAY_ORDER.map((d) => {
-                                const isToday = d === todayKey;
-                                const isSelected = activeMatrixDay === d;
+                        {habits.length === 0 ? (
+                          <div style={{
+                            padding: "36px 20px",
+                            textAlign: "center",
+                            background: "rgba(16, 19, 30, 0.6)",
+                            border: "1px dashed #282E42",
+                            borderRadius: 8,
+                            margin: "8px 0"
+                          }}>
+                            <div style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "50%",
+                              background: "rgba(63, 214, 196, 0.12)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              margin: "0 auto 12px",
+                              color: "#3FD6C4"
+                            }}>
+                              <CheckCircle2 size={22} />
+                            </div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: "#EEF0F5", fontFamily: "'Space Grotesk', sans-serif", marginBottom: 5 }}>
+                              Log your habits
+                            </div>
+                            <div style={{ fontSize: 13, color: "#8E95A8", maxWidth: 360, margin: "0 auto 16px", lineHeight: 1.5 }}>
+                              Your 7-day habit matrix is currently blank. Start by logging the daily study habits, coding routines, or focus drills you want to master.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddHabitModal(true)}
+                              style={{
+                                background: C.ramp,
+                                border: "none",
+                                borderRadius: 6,
+                                padding: "8px 18px",
+                                color: "#08211E",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                boxShadow: "0 2px 10px rgba(63, 214, 196, 0.25)"
+                              }}
+                            >
+                              <Plus size={15} strokeWidth={2.5} /> Log Your Habits
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="rp-table-scroll">
+                            <table className="hf-grid-table">
+                            <thead>
+                              <tr>
+                                <th style={{ fontSize: 12, color: C.textMuted }}>Habit</th>
+                                {DAY_ORDER.map((d) => {
+                                  const isToday = d === todayKey;
+                                  const isSelected = activeMatrixDay === d;
+                                  return (
+                                    <th
+                                      key={d}
+                                      onClick={() => setActiveMatrixDay(activeMatrixDay === d ? null : d)}
+                                      title={`Click to focus ${DAY_LABEL[d]} in 28D Consistency Matrix`}
+                                      style={{
+                                        fontSize: 12,
+                                        color: isSelected ? "#38BDF8" : isToday ? C.boulder : C.textMuted,
+                                        fontWeight: isToday || isSelected ? 700 : 500,
+                                        cursor: "pointer",
+                                        background: isSelected ? "rgba(56, 189, 248, 0.16)" : "transparent",
+                                        border: isSelected ? "1px solid #38BDF8" : "1px solid transparent",
+                                        borderRadius: 6,
+                                        padding: "4px 6px",
+                                        transition: "all 0.15s ease"
+                                      }}
+                                    >
+                                      {DAY_LABEL[d]}
+                                    </th>
+                                  );
+                                })}
+                                <th style={{ fontSize: 12, color: C.textMuted }}>Streak</th>
+                                <th style={{ fontSize: 12, color: C.textMuted }}>Ramp</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {habits.map((h) => {
+                                const streak = computeHabitStreak(h.logs);
                                 return (
-                                  <th
-                                    key={d}
-                                    onClick={() => setActiveMatrixDay(activeMatrixDay === d ? null : d)}
-                                    title={`Click to focus ${DAY_LABEL[d]} in 28D Consistency Matrix`}
-                                    style={{
-                                      fontSize: 12,
-                                      color: isSelected ? "#38BDF8" : isToday ? C.boulder : C.textMuted,
-                                      fontWeight: isToday || isSelected ? 700 : 500,
-                                      cursor: "pointer",
-                                      background: isSelected ? "rgba(56, 189, 248, 0.16)" : "transparent",
-                                      border: isSelected ? "1px solid #38BDF8" : "1px solid transparent",
-                                      borderRadius: 6,
-                                      padding: "4px 6px",
-                                      transition: "all 0.15s ease"
-                                    }}
-                                  >
-                                    {DAY_LABEL[d]}
-                                  </th>
-                                );
-                              })}
-                              <th style={{ fontSize: 12, color: C.textMuted }}>Streak</th>
-                              <th style={{ fontSize: 12, color: C.textMuted }}>Ramp</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {habits.map((h) => {
-                              const streak = computeHabitStreak(h.logs);
-                              return (
-                                <tr key={h.id}>
-                                  <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: h.color, display: "inline-block" }} />
-                                      <div>
-                                        <div style={{ fontSize: 13.5, fontWeight: 500 }}>{h.name}</div>
-                                        <div style={{ fontSize: 11, color: C.textMuted }}>{h.category} · {h.mins}m · {h.load}</div>
+                                  <tr key={h.id}>
+                                    <td>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: h.color, display: "inline-block" }} />
+                                        <div>
+                                          <div style={{ fontSize: 13.5, fontWeight: 500 }}>{h.name}</div>
+                                          <div style={{ fontSize: 11, color: C.textMuted }}>{h.category} · {h.mins}m · {h.load}</div>
+                                        </div>
                                       </div>
-                                    </div>
-                                  </td>
-                                  {DAY_ORDER.map((d) => {
-                                    const checked = !!h.logs?.[d];
-                                    const isSelected = activeMatrixDay === d;
-                                    return (
-                                      <td
-                                        key={d}
-                                        style={{
-                                          background: isSelected ? "rgba(56, 189, 248, 0.06)" : "transparent",
-                                          borderRadius: 4,
-                                          transition: "background 0.15s ease"
-                                        }}
-                                      >
-                                        <button
-                                          onClick={() => toggleHabitDay(h.id, d)}
-                                          title={`Toggle ${h.name} on ${DAY_LABEL[d]} (updates 28D Consistency Loop)`}
+                                    </td>
+                                    {DAY_ORDER.map((d) => {
+                                      const checked = !!h.logs?.[d];
+                                      const isSelected = activeMatrixDay === d;
+                                      return (
+                                        <td
+                                          key={d}
                                           style={{
-                                            width: 28,
-                                            height: 28,
-                                            borderRadius: 6,
-                                            border: `1.5px solid ${checked ? h.color : isSelected ? "#38BDF8" : C.border}`,
-                                            background: checked ? h.color : "transparent",
-                                            color: checked ? "#12141B" : "transparent",
-                                            cursor: "pointer",
-                                            fontWeight: 700,
-                                            boxShadow: isSelected && checked ? `0 0 10px ${h.color}88` : "none",
-                                            transition: "all 0.15s ease"
+                                            background: isSelected ? "rgba(56, 189, 248, 0.06)" : "transparent",
+                                            borderRadius: 4,
+                                            transition: "background 0.15s ease"
                                           }}
                                         >
-                                          ✓
+                                          <button
+                                            onClick={() => toggleHabitDay(h.id, d)}
+                                            title={`Toggle ${h.name} on ${DAY_LABEL[d]} (updates 28D Consistency Loop)`}
+                                            style={{
+                                              width: 28,
+                                              height: 28,
+                                              borderRadius: 6,
+                                              border: `1.5px solid ${checked ? h.color : isSelected ? "#38BDF8" : C.border}`,
+                                              background: checked ? h.color : "transparent",
+                                              color: checked ? "#12141B" : "transparent",
+                                              cursor: "pointer",
+                                              fontWeight: 700,
+                                              boxShadow: isSelected && checked ? `0 0 10px ${h.color}88` : "none",
+                                              transition: "all 0.15s ease"
+                                            }}
+                                          >
+                                            ✓
+                                          </button>
+                                        </td>
+                                      );
+                                    })}
+                                    <td style={{ fontSize: 13, fontWeight: 600, color: streak > 0 ? C.boulder : C.textMuted }}>
+                                      🔥 {streak}d
+                                    </td>
+                                    <td>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
+                                        <button
+                                          onClick={() => scheduleHabitIntoRamp(h)}
+                                          style={{ background: C.panelAlt, border: `1px solid ${C.border}`, color: C.ramp, borderRadius: 5, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}
+                                        >
+                                          + Slot
                                         </button>
-                                      </td>
-                                    );
-                                  })}
-                                  <td style={{ fontSize: 13, fontWeight: 600, color: streak > 0 ? C.boulder : C.textMuted }}>
-                                    🔥 {streak}d
-                                  </td>
-                                  <td>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
-                                      <button
-                                        onClick={() => scheduleHabitIntoRamp(h)}
-                                        style={{ background: C.panelAlt, border: `1px solid ${C.border}`, color: C.ramp, borderRadius: 5, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}
-                                      >
-                                        + Slot
-                                      </button>
-                                      <button
-                                        onClick={() => deleteHabit(h.id)}
-                                        style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                          <tfoot>
-                            <tr>
-                              <td style={{ fontSize: 12, color: C.textMuted, paddingTop: 12 }}>Daily Completion %</td>
-                              {dailyHabitRates.map((pct, i) => {
-                                const d = DAY_ORDER[i];
-                                const isSelected = activeMatrixDay === d;
-                                return (
-                                  <td
-                                    key={i}
-                                    style={{
-                                      fontSize: 11.5,
-                                      color: isSelected ? "#38BDF8" : pct >= 80 ? "#3CD09B" : pct >= 50 ? "#306C5D" : pct > 0 ? "#245548" : C.textMuted,
-                                      fontWeight: 700,
-                                      paddingTop: 12,
-                                      background: isSelected ? "rgba(56, 189, 248, 0.12)" : "transparent",
-                                      borderRadius: 4
-                                    }}
-                                  >
-                                    {pct}%
-                                  </td>
+                                        <button
+                                          onClick={() => deleteHabit(h.id)}
+                                          style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
                                 );
                               })}
-                              <td colSpan={2} />
-                            </tr>
-                          </tfoot>
-                        </table>
-                        </div>
+                            </tbody>
+                            <tfoot>
+                              <tr>
+                                <td style={{ fontSize: 12, color: C.textMuted, paddingTop: 12 }}>Daily Completion %</td>
+                                {dailyHabitRates.map((pct, i) => {
+                                  const d = DAY_ORDER[i];
+                                  const isSelected = activeMatrixDay === d;
+                                  return (
+                                    <td
+                                      key={i}
+                                      style={{
+                                        fontSize: 11.5,
+                                        color: isSelected ? "#38BDF8" : pct >= 80 ? "#3CD09B" : pct >= 50 ? "#306C5D" : pct > 0 ? "#245548" : C.textMuted,
+                                        fontWeight: 700,
+                                        paddingTop: 12,
+                                        background: isSelected ? "rgba(56, 189, 248, 0.12)" : "transparent",
+                                        borderRadius: 4
+                                      }}
+                                    >
+                                      {pct}%
+                                    </td>
+                                  );
+                                })}
+                                <td colSpan={2} />
+                              </tr>
+                            </tfoot>
+                          </table>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -6069,6 +6227,7 @@
                         activeDay={activeMatrixDay}
                         onSelectDay={setActiveMatrixDay}
                         onToggleHabitDay={toggleHabitDay}
+                        onAddHabit={() => setShowAddHabitModal(true)}
                       />
 
                       <div style={{
@@ -6097,64 +6256,78 @@
                           </span>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                          {[...habits]
-                            .sort((a, b) => computeHabitStreak(b.logs) - computeHabitStreak(a.logs))
-                            .map((h, rank) => {
-                              const s = computeHabitStreak(h.logs);
-                              const isTop = rank === 0 && s > 0;
-                              return (
-                                <div
-                                  key={h.id}
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    background: "#161925",
-                                    border: `1px solid ${isTop ? "rgba(227, 178, 60, 0.35)" : "#202434"}`,
-                                    borderRadius: 8,
-                                    padding: "10px 14px",
-                                    fontSize: 13,
-                                    transition: "all 0.15s ease"
-                                  }}
-                                >
-                                  <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                                    <span style={{
-                                      width: 7,
-                                      height: 7,
-                                      borderRadius: "50%",
-                                      background: h.color || "#3CD09B",
-                                      flexShrink: 0,
-                                      boxShadow: `0 0 6px ${h.color || "#3CD09B"}`
-                                    }} />
-                                    <div style={{ minWidth: 0 }}>
-                                      <div style={{ fontWeight: 600, color: "#EEF0F5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                        {h.name}
-                                      </div>
-                                      <div style={{ fontSize: 11, color: "#6D758B", marginTop: 2 }}>
-                                        {h.category} · {h.load === "boulder" ? "🏔️ Boulder" : "🌱 Ramp"}
+                          {habits.length === 0 ? (
+                            <div style={{
+                              padding: "16px",
+                              textAlign: "center",
+                              fontSize: 12.5,
+                              color: "#8E95A8",
+                              background: "#161925",
+                              borderRadius: 8,
+                              border: "1px solid #202434"
+                            }}>
+                              No streaks yet. Log your habits to begin tracking daily streaks!
+                            </div>
+                          ) : (
+                            [...habits]
+                              .sort((a, b) => computeHabitStreak(b.logs) - computeHabitStreak(a.logs))
+                              .map((h, rank) => {
+                                const s = computeHabitStreak(h.logs);
+                                const isTop = rank === 0 && s > 0;
+                                return (
+                                  <div
+                                    key={h.id}
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                      background: "#161925",
+                                      border: `1px solid ${isTop ? "rgba(227, 178, 60, 0.35)" : "#202434"}`,
+                                      borderRadius: 8,
+                                      padding: "10px 14px",
+                                      fontSize: 13,
+                                      transition: "all 0.15s ease"
+                                    }}
+                                  >
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                                      <span style={{
+                                        width: 7,
+                                        height: 7,
+                                        borderRadius: "50%",
+                                        background: h.color || "#3CD09B",
+                                        flexShrink: 0,
+                                        boxShadow: `0 0 6px ${h.color || "#3CD09B"}`
+                                      }} />
+                                      <div style={{ minWidth: 0 }}>
+                                        <div style={{ fontWeight: 600, color: "#EEF0F5", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                          {h.name}
+                                        </div>
+                                        <div style={{ fontSize: 11, color: "#6D758B", marginTop: 2 }}>
+                                          {h.category} · {h.load === "boulder" ? "🏔️ Boulder" : "🌱 Ramp"}
+                                        </div>
                                       </div>
                                     </div>
+                                    <div style={{ flexShrink: 0, marginLeft: 10 }}>
+                                      <span style={{
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        color: s >= 5 ? "#3CD09B" : s > 0 ? "#FF8A5C" : "#6D758B",
+                                        background: s > 0 ? "rgba(255, 138, 92, 0.1)" : "rgba(255,255,255,0.03)",
+                                        border: s > 0 ? "1px solid rgba(255, 138, 92, 0.28)" : "1px solid #232838",
+                                        padding: "3px 10px",
+                                        borderRadius: 9999,
+                                        fontFamily: "'Space Grotesk', monospace",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: 4
+                                      }}>
+                                        🔥 {s}d active
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div style={{ flexShrink: 0, marginLeft: 10 }}>
-                                    <span style={{
-                                      fontSize: 12,
-                                      fontWeight: 700,
-                                      color: s >= 5 ? "#3CD09B" : s > 0 ? "#FF8A5C" : "#6D758B",
-                                      background: s > 0 ? "rgba(255, 138, 92, 0.1)" : "rgba(255,255,255,0.03)",
-                                      border: s > 0 ? "1px solid rgba(255, 138, 92, 0.28)" : "1px solid #232838",
-                                      padding: "3px 10px",
-                                      borderRadius: 9999,
-                                      fontFamily: "'Space Grotesk', monospace",
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: 4
-                                    }}>
-                                      🔥 {s}d active
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              })
+                          )}
                         </div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, fontSize: 11.5, color: "#8E95A8" }}>
                           <span>Consecutive consistency</span>
@@ -6197,8 +6370,59 @@
                         </div>
 
                         {todaysTargets.length === 0 ? (
-                          <div style={{ fontSize: 12.5, color: C.textMuted, padding: "8px 0" }}>
-                            No targets set for today. Click "+ Add Target" to set a goal with deadline and difficulty.
+                          <div style={{
+                            padding: "18px 14px",
+                            textAlign: "center",
+                            background: C.panelAlt,
+                            border: `1px dashed ${C.border}`,
+                            borderRadius: 8
+                          }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#EEF0F5", marginBottom: 4 }}>
+                              Upload your timetable or targets
+                            </div>
+                            <div style={{ fontSize: 11.5, color: C.textMuted, marginBottom: 12, lineHeight: 1.4 }}>
+                              Add daily targets or upload your timetable to schedule ramp study blocks.
+                            </div>
+                            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                              <button
+                                type="button"
+                                onClick={openAddTargetModal}
+                                style={{
+                                  background: C.boulder,
+                                  border: "none",
+                                  color: "#2A1206",
+                                  borderRadius: 5,
+                                  padding: "6px 12px",
+                                  fontSize: 11.5,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 5
+                                }}
+                              >
+                                <Plus size={12} /> Add Target
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowScheduleUploadModal(true)}
+                                style={{
+                                  background: "transparent",
+                                  border: `1px solid ${C.border}`,
+                                  color: C.ramp,
+                                  borderRadius: 5,
+                                  padding: "6px 12px",
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 5
+                                }}
+                              >
+                                <QrCode size={12} /> Upload Timetable
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
@@ -6384,9 +6608,91 @@
                   </div>
 
                   <div className="rp-grid">
-                    <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 20, marginLeft: 4 }}>
+                    <div style={{ borderLeft: timelineEvents.length === 0 ? "none" : `2px solid ${C.border}`, paddingLeft: timelineEvents.length === 0 ? 0 : 20, marginLeft: timelineEvents.length === 0 ? 0 : 4 }}>
                       {timelineEvents.length === 0 && (
-                        <div style={{ fontSize: 13, color: C.textMuted }}>No classes or scheduled tasks for {DAY_LABEL[selectedDay]}.</div>
+                        <div style={{
+                          background: C.panel,
+                          border: `1px dashed ${C.border}`,
+                          borderRadius: 12,
+                          padding: "36px 24px",
+                          textAlign: "center",
+                          marginBottom: 20
+                        }}>
+                          <div style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: "50%",
+                            background: "rgba(255, 138, 92, 0.12)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            margin: "0 auto 16px",
+                            color: C.boulder
+                          }}>
+                            <Calendar size={26} />
+                          </div>
+                          <div style={{
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            fontSize: 18,
+                            fontWeight: 700,
+                            color: "#EEF0F5",
+                            marginBottom: 8
+                          }}>
+                            Upload your timetable or targets
+                          </div>
+                          <p style={{
+                            fontSize: 13.5,
+                            color: "#8E95A8",
+                            maxWidth: 420,
+                            margin: "0 auto 20px",
+                            lineHeight: 1.5
+                          }}>
+                            Your schedule and ramp blocks are blank. Scan your university timetable or add daily academic targets to automatically populate your ramp schedule.
+                          </p>
+                          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                            <button
+                              type="button"
+                              onClick={() => setShowScheduleUploadModal(true)}
+                              style={{
+                                background: C.ramp,
+                                border: "none",
+                                color: "#08211E",
+                                borderRadius: 8,
+                                padding: "10px 20px",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 8,
+                                boxShadow: "0 2px 12px rgba(63, 214, 196, 0.28)",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              <QrCode size={15} /> Upload Timetable
+                            </button>
+                            <button
+                              type="button"
+                              onClick={openAddTargetModal}
+                              style={{
+                                background: "rgba(255, 138, 92, 0.15)",
+                                border: `1px solid ${C.boulder}`,
+                                color: C.boulder,
+                                borderRadius: 8,
+                                padding: "10px 18px",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 8,
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              <Target size={15} /> Add Target
+                            </button>
+                          </div>
+                        </div>
                       )}
                       {timelineEvents.map((ev, i) => {
                         const color = ev.kind === "class" ? C.class : ev.kind === "boulder" ? C.boulder : C.ramp;
@@ -6432,22 +6738,49 @@
                           </button>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                          {habits.map((h) => {
-                            const done = !!h.logs?.[todayKey];
-                            return (
-                              <div key={h.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13 }}>
-                                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", textDecoration: done ? "line-through" : "none", color: done ? C.textMuted : C.textPrimary }}>
-                                  <input type="checkbox" checked={done} onChange={() => toggleHabitDay(h.id, todayKey)} />
-                                  {h.name}
-                                </label>
-                                {!done && (
-                                  <button onClick={() => scheduleHabitIntoRamp(h)} style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 4, padding: "2px 6px", fontSize: 10.5, cursor: "pointer" }}>
-                                    Slot
-                                  </button>
-                                )}
+                          {habits.length === 0 ? (
+                            <div style={{ fontSize: 12.5, color: C.textMuted, padding: "12px 8px", textAlign: "center" }}>
+                              No habits logged yet.
+                              <div style={{ marginTop: 8 }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAddHabitModal(true)}
+                                  style={{
+                                    background: C.ramp,
+                                    border: "none",
+                                    color: "#08211E",
+                                    borderRadius: 5,
+                                    padding: "5px 12px",
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4
+                                  }}
+                                >
+                                  <Plus size={12} /> Log Your Habits
+                                </button>
                               </div>
-                            );
-                          })}
+                            </div>
+                          ) : (
+                            habits.map((h) => {
+                              const done = !!h.logs?.[todayKey];
+                              return (
+                                <div key={h.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13 }}>
+                                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", textDecoration: done ? "line-through" : "none", color: done ? C.textMuted : C.textPrimary }}>
+                                    <input type="checkbox" checked={done} onChange={() => toggleHabitDay(h.id, todayKey)} />
+                                    {h.name}
+                                  </label>
+                                  {!done && (
+                                    <button onClick={() => scheduleHabitIntoRamp(h)} style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 4, padding: "2px 6px", fontSize: 10.5, cursor: "pointer" }}>
+                                      Slot
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
 
