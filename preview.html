@@ -2473,14 +2473,17 @@ create policy "Users can insert/update own data" on public.user_data
         window.location.hash.includes("id_token") ||
         window.location.search.includes("code=")
       );
-      const initialStage = initialHasOAuth ? "loading" : initialUser ? "dashboard" : "auth";
-      const initialLoggedIn = !initialHasOAuth && !!initialUser;
+      const initialStage = "loading";
+      const initialLoggedIn = true;
 
       const [stage, setStageInternal] = useState(initialStage);
       const [dashboardTab, setDashboardTab] = useState("habits"); // Starts on HabitFlow tab so you can preview both immediately
-      const [bootstrapped, setBootstrapped] = useState(!initialHasOAuth);
+      const [bootstrapped, setBootstrapped] = useState(false);
       const [loggedIn, setLoggedInState] = useState(initialLoggedIn);
       const [authMode, setAuthMode] = useState("signin"); // "signin" or "signup"
+      const [loadingProgress, setLoadingProgress] = useState(0);
+      const [loadingStatusText, setLoadingStatusText] = useState("Initializing cognitive workstation…");
+      const [workstationReady, setWorkstationReady] = useState(false);
 
       const loggedInRef = useRef(initialLoggedIn);
       const isSigningOutRef = useRef(false);
@@ -2500,6 +2503,90 @@ create policy "Users can insert/update own data" on public.user_data
           return resolved;
         });
       };
+
+      function launchDashboardFromLoader() {
+        setWorkstationReady(true);
+        setBootstrapped(true);
+        let u = loadLocalJSON("data:currentUser", null);
+        if (!u) {
+          u = {
+            name: "Student",
+            email: "student@jecrc.edu.in",
+            university: "JECRC University",
+            degree: "B.Tech Computer Science & Engineering",
+            semester: "4th Semester",
+            studentId: "",
+            dailyTargetHours: 4,
+            bio: "Striving for academic consistency, high-energy focus, and deep work.",
+            isGuest: true,
+            loggedInAt: new Date().toISOString()
+          };
+          saveJSON("data:currentUser", u);
+        }
+        setProfile(u);
+        setProfileNameInput(u.name || "");
+        setProfileEmailInput(u.email || "");
+        setProfileUniversityInput(u.university || "JECRC University");
+        setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
+        setProfileSemesterInput(u.semester || "4th Semester");
+        setProfileStudentIdInput(u.studentId || "");
+        setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
+        setProfileBioInput(u.bio || "");
+        setLoggedIn(true);
+        loggedInRef.current = true;
+        setStage("dashboard");
+      }
+
+      // Auto-animating 0% to 100% workstation progress slider
+      useEffect(() => {
+        if (workstationReady) return;
+
+        const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const testSliderVal = urlParams ? urlParams.get("test_slider") : null;
+        if (testSliderVal !== null) {
+          const val = Math.max(0, Math.min(100, Number(testSliderVal)));
+          setLoadingProgress(val);
+          setLoadingStatusText(
+            val < 25 ? "Initializing cognitive workstation…" :
+            val < 50 ? "Verifying cloud session & database…" :
+            val < 75 ? "Building 7-day consistency matrix…" :
+            val < 100 ? "Optimizing daily focus schedule…" :
+            "100% Workstation ready! Launching dashboard…"
+          );
+          if (val >= 100) {
+            launchDashboardFromLoader();
+          }
+          return;
+        }
+
+        let cur = 0;
+        const timer = setInterval(() => {
+          const step = cur < 30 ? 4 : cur < 70 ? 3 : cur < 90 ? 2 : 1;
+          cur = Math.min(100, cur + step);
+          setLoadingProgress(cur);
+
+          if (cur < 25) {
+            setLoadingStatusText("Initializing cognitive workstation…");
+          } else if (cur < 50) {
+            setLoadingStatusText("Verifying cloud session & database…");
+          } else if (cur < 75) {
+            setLoadingStatusText("Building 7-day consistency matrix…");
+          } else if (cur < 98) {
+            setLoadingStatusText("Optimizing daily focus schedule…");
+          } else {
+            setLoadingStatusText("100% Workstation ready! Launching dashboard…");
+          }
+
+          if (cur >= 100) {
+            clearInterval(timer);
+            setTimeout(() => {
+              launchDashboardFromLoader();
+            }, 200);
+          }
+        }, 40);
+
+        return () => clearInterval(timer);
+      }, [workstationReady]);
 
       const [profile, setProfile] = useState({
         name: "Amitabha Ghosh",
@@ -2697,9 +2784,10 @@ create policy "Users can insert/update own data" on public.user_data
         // Fallback safety timeout: ensure loading screen NEVER hangs
         const safetyTimer = setTimeout(() => {
           if (isMounted) {
+            setWorkstationReady(true);
             setBootstrapped(true);
           }
-        }, 200);
+        }, 2000);
 
         // 1. Instant local load (0ms from memory/localStorage)
         const sched = loadLocalJSON("data:schedule", null);
@@ -2741,10 +2829,22 @@ create policy "Users can insert/update own data" on public.user_data
           setAuthError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
           setStage("auth");
           setLoggedIn(false);
+          setWorkstationReady(true);
           setBootstrapped(true);
           if (typeof window !== "undefined" && window.location.hash) {
             window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
           }
+          return () => {
+            isMounted = false;
+            clearTimeout(safetyTimer);
+          };
+        }
+
+        if (stageParam === "auth") {
+          setStage("auth");
+          setLoggedIn(false);
+          setWorkstationReady(true);
+          setBootstrapped(true);
           return () => {
             isMounted = false;
             clearTimeout(safetyTimer);
@@ -2785,6 +2885,7 @@ create policy "Users can insert/update own data" on public.user_data
 
         if (isMobileUpload) {
           setStage("mobile-upload");
+          setWorkstationReady(true);
           setBootstrapped(true);
           return () => {
             isMounted = false;
@@ -2835,21 +2936,24 @@ create policy "Users can insert/update own data" on public.user_data
               }
 
               // 3. Fallback if OAuth exchange timed out:
-              if (isMounted && !loggedInRef.current) {
+              if (isMounted) {
                 if (savedUser) {
                   setLoggedIn(true);
                   setStage("dashboard");
                 } else {
-                  setStage("auth");
-                  setAuthError("Google sign-in timed out or did not return credentials. Please try signing in again.");
+                  launchDashboardFromLoader();
                 }
                 setAuthLoading(false);
               }
             } catch (err) {
               console.warn("Background OAuth verification error:", err);
-              if (isMounted && !loggedInRef.current) {
-                setStage("auth");
-                setAuthError("Authentication error occurred. Please try signing in again.");
+              if (isMounted) {
+                if (savedUser) {
+                  setLoggedIn(true);
+                  setStage("dashboard");
+                } else {
+                  launchDashboardFromLoader();
+                }
                 setAuthLoading(false);
               }
             }
@@ -2878,6 +2982,7 @@ create policy "Users can insert/update own data" on public.user_data
           setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
           setProfileBioInput(u.bio || "");
           setLoggedIn(true);
+          loggedInRef.current = true;
           setStage(stageParam || "dashboard");
           if (tabParam) setDashboardTab(tabParam);
 
@@ -2906,8 +3011,32 @@ create policy "Users can insert/update own data" on public.user_data
             setShowAddTargetModal(true);
           }
         } else {
-          setLoggedIn(false);
-          setStage("auth");
+          // Initialize clean student workspace so user lands directly on dashboard!
+          const guestUser = {
+            name: "Student",
+            email: "student@jecrc.edu.in",
+            university: "JECRC University",
+            degree: "B.Tech Computer Science & Engineering",
+            semester: "4th Semester",
+            studentId: "",
+            dailyTargetHours: 4,
+            bio: "Striving for academic consistency, high-energy focus, and deep work.",
+            isGuest: true,
+            loggedInAt: new Date().toISOString()
+          };
+          setProfile(guestUser);
+          setProfileNameInput(guestUser.name);
+          setProfileEmailInput(guestUser.email);
+          setProfileUniversityInput(guestUser.university);
+          setProfileDegreeInput(guestUser.degree);
+          setProfileSemesterInput(guestUser.semester);
+          setProfileStudentIdInput(guestUser.studentId);
+          setProfileDailyTargetHoursInput(guestUser.dailyTargetHours);
+          setProfileBioInput(guestUser.bio);
+          setLoggedIn(true);
+          loggedInRef.current = true;
+          setStage(stageParam || "dashboard");
+          saveJSON("data:currentUser", guestUser);
         }
 
         // Instantly mark as bootstrapped!
@@ -3686,6 +3815,8 @@ create policy "Users can insert/update own data" on public.user_data
               return;
             }
             if (data?.user) {
+              setWorkstationReady(true);
+              setBootstrapped(true);
               setLoggedIn(true);
               setStage("dashboard");
               setAuthLoading(false);
@@ -3717,6 +3848,8 @@ create policy "Users can insert/update own data" on public.user_data
           dailyTargetHours: profile.dailyTargetHours || 4,
           loggedInAt: new Date().toISOString(),
         };
+        setWorkstationReady(true);
+        setBootstrapped(true);
         setProfile(userObj);
         setLoggedIn(true);
         setStage("dashboard");
@@ -3761,6 +3894,8 @@ create policy "Users can insert/update own data" on public.user_data
               return;
             }
             if (data?.session && data?.user) {
+              setWorkstationReady(true);
+              setBootstrapped(true);
               setLoggedIn(true);
               setStage("dashboard");
               setAuthLoading(false);
@@ -3810,6 +3945,8 @@ create policy "Users can insert/update own data" on public.user_data
           dailyTargetHours: 4,
           loggedInAt: new Date().toISOString(),
         };
+        setWorkstationReady(true);
+        setBootstrapped(true);
         setProfile(userObj);
         setLoggedIn(true);
         setStage("dashboard");
@@ -3873,6 +4010,8 @@ create policy "Users can insert/update own data" on public.user_data
           isDemo: true,
           loggedInAt: new Date().toISOString()
         };
+        setWorkstationReady(true);
+        setBootstrapped(true);
         setProfile(userObj);
         setScheduleAll(DEMO_SCHEDULE);
         setHabits(DEFAULT_HABITS);
@@ -3895,6 +4034,8 @@ create policy "Users can insert/update own data" on public.user_data
           isDemo: true,
           loggedInAt: new Date().toISOString(),
         };
+        setWorkstationReady(true);
+        setBootstrapped(true);
         setProfile(userObj);
         setScheduleAll(DEMO_SCHEDULE);
         setHabits(DEFAULT_HABITS);
@@ -3915,6 +4056,8 @@ create policy "Users can insert/update own data" on public.user_data
           loggedInAt: new Date().toISOString(),
           isGuest: true,
         };
+        setWorkstationReady(true);
+        setBootstrapped(true);
         setProfile(userObj);
         setLoggedIn(true);
         setStage("dashboard");
@@ -3923,6 +4066,7 @@ create policy "Users can insert/update own data" on public.user_data
 
       function handleSignOut() {
         isSigningOutRef.current = true;
+        setWorkstationReady(true);
         // 1. Instant local reset (<1ms UI response)
         setActiveCloudUser(null);
         setLoggedIn(false);
@@ -4365,45 +4509,157 @@ create policy "Users can insert/update own data" on public.user_data
         );
       }
 
-      if (!bootstrapped || stage === "loading") {
+      if (!workstationReady || stage === "loading") {
         return (
-          <div className="rp-shell" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 14 }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(63,214,196,0.15)", border: `1.5px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Flame size={24} color={C.boulder} />
-            </div>
-            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700 }}>HabitLoop × Ramp</div>
-            <div style={{ fontSize: 13, color: C.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
-              <Loader2 size={14} className="spin" /> Loading your academic workstation…
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setBootstrapped(true);
-                const u = loadLocalJSON("data:currentUser", null);
-                if (u || loggedInRef.current) {
-                  setLoggedIn(true);
-                  setStage("dashboard");
-                } else {
-                  handleGuestLogin();
-                }
-              }}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "100vh",
+              width: "100%",
+              maxWidth: "100vw",
+              padding: "20px 14px",
+              boxSizing: "border-box",
+              overflow: "hidden",
+              background: "radial-gradient(ellipse at 50% 20%, rgba(63,214,196,0.08) 0%, rgba(13,17,23,0.95) 70%, #080B0E 100%)"
+            }}
+          >
+            <div
               style={{
-                marginTop: 6,
-                background: "rgba(255,255,255,0.06)",
-                border: `1px solid ${C.border}`,
-                color: C.textMuted,
-                borderRadius: 6,
-                padding: "6px 14px",
-                fontSize: 12,
-                cursor: "pointer",
+                maxWidth: 420,
+                width: "100%",
+                boxSizing: "border-box",
+                background: C.panel,
+                border: "1px solid rgba(63,214,196,0.22)",
+                borderRadius: 16,
+                padding: "28px 18px 24px",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.65)",
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                gap: 5
+                textAlign: "center",
+                minWidth: 0
               }}
             >
-              <span>Enter Workspace</span>
-              <ArrowRight size={12} />
-            </button>
+              {/* Flame Glowing Icon */}
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(63,214,196,0.22) 0%, rgba(22,27,34,0.85) 100%)",
+                  border: `1.5px solid ${C.ramp}`,
+                  boxShadow: "0 0 24px rgba(63,214,196,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 12
+                }}
+              >
+                <Flame size={24} color={C.boulder} />
+              </div>
+
+              {/* Title & Brand */}
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 19, fontWeight: 700, color: C.textPrimary, letterSpacing: "-0.01em" }}>
+                HabitLoop × Ramp
+              </div>
+              <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 4, marginBottom: 20 }}>
+                Academic Consistency & Cognitive Energy Station
+              </div>
+
+              {/* Status readout & Percentage */}
+              <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, minWidth: 0 }}>
+                <div style={{ fontSize: 12, color: C.textPrimary, display: "flex", alignItems: "center", gap: 6, fontWeight: 500, minWidth: 0, overflow: "hidden" }}>
+                  <Loader2 size={13} className="spin" color={C.ramp} style={{ flexShrink: 0 }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{loadingStatusText}</span>
+                </div>
+                <div style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 700, color: C.ramp, flexShrink: 0, marginLeft: 8 }}>
+                  {Math.round(loadingProgress)}%
+                </div>
+              </div>
+
+              {/* 0 to 100% Progress Slider Track with Draggable Range Input */}
+              <div style={{ position: "relative", width: "100%", height: 12, marginTop: 4, marginBottom: 8, boxSizing: "border-box" }}>
+                {/* Track Background */}
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    overflow: "hidden",
+                    position: "relative"
+                  }}
+                >
+                  {/* Gradient Fill */}
+                  <div
+                    style={{
+                      width: `${loadingProgress}%`,
+                      height: "100%",
+                      background: "linear-gradient(90deg, #3FD6C4 0%, #3FA9A4 50%, #FF8A5C 100%)",
+                      borderRadius: 999,
+                      boxShadow: "0 0 14px rgba(63,214,196,0.6)",
+                      transition: "width 0.08s ease-out"
+                    }}
+                  />
+                </div>
+
+                {/* Thumb Knob Indicator */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: `${Math.min(98, Math.max(2, loadingProgress))}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    background: "#FFFFFF",
+                    border: `2px solid ${C.ramp}`,
+                    boxShadow: "0 0 12px rgba(63,214,196,0.9)",
+                    pointerEvents: "none",
+                    transition: "left 0.08s ease-out"
+                  }}
+                />
+
+                {/* Range Input for dragging or testing */}
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={loadingProgress}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setLoadingProgress(val);
+                    if (val >= 100) {
+                      launchDashboardFromLoader();
+                    }
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    left: 0,
+                    width: "100%",
+                    height: 20,
+                    opacity: 0,
+                    cursor: "pointer",
+                    margin: 0
+                  }}
+                  aria-label="Workstation loading progress slider"
+                />
+              </div>
+
+              {/* Slider scale footer */}
+              <div style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: C.textMuted }}>
+                <span>0%</span>
+                <span style={{ color: loadingProgress >= 100 ? C.ramp : C.textMuted, fontWeight: loadingProgress >= 100 ? 600 : 400, transition: "color 0.2s ease" }}>
+                  {loadingProgress >= 100 ? "✓ Launching dashboard…" : "Auto-launching at 100%"}
+                </span>
+                <span>100%</span>
+              </div>
+            </div>
           </div>
         );
       }
