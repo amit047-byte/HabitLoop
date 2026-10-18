@@ -399,13 +399,57 @@
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
       Download, RefreshCw, FileText, Check, Folder, Smartphone, Copy, ExternalLink,
-      Shield, Activity, Cloud
+      Shield, Activity, Cloud, Database, ChevronDown
     } from "lucide-react";
 
     // ---------------------------------------------------------------------------
-    // SUPABASE CLOUD BACKEND INITIALIZATION
+    // SUPABASE CLOUD BACKEND INITIALIZATION & SCHEMA DEFINITION
     // Project: https://pzfvmnsbhqkrtxietlle.supabase.co
     // ---------------------------------------------------------------------------
+    const SUPABASE_SCHEMA_SQL = `-- HabitLoop × Supabase PostgreSQL Cloud Schema
+-- Run this script in your Supabase SQL Editor: https://supabase.com/dashboard/project/pzfvmnsbhqkrtxietlle/sql
+
+-- 1. Profiles Table (Stores student credentials & study targets)
+create table if not exists public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  full_name text,
+  email text,
+  university text,
+  degree text,
+  semester text,
+  student_id text,
+  daily_target_hours numeric default 4,
+  bio text,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table public.profiles enable row level security;
+
+create policy "Users can read own profile" on public.profiles
+  for select using (auth.uid() = id);
+
+create policy "Users can insert/update own profile" on public.profiles
+  for all using (auth.uid() = id);
+
+-- 2. User Data Table (Stores habits, schedule, targets, energy)
+create table if not exists public.user_data (
+  id bigint generated always as identity primary key,
+  user_id uuid references auth.users on delete cascade not null,
+  key text not null,
+  value jsonb not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()),
+  unique(user_id, key)
+);
+
+alter table public.user_data enable row level security;
+
+create policy "Users can read own data" on public.user_data
+  for select using (auth.uid() = user_id);
+
+create policy "Users can insert/update own data" on public.user_data
+  for all using (auth.uid() = user_id);
+`;
+
     const SUPABASE_URL = "https://pzfvmnsbhqkrtxietlle.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_4iIvihs0-Rkc7ShRRNW-Vg_oSDb9ESc";
     let supabase = null;
@@ -2489,6 +2533,10 @@
       const [profileDailyTargetHoursInput, setProfileDailyTargetHoursInput] = useState(4);
       const [profileBioInput, setProfileBioInput] = useState("");
       const [profileMsg, setProfileMsg] = useState(null);
+      const [showSqlSchemaModal, setShowSqlSchemaModal] = useState(false);
+      const [copySchemaSuccess, setCopySchemaSuccess] = useState(false);
+      const [isManualSyncing, setIsManualSyncing] = useState(false);
+      const [isSavingProfile, setIsSavingProfile] = useState(false);
 
       // Auto-debrief timing & trigger state
       const [autoDebriefEnabled, setAutoDebriefEnabled] = useState(true);
@@ -2817,13 +2865,16 @@
             dailyTargetHours: 4,
             bio: "Striving for academic consistency, high-energy focus, and deep work."
           };
+          if (u.cloudUserId && !u.isGuest) {
+            setActiveCloudUser(u.cloudUserId);
+          }
           setProfile(u);
           setProfileNameInput(u.name || "");
           setProfileEmailInput(u.email || "");
           setProfileUniversityInput(u.university || "JECRC University");
           setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
           setProfileSemesterInput(u.semester || "4th Semester");
-          setProfileStudentIdInput(u.studentId || "23BCON047");
+          setProfileStudentIdInput(u.studentId || "");
           setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
           setProfileBioInput(u.bio || "");
           setLoggedIn(true);
@@ -3419,55 +3470,111 @@
         setCloudSyncStatus("syncing");
 
         try {
-          // 1. Fetch or initialize profile record
-          const { data: dbProfile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", cloudUser.id)
-            .maybeSingle();
+          // 1. Fetch or initialize profile record from PostgreSQL
+          let dbProfile = null;
+          try {
+            const { data } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", cloudUser.id)
+              .maybeSingle();
+            dbProfile = data;
+          } catch (dbErr) {
+            console.warn("PostgreSQL profiles query note:", dbErr);
+          }
+
+          // 2. Extract Auth user metadata (available directly from Supabase Auth)
+          const meta = cloudUser.user_metadata || {};
+
+          // Check local storage only if it belongs to this user and is not a guest student
+          const localUser = loadLocalJSON("data:currentUser", null);
+          const isMatchingLocal = localUser && !localUser.isGuest && (localUser.email === cloudUser.email || localUser.cloudUserId === cloudUser.id);
+
+          const resolvedName = dbProfile?.full_name 
+            || meta.full_name 
+            || meta.name 
+            || (isMatchingLocal && localUser.name && localUser.name !== "Guest Student" ? localUser.name : "")
+            || (cloudUser.email ? cloudUser.email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, l => l.toUpperCase()) : "Student");
 
           const resolvedProfile = {
-            name: dbProfile?.full_name || cloudUser.user_metadata?.full_name || cloudUser.user_metadata?.name || cloudUser.email?.split("@")[0] || "Student",
+            name: resolvedName,
             email: cloudUser.email,
-            university: dbProfile?.university || cloudUser.user_metadata?.university || "University Student",
-            degree: dbProfile?.degree || "Undergraduate",
-            semester: dbProfile?.semester || "1st Year",
-            studentId: dbProfile?.student_id || "",
-            dailyTargetHours: dbProfile?.daily_target_hours || 4,
-            bio: dbProfile?.bio || "Building daily consistency, focused study habits, and peak academic momentum.",
+            university: dbProfile?.university || meta.university || (isMatchingLocal ? localUser.university : "JECRC University"),
+            degree: dbProfile?.degree || meta.degree || (isMatchingLocal ? localUser.degree : "B.Tech Computer Science & Engineering"),
+            semester: dbProfile?.semester || meta.semester || (isMatchingLocal ? localUser.semester : "4th Semester"),
+            studentId: dbProfile?.student_id || meta.student_id || (isMatchingLocal ? localUser.studentId : ""),
+            dailyTargetHours: Number(dbProfile?.daily_target_hours || meta.daily_target_hours || (isMatchingLocal ? localUser.dailyTargetHours : 4)) || 4,
+            bio: dbProfile?.bio || meta.bio || (isMatchingLocal ? localUser.bio : "Building daily consistency, focused study habits, and peak academic momentum."),
+            avatarUrl: meta.avatar_url || meta.picture || null,
             cloudUserId: cloudUser.id,
+            isGuest: false,
+            provider: cloudUser.app_metadata?.provider || (cloudUser.identities?.[0]?.provider) || "google",
             loggedInAt: new Date().toISOString()
           };
 
-          if (!dbProfile) {
-            try {
-              await supabase.from("profiles").upsert({
-                id: cloudUser.id,
+          // Update React profile state & local storage
+          setProfile(resolvedProfile);
+          saveJSON("data:currentUser", resolvedProfile);
+          saveJSON("data:profile", resolvedProfile);
+
+          // Update input state hooks immediately so profile edit form is synchronized
+          setProfileNameInput(resolvedProfile.name);
+          setProfileEmailInput(resolvedProfile.email);
+          setProfileUniversityInput(resolvedProfile.university);
+          setProfileDegreeInput(resolvedProfile.degree);
+          setProfileSemesterInput(resolvedProfile.semester);
+          setProfileStudentIdInput(resolvedProfile.studentId);
+          setProfileDailyTargetHoursInput(resolvedProfile.dailyTargetHours);
+          setProfileBioInput(resolvedProfile.bio);
+
+          // Synchronize to Supabase Auth cloud metadata directly (works without PostgreSQL tables!)
+          try {
+            await supabase.auth.updateUser({
+              data: {
                 full_name: resolvedProfile.name,
-                email: resolvedProfile.email,
                 university: resolvedProfile.university,
                 degree: resolvedProfile.degree,
                 semester: resolvedProfile.semester,
                 student_id: resolvedProfile.studentId,
                 daily_target_hours: resolvedProfile.dailyTargetHours,
-                bio: resolvedProfile.bio,
-                updated_at: new Date().toISOString()
-              });
-            } catch (pErr) {
-              console.warn("Profile table upsert note:", pErr);
-            }
+                bio: resolvedProfile.bio
+              }
+            });
+          } catch (upErr) {
+            console.warn("Supabase auth updateUser notice:", upErr);
           }
 
-          setProfile(resolvedProfile);
-          saveJSON("data:currentUser", resolvedProfile);
+          // Also attempt PostgreSQL profiles table upsert
+          try {
+            await supabase.from("profiles").upsert({
+              id: cloudUser.id,
+              full_name: resolvedProfile.name,
+              email: resolvedProfile.email,
+              university: resolvedProfile.university,
+              degree: resolvedProfile.degree,
+              semester: resolvedProfile.semester,
+              student_id: resolvedProfile.studentId,
+              daily_target_hours: resolvedProfile.dailyTargetHours,
+              bio: resolvedProfile.bio,
+              updated_at: new Date().toISOString()
+            });
+          } catch (pErr) {
+            console.warn("PostgreSQL profiles table upsert note:", pErr);
+          }
 
-          // 2. Fetch existing cloud user_data
-          const { data: userRecords, error: dataErr } = await supabase
-            .from("user_data")
-            .select("key, value")
-            .eq("user_id", cloudUser.id);
+          // 3. Fetch existing cloud user_data (habits, schedule, targets)
+          let userRecords = null;
+          try {
+            const { data, error } = await supabase
+              .from("user_data")
+              .select("key, value")
+              .eq("user_id", cloudUser.id);
+            if (!error && data) userRecords = data;
+          } catch (dataErr) {
+            console.warn("PostgreSQL user_data query note:", dataErr);
+          }
 
-          if (!dataErr && userRecords && userRecords.length > 0) {
+          if (userRecords && userRecords.length > 0) {
             userRecords.forEach((record) => {
               try { window.localStorage.setItem(record.key, JSON.stringify(record.value)); } catch (_) {}
               if (record.key === "data:habits" && Array.isArray(record.value)) {
@@ -3482,6 +3589,14 @@
                 setTasks(record.value);
               }
             });
+          } else if (meta.app_data && typeof meta.app_data === "object") {
+            // Restore from Supabase Auth metadata backup
+            const app = meta.app_data;
+            if (Array.isArray(app.habits)) setHabits(app.habits);
+            if (Array.isArray(app.schedule)) setScheduleAll(app.schedule);
+            if (app.targets && typeof app.targets === "object") setTargetsByDate(app.targets);
+            if (Array.isArray(app.tasks)) setTasks(app.tasks);
+            if (app.hourlyEnergy && typeof app.hourlyEnergy === "object") setHourlyEnergy(app.hourlyEnergy);
           } else {
             // New user account: Give a clean, blank app (empty habits, timetable, targets)
             setHabits([]);
@@ -3509,7 +3624,7 @@
               ];
               await supabase.from("user_data").upsert(blankPayload);
             } catch (initErr) {
-              console.warn("New user cloud data initialization note:", initErr);
+              /* non-fatal if table not created */
             }
           }
 
@@ -3872,14 +3987,38 @@
         setProfileUniversityInput(profile.university || "JECRC University");
         setProfileDegreeInput(profile.degree || "B.Tech Computer Science & Engineering");
         setProfileSemesterInput(profile.semester || "4th Semester");
-        setProfileStudentIdInput(profile.studentId || "23BCON047");
+        setProfileStudentIdInput(profile.studentId || "");
         setProfileDailyTargetHoursInput(profile.dailyTargetHours || 4);
         setProfileBioInput(profile.bio || "Striving for academic consistency, high-energy focus, and deep work.");
         setProfileMsg(null);
         setStage("profile-page");
       }
 
-      function saveProfile() {
+      async function handleManualCloudSync() {
+        if (!supabase) {
+          setProfileMsg("Supabase client is not available.");
+          return;
+        }
+        setIsManualSyncing(true);
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            await syncUserCloudData(session.user);
+            setProfileMsg("✅ Successfully synced profile & database with Supabase Cloud!");
+          } else {
+            setProfileMsg("⚠️ You are currently in Guest Mode. Sign in with Google or Email to link your cloud account.");
+          }
+        } catch (syncErr) {
+          setProfileMsg("Sync notice: " + (syncErr.message || "Failed to sync."));
+        } finally {
+          setIsManualSyncing(false);
+          setTimeout(() => setProfileMsg(null), 4000);
+        }
+      }
+
+      async function saveProfile() {
+        setIsSavingProfile(true);
+        setProfileMsg("Saving and syncing profile to cloud...");
         const updated = {
           ...profile,
           name: profileNameInput.trim() || profile.name || "Student",
@@ -3887,28 +4026,64 @@
           university: profileUniversityInput.trim() || profile.university || "JECRC University",
           degree: profileDegreeInput.trim() || profile.degree || "B.Tech Computer Science & Engineering",
           semester: profileSemesterInput.trim() || profile.semester || "4th Semester",
-          studentId: profileStudentIdInput.trim() || profile.studentId || "23BCON047",
+          studentId: profileStudentIdInput.trim() || profile.studentId || "",
           dailyTargetHours: Number(profileDailyTargetHoursInput) || 4,
           bio: profileBioInput.trim() || profile.bio || "",
+          isGuest: activeCloudUserId ? false : (profile.isGuest ?? true),
         };
         setProfile(updated);
         saveJSON("data:currentUser", updated);
         saveJSON("data:profile", updated);
-        if (supabase && activeCloudUserId) {
-          supabase.from("profiles").upsert({
-            id: activeCloudUserId,
-            full_name: updated.name,
-            university: updated.university,
-            degree: updated.degree,
-            semester: updated.semester,
-            student_id: updated.studentId,
-            daily_target_hours: updated.dailyTargetHours,
-            bio: updated.bio,
-            updated_at: new Date().toISOString()
-          }).then(() => {}).catch(e => console.warn("Cloud profile save error:", e));
+
+        let cloudSynced = false;
+        if (supabase) {
+          // 1. Update Supabase Auth user_metadata directly (guaranteed to persist in cloud!)
+          try {
+            const { error: authErr } = await supabase.auth.updateUser({
+              data: {
+                full_name: updated.name,
+                university: updated.university,
+                degree: updated.degree,
+                semester: updated.semester,
+                student_id: updated.studentId,
+                daily_target_hours: updated.dailyTargetHours,
+                bio: updated.bio
+              }
+            });
+            if (!authErr) cloudSynced = true;
+          } catch (authUpErr) {
+            console.warn("Supabase auth updateUser notice:", authUpErr);
+          }
+
+          // 2. Also upsert to PostgreSQL profiles table if activeCloudUserId exists
+          if (activeCloudUserId) {
+            try {
+              const { error: dbErr } = await supabase.from("profiles").upsert({
+                id: activeCloudUserId,
+                full_name: updated.name,
+                email: updated.email,
+                university: updated.university,
+                degree: updated.degree,
+                semester: updated.semester,
+                student_id: updated.studentId,
+                daily_target_hours: updated.dailyTargetHours,
+                bio: updated.bio,
+                updated_at: new Date().toISOString()
+              });
+              if (!dbErr) cloudSynced = true;
+            } catch (pErr) {
+              console.warn("PostgreSQL profiles upsert notice:", pErr);
+            }
+          }
         }
-        setProfileMsg("Profile updated and saved successfully!");
-        setTimeout(() => setProfileMsg(null), 3500);
+
+        setIsSavingProfile(false);
+        if (cloudSynced || activeCloudUserId) {
+          setProfileMsg("✅ Profile saved and synced with Supabase Cloud!");
+        } else {
+          setProfileMsg("💾 Profile saved locally! Connect with Supabase to sync across devices.");
+        }
+        setTimeout(() => setProfileMsg(null), 4000);
       }
 
       // ---- Target Handlers & Modal ----
@@ -5298,6 +5473,7 @@
           </div>
         );
       } else if (stage === "profile-page") {
+        const isCloudConnected = Boolean(activeCloudUserId && !profile.isGuest);
         pageBody = (
           <div className="rp-shell">
             <div style={{ maxWidth: 640, margin: "0 auto" }}>
@@ -5309,36 +5485,193 @@
                   </div>
                   <div>
                     <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: C.textPrimary }}>
-                      Student Profile
+                      Student Profile & Database Sync
                     </div>
                     <div style={{ fontSize: 12.5, color: C.textMuted }}>
-                      Manage your academic credentials, university details, and daily study targets
+                      Manage your academic credentials, university details, and Supabase cloud synchronization
                     </div>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: isCloudConnected ? "rgba(63,214,196,0.12)" : "rgba(227,178,60,0.12)",
+                    color: isCloudConnected ? C.ramp : C.boulder,
+                    border: `1px solid ${isCloudConnected ? "rgba(63,214,196,0.3)" : "rgba(227,178,60,0.3)"}`,
+                    padding: "4px 10px",
+                    borderRadius: 20,
+                    fontSize: 12,
+                    fontWeight: 600
+                  }}>
+                    <span style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: isCloudConnected ? C.ramp : C.boulder,
+                      boxShadow: isCloudConnected ? `0 0 8px ${C.ramp}` : "none"
+                    }} />
+                    {isCloudConnected ? "Supabase Synced" : "Guest Mode"}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setStage("dashboard")}
-                    style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "8px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
+                    style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: "7px 11px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12.5 }}
                   >
-                    <X size={15} /> Close
+                    <X size={14} /> Close
                   </button>
                 </div>
               </div>
 
               {profileMsg && (
-                <div style={{ background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, color: C.ramp, borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  background: profileMsg.includes("⚠️") ? "rgba(227,178,60,0.12)" : profileMsg.includes("💾") ? "rgba(76,110,245,0.12)" : "rgba(63,214,196,0.12)",
+                  border: `1px solid ${profileMsg.includes("⚠️") ? C.boulder : profileMsg.includes("💾") ? "#4C6EF5" : C.ramp}`,
+                  color: profileMsg.includes("⚠️") ? C.boulder : profileMsg.includes("💾") ? "#7B96F8" : C.ramp,
+                  borderRadius: 8,
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                }}>
                   <CheckCircle2 size={16} /> {profileMsg}
+                </div>
+              )}
+
+              {/* Guest Student Mode Alert Banner with Direct Sign In Options */}
+              {!isCloudConnected && (
+                <div style={{
+                  background: "rgba(227,178,60,0.08)",
+                  border: `1px solid rgba(227,178,60,0.35)`,
+                  borderRadius: 10,
+                  padding: "14px 16px",
+                  marginBottom: 18,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 12
+                }}>
+                  <div style={{ flex: 1, minWidth: 240 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: C.boulder, display: "flex", alignItems: "center", gap: 6 }}>
+                      <AlertTriangle size={15} /> Currently in Guest Student Mode (Local Storage Only)
+                    </div>
+                    <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3, lineHeight: 1.4 }}>
+                      Your habits, timetable, and profile are saved only on this browser. Sign in with Google or Email to link your account to Supabase Cloud and sync across all devices.
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      style={{
+                        background: "#ffffff",
+                        color: "#1f1f1f",
+                        border: "1px solid #CBD5E1",
+                        borderRadius: 6,
+                        padding: "7px 12px",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                      </svg>
+                      Sign In with Google
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStage("auth")}
+                      style={{
+                        background: C.panelAlt,
+                        color: C.textPrimary,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        padding: "7px 12px",
+                        fontSize: 12.5,
+                        cursor: "pointer"
+                      }}
+                    >
+                      Sign In / Register
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Cloud Connected Status Banner */}
+              {isCloudConnected && (
+                <div style={{
+                  background: "rgba(63,214,196,0.08)",
+                  border: `1px solid rgba(63,214,196,0.3)`,
+                  borderRadius: 10,
+                  padding: "12px 16px",
+                  marginBottom: 18,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 10
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.ramp, boxShadow: `0 0 10px ${C.ramp}` }} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.ramp, display: "flex", alignItems: "center", gap: 6 }}>
+                        <CheckCircle2 size={14} /> Connected to Supabase Cloud
+                      </div>
+                      <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 1 }}>
+                        Account: <span style={{ color: C.textPrimary, fontWeight: 600 }}>{profile.email}</span> · Provider: {profile.provider === "google" ? "Google OAuth" : "Supabase Auth"}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleManualCloudSync}
+                    disabled={isManualSyncing}
+                    style={{
+                      background: "rgba(63,214,196,0.14)",
+                      color: C.ramp,
+                      border: `1px solid rgba(63,214,196,0.4)`,
+                      borderRadius: 6,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: isManualSyncing ? "default" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    <RefreshCw size={13} className={isManualSyncing ? "spin" : ""} />
+                    {isManualSyncing ? "Syncing..." : "Sync Cloud Now"}
+                  </button>
                 </div>
               )}
 
               {/* Profile Overview Card */}
               <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
-                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,138,92,0.25) 0%, rgba(63,214,196,0.25) 100%)", border: `2px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 700, color: C.ramp }}>
-                    {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
-                  </div>
+                  {profile.avatarUrl ? (
+                    <img
+                      src={profile.avatarUrl}
+                      alt={profile.name || "Student"}
+                      style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: `2px solid ${C.ramp}` }}
+                    />
+                  ) : (
+                    <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,138,92,0.25) 0%, rgba(63,214,196,0.25) 100%)", border: `2px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 700, color: C.ramp }}>
+                      {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
+                    </div>
+                  )}
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary }}>
                       {profile.name || "Student"}
@@ -5353,6 +5686,11 @@
                       {profile.degree && (
                         <span style={{ fontSize: 11, background: C.panelAlt, color: C.textMuted, border: `1px solid ${C.border}`, padding: "2px 8px", borderRadius: 4 }}>
                           {profile.degree}
+                        </span>
+                      )}
+                      {profile.semester && (
+                        <span style={{ fontSize: 11, background: C.panelAlt, color: C.textMuted, border: `1px solid ${C.border}`, padding: "2px 8px", borderRadius: 4 }}>
+                          {profile.semester}
                         </span>
                       )}
                     </div>
@@ -5385,7 +5723,7 @@
               {/* Editable Academic Form */}
               <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-                  <Pencil size={15} color={C.ramp} /> Edit Student Credentials
+                  <Pencil size={15} color={C.ramp} /> Edit Student Credentials & Cloud Sync
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
@@ -5488,6 +5826,7 @@
                   <button
                     type="button"
                     onClick={saveProfile}
+                    disabled={isSavingProfile}
                     style={{
                       flex: 1,
                       background: C.ramp,
@@ -5497,14 +5836,15 @@
                       padding: "10px 0",
                       fontSize: 13.5,
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: isSavingProfile ? "default" : "pointer",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 6
                     }}
                   >
-                    <CheckCircle2 size={16} /> Save Profile Changes
+                    {isSavingProfile ? <Loader2 size={16} className="spin" /> : <CheckCircle2 size={16} />}
+                    {isSavingProfile ? "Saving to Supabase Cloud..." : "Save Profile Changes"}
                   </button>
                   <button
                     type="button"
@@ -5524,11 +5864,78 @@
                 </div>
               </div>
 
+              {/* Supabase Database Connection & Setup Card */}
+              <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 18, marginBottom: 20 }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+                  onClick={() => setShowSqlSchemaModal(!showSqlSchemaModal)}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(63,214,196,0.12)", border: `1px solid ${C.ramp}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Database size={17} color={C.ramp} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: C.textPrimary }}>
+                        Supabase Cloud Database & Tables
+                      </div>
+                      <div style={{ fontSize: 11.5, color: C.textMuted }}>
+                        Endpoint: <code style={{ fontSize: 11, color: C.ramp }}>pzfvmnsbhqkrtxietlle.supabase.co</code> · Auth + PostgreSQL
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 11, background: "rgba(63,214,196,0.12)", color: C.ramp, border: "1px solid rgba(63,214,196,0.3)", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                      Auth Active
+                    </span>
+                    <ChevronDown size={15} color={C.textMuted} style={{ transform: showSqlSchemaModal ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                  </div>
+                </div>
+
+                {showSqlSchemaModal && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+                    <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 10, lineHeight: 1.5 }}>
+                      HabitLoop connects to Supabase Auth metadata for automatic 0-config cloud storage. To enable relational SQL querying for <code style={{ color: C.ramp }}>profiles</code> and <code style={{ color: C.ramp }}>user_data</code> in your Supabase project dashboard, run this script in your Supabase SQL Editor:
+                    </div>
+                    <div style={{ position: "relative" }}>
+                      <pre style={{ background: "#0d0f15", border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 14px", fontSize: 11, color: "#9cdcfe", overflowX: "auto", margin: 0, maxHeight: 180, lineHeight: 1.45 }}>
+                        {SUPABASE_SCHEMA_SQL}
+                      </pre>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(SUPABASE_SCHEMA_SQL);
+                          setCopySchemaSuccess(true);
+                          setTimeout(() => setCopySchemaSuccess(false), 2500);
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          background: "rgba(255,255,255,0.12)",
+                          border: `1px solid ${C.border}`,
+                          color: copySchemaSuccess ? C.ramp : C.textPrimary,
+                          borderRadius: 5,
+                          padding: "4px 8px",
+                          fontSize: 11,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}
+                      >
+                        {copySchemaSuccess ? <Check size={11} /> : <Copy size={11} />}
+                        {copySchemaSuccess ? "Copied!" : "Copy SQL"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Account Session Actions */}
               <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>Account Session</div>
-                  <div style={{ fontSize: 11.5, color: C.textMuted }}>Currently signed in as {profile.email} · {activeCloudUserId ? "☁️ Supabase Cloud Synced" : "💾 Local Storage"}</div>
+                  <div style={{ fontSize: 11.5, color: C.textMuted }}>Currently signed in as {profile.email} · {isCloudConnected ? "☁️ Supabase Cloud Synced" : "💾 Local Storage Cache"}</div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
