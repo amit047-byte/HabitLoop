@@ -5,6 +5,15 @@ import { JECRC_SECTIONS } from "./sections.js";
 
 function detectSection(fileName, text) {
   const combined = `${fileName || ""} ${text || ""}`;
+  // MITS Biotechnology sections: BSC-1A, BSC-1B, BSC-1C or 1A, 1B, 1C
+  const mitsMatch = combined.match(/\b(?:BSC[-_\s]*)?(1[A-C])\b/i) || combined.match(/\bBSC[-_\s]*(1[A-C]|[A-C])\b/i);
+  if (mitsMatch && mitsMatch[1]) {
+    const secTag = mitsMatch[1].toUpperCase();
+    return secTag.startsWith("1") ? `BSC-${secTag}` : `BSC-1${secTag}`;
+  }
+  if (/mits|biotech|cell biology|cbg|dr\.?\s*subrat/i.test(combined)) {
+    return "BSC-1A";
+  }
   const m = combined.match(/\b(?:SEC|SECTION)[-_\s.:]*([A-T])\b/i);
   if (m && m[1]) return m[1].toUpperCase();
   const m2 = combined.match(/(?:^|[^a-zA-Z])(?:SEC|SECTION)[-_\s.:]*([A-T])(?:[^a-zA-Z]|$)/i);

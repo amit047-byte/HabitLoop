@@ -1,2 +1,4629 @@
-// Calibrated JECRC University Sections Database (A through T)
-export const JECRC_SECTIONS = {"A": {"name": "Section A", "title": "B.Tech First Year \u00b7 Section A", "classes": [{"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Bhupendra Meena)", "day": "mon", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-303 \u00b7 Dr. Monika Jain)", "day": "mon", "start": 530, "end": 580}, {"subject": "CPLT Lab (A2 \u00b7 VIB-203) / Auto Cad Lab (A1 \u00b7 KAB-406)", "day": "mon", "start": 630, "end": 725}, {"subject": "Digital Data and AI Literacy Lab (Section A \u00b7 NYB-506)", "day": "tue", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Dr. Monika Jain)", "day": "tue", "start": 580, "end": 630}, {"subject": "Entrepreneurship Development (EDP-A)", "day": "tue", "start": 680, "end": 725}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Nidhi Bansal)", "day": "wed", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Bhupendra Meena)", "day": "wed", "start": 530, "end": 580}, {"subject": "Chemistry Lab (A1 \u00b7 VIB-017) / Auto Cad Lab (A2 \u00b7 KAB-406)", "day": "wed", "start": 580, "end": 680}, {"subject": "Engineering Mathematics-I Tutorial (EM-I Tut-A2 \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)", "day": "wed", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Bhupendra Meena)", "day": "thu", "start": 480, "end": 530}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Nidhi Bansal)", "day": "thu", "start": 580, "end": 630}, {"subject": "Communication Skills Lab (CS Lab-A1 \u00b7 NYB-102) / Chemistry Lab (A2 \u00b7 VIB-017)", "day": "thu", "start": 630, "end": 725}, {"subject": "CPLT Lab (A1 \u00b7 VIB-203) / Communication Skills Lab (CS Lab-A2 \u00b7 NYB-103)", "day": "fri", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)", "day": "fri", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I Tutorial (EM-I Tut-A1 \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)", "day": "fri", "start": 680, "end": 725}, {"subject": "Communication Skills (NYB-101 \u00b7 Dr. Vishnu)", "day": "sat", "start": 530, "end": 580}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Nidhi Bansal)", "day": "sat", "start": 580, "end": 630}, {"subject": "Digital Data and AI Literacy Lab (Section A \u00b7 NYB-506)", "day": "sat", "start": 630, "end": 725}]}, "B": {"name": "Section B", "title": "B.Tech First Year \u00b7 Section B", "classes": [{"subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "mon", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Prof. Seema Tinker)", "day": "mon", "start": 580, "end": 630}, {"subject": "Chemistry Lab (B1 \u00b7 VIB-017) / EM-I Tutorial (EM-I Tut-B2 \u00b7 NYB-101 \u00b7 Mr. Piyush G)", "day": "mon", "start": 630, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Dr. Ankit Tiwari)", "day": "tue", "start": 480, "end": 530}, {"subject": "Digital Data and AI Literacy Lab (Section B \u00b7 NYB-506)", "day": "tue", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-B)", "day": "tue", "start": 680, "end": 725}, {"subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "wed", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Dr. Ankit Tiwari)", "day": "wed", "start": 580, "end": 630}, {"subject": "Communication Skills Lab (CS Lab-B2 \u00b7 NYB-314) / EM-I Tutorial (EM-I Tut-B1 \u00b7 NYB-204 \u00b7 Mr. Piyush G)", "day": "wed", "start": 630, "end": 725}, {"subject": "Auto Cad Lab (B1 \u00b7 KAB-406) / Chemistry Lab (B2 \u00b7 VIB-017)", "day": "thu", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Prof. Seema Tinker)", "day": "thu", "start": 580, "end": 630}, {"subject": "CPLT Lab (B2 \u00b7 VIB-203) / Communication Skills Lab (CS Lab-B1 \u00b7 NYB-103)", "day": "thu", "start": 630, "end": 725}, {"subject": "Communication Skills (NYB-101 \u00b7 Dr. Aditi)", "day": "fri", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 VIB-407 \u00b7 Dr. Ankit Tiwari)", "day": "fri", "start": 580, "end": 630}, {"subject": "Digital Data and AI Literacy Lab (Section B \u00b7 NYB-506)", "day": "fri", "start": 630, "end": 725}, {"subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "sat", "start": 530, "end": 580}, {"subject": "CPLT Lab (B1 \u00b7 VIB-203) / Auto Cad Lab (B2 \u00b7 KAB-406)", "day": "sat", "start": 580, "end": 680}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Prof. Seema Tinker)", "day": "sat", "start": 680, "end": 725}]}, "C": {"name": "Section C", "title": "B.Tech First Year \u00b7 Section C", "classes": [{"subject": "Auto Cad Lab (C2 \u00b7 KAB-406) / Communication Skills Lab (CS Lab-C1 \u00b7 NYB-103)", "day": "mon", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)", "day": "mon", "start": 580, "end": 630}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Prof. Sapna Sharma)", "day": "mon", "start": 630, "end": 680}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Shekhar)", "day": "mon", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I Tutorial (EM-I Tut-C1 \u00b7 NYB-301)", "day": "mon", "start": 725, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)", "day": "tue", "start": 530, "end": 580}, {"subject": "CPLT Lab (C1 \u00b7 VIB-203) / Chemistry Lab (C2 \u00b7 VIB-017)", "day": "tue", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-C)", "day": "tue", "start": 680, "end": 770}, {"subject": "Digital Data & AI Literacy Lab (Section C \u00b7 NYB-506)", "day": "wed", "start": 480, "end": 580}, {"subject": "Communication Skills (Comm. Skills \u00b7 NYB-102 \u00b7 Dr. Nidhi Bhatnagar)", "day": "wed", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)", "day": "wed", "start": 630, "end": 680}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Prof. Sapna Sharma)", "day": "wed", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Shekhar)", "day": "thu", "start": 530, "end": 580}, {"subject": "Auto Cad Lab (C1 \u00b7 KAB-406) / CPLT Lab (C2 \u00b7 VIB-203)", "day": "thu", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Prof. Sapna Sharma)", "day": "thu", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I Tutorial (EM-I Tut-C2 \u00b7 NYB-301)", "day": "thu", "start": 725, "end": 770}, {"subject": "Chemistry Lab (C1 \u00b7 VIB-017) / CS Lab (C2 \u00b7 NYB-103)", "day": "sat", "start": 480, "end": 580}, {"subject": "Digital Data & AI Literacy Lab (Section C \u00b7 NYB-506)", "day": "sat", "start": 580, "end": 680}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Mr. Shekhar)", "day": "sat", "start": 680, "end": 725}]}, "D": {"name": "Section D", "title": "B.Tech First Year \u00b7 Section D", "classes": [{"subject": "Digital Data and AI Literacy Lab (Section D \u00b7 NYB-506)", "day": "mon", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Pradip Kr. Gaur)", "day": "mon", "start": 630, "end": 680}, {"subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Anita Nehra)", "day": "mon", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Mr. Ajay Kr. Mehta)", "day": "tue", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Dr. Pradip Kr. Gaur)", "day": "tue", "start": 580, "end": 630}, {"subject": "Auto Cad Lab (D2 \u00b7 KAB-406) / CS Lab (D1 \u00b7 NYB-102)", "day": "tue", "start": 630, "end": 725}, {"subject": "CPLT Lab (D1 \u00b7 VIB-203) / Chemistry Lab (D2 \u00b7 VIB-017)", "day": "wed", "start": 480, "end": 580}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Anita Nehra)", "day": "wed", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-D)", "day": "wed", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Mr. Ajay Kr. Mehta)", "day": "thu", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section D \u00b7 NYB-506)", "day": "thu", "start": 580, "end": 680}, {"subject": "EM-I Tutorial (EM-I Tut-D2 \u00b7 NYB-301 \u00b7 Mr. Abhishek)", "day": "thu", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-D1 \u00b7 NYB-306 \u00b7 Mr. Abhishek)", "day": "thu", "start": 725, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Pradip Kr. Gaur)", "day": "fri", "start": 530, "end": 580}, {"subject": "CPLT Lab (D2 \u00b7 VIB-203) / Auto Cad Lab (D1 \u00b7 KAB-406)", "day": "fri", "start": 580, "end": 680}, {"subject": "Communication Skills (NYB-101 \u00b7 Dr. Vishakha Chouhan)", "day": "fri", "start": 680, "end": 725}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Anita Nehra)", "day": "sat", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Ajay Kr. Mehta)", "day": "sat", "start": 580, "end": 630}, {"subject": "Chemistry Lab (D1 \u00b7 VIB-017) / CS Lab (D2 \u00b7 NYB-103)", "day": "sat", "start": 630, "end": 725}]}, "E": {"name": "Section E", "title": "B.Tech First Year \u00b7 Section E", "classes": [{"subject": "CPLT Lab (E2 \u00b7 VIB-203) / Chemistry Lab (E1 \u00b7 VIB-017)", "day": "mon", "start": 480, "end": 580}, {"subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Poonam Haryani)", "day": "mon", "start": 580, "end": 630}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Ms. Smita Rai Agarwal)", "day": "mon", "start": 630, "end": 680}, {"subject": "EM-I Tutorial (EM-I Tut-E1 \u00b7 NYB-103 \u00b7 Piyush Gupta)", "day": "mon", "start": 680, "end": 725}, {"subject": "Auto Cad Lab (E1 \u00b7 KAB-406) / CS Lab (E2 \u00b7 NYB-103)", "day": "wed", "start": 480, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Smita Rai Agarwal)", "day": "wed", "start": 630, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section E \u00b7 NYB-506)", "day": "wed", "start": 680, "end": 770}, {"subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Poonam Haryani)", "day": "thu", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Vishwas Deep Joshi)", "day": "thu", "start": 580, "end": 630}, {"subject": "Communication Skills (NYB-102 \u00b7 Dr. Rashi Mehta)", "day": "thu", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-E)", "day": "thu", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Smita Rai Agarwal)", "day": "fri", "start": 480, "end": 530}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Poonam Haryani)", "day": "fri", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Vishwas Deep Joshi)", "day": "fri", "start": 630, "end": 680}, {"subject": "Auto Cad Lab (E2 \u00b7 KAB-406) / CPLT Lab (E1 \u00b7 VIB-203)", "day": "fri", "start": 680, "end": 770}, {"subject": "Digital Data and AI Literacy Lab (Section E \u00b7 NYB-506)", "day": "sat", "start": 480, "end": 580}, {"subject": "Chemistry Lab (E2 \u00b7 VIB-017) / CS Lab (E1 \u00b7 NYB-102)", "day": "sat", "start": 580, "end": 680}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. Vishwas Deep Joshi)", "day": "sat", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-E2 \u00b7 NYB-101 \u00b7 Abhishek)", "day": "sat", "start": 725, "end": 770}]}, "F": {"name": "Section F", "title": "B.Tech First Year \u00b7 Section F", "classes": [{"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Abhishek Nimawat)", "day": "mon", "start": 530, "end": 580}, {"subject": "Chemistry Lab (F2 \u00b7 VIB-017) / Auto Cad Lab (F1 \u00b7 KAB-406)", "day": "mon", "start": 580, "end": 680}, {"subject": "EM-I Tutorial (EM-I Tut-F1 \u00b7 NYB-103 \u00b7 Dilkhush)", "day": "mon", "start": 680, "end": 725}, {"subject": "CPLT Lab (F1 \u00b7 VIB-203) / CS Lab (F2 \u00b7 NYB-107)", "day": "tue", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Abhishek Nimawat)", "day": "tue", "start": 580, "end": 630}, {"subject": "Digital Data and AI Literacy Lab (Section F \u00b7 NYB-506)", "day": "tue", "start": 680, "end": 770}, {"subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "wed", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Ms. Divya Sharma)", "day": "wed", "start": 580, "end": 630}, {"subject": "CPLT Lab (F2 \u00b7 VIB-203) / Chemistry Lab (F1 \u00b7 VIB-019)", "day": "wed", "start": 630, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. Abhishek Nimawat)", "day": "thu", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Ms. Divya Sharma)", "day": "thu", "start": 580, "end": 630}, {"subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "thu", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-F)", "day": "thu", "start": 680, "end": 725}, {"subject": "Digital Data and AI Literacy Lab (Section F \u00b7 NYB-506)", "day": "fri", "start": 480, "end": 580}, {"subject": "Communication Skills (NYB-102 \u00b7 Dr. Alia)", "day": "fri", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-F2 \u00b7 NYB-314 \u00b7 Rachna Yadav)", "day": "fri", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Divya Sharma)", "day": "sat", "start": 480, "end": 530}, {"subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "sat", "start": 580, "end": 630}, {"subject": "Auto Cad Lab (F2 \u00b7 KAB-406) / CS Lab (F1 \u00b7 NYB-107)", "day": "sat", "start": 630, "end": 725}]}, "G": {"name": "Section G", "title": "B.Tech First Year \u00b7 Section G", "classes": [{"subject": "Communication Skills (NYB-106 \u00b7 Dr. Vishnu)", "day": "mon", "start": 480, "end": 530}, {"subject": "EM-I Tutorial (EM-I Tut-G2 \u00b7 VIB-217 \u00b7 Pooja Gupta)", "day": "mon", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section G \u00b7 NYB-506)", "day": "mon", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-106 \u00b7 Dr. Niharika Shringi)", "day": "mon", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. G.S Paliwal)", "day": "tue", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Mr. Sanjay Sharma)", "day": "tue", "start": 530, "end": 580}, {"subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Niharika Shringi)", "day": "tue", "start": 580, "end": 630}, {"subject": "Chemistry Lab (G2 \u00b7 VIB-017) / CS Lab (G1 \u00b7 NYB-103)", "day": "tue", "start": 630, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-106 \u00b7 Mr. Sanjay Sharma)", "day": "wed", "start": 480, "end": 530}, {"subject": "EM-I Tutorial (EM-I Tut-G1 \u00b7 VIB-217 \u00b7 Pooja Gupta)", "day": "wed", "start": 530, "end": 580}, {"subject": "CPLT Lab (G1 \u00b7 VIB-203) / CS Lab (G2 \u00b7 NYB-107)", "day": "wed", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-G)", "day": "wed", "start": 680, "end": 725}, {"subject": "Engineering Chemistry (NYB-106 \u00b7 Dr. Niharika Shringi)", "day": "fri", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-106 \u00b7 Mr. Sanjay Sharma)", "day": "fri", "start": 530, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. G.S Paliwal)", "day": "fri", "start": 580, "end": 630}, {"subject": "Auto Cad Lab (G2 \u00b7 VIB-217) / Chemistry Lab (G1 \u00b7 VIB-017)", "day": "fri", "start": 630, "end": 725}, {"subject": "CPLT Lab (G2 \u00b7 VIB-203) / Auto Cad Lab (G1 \u00b7 KAB-406)", "day": "sat", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. G.S Paliwal)", "day": "sat", "start": 580, "end": 630}, {"subject": "Digital Data and AI Literacy Lab (Section G \u00b7 NYB-501)", "day": "sat", "start": 630, "end": 725}]}, "H": {"name": "Section H", "title": "B.Tech First Year \u00b7 Section H", "classes": [{"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-107 \u00b7 Dr. Satyajeet Sharma)", "day": "mon", "start": 480, "end": 530}, {"subject": "Engineering Chemistry (NYB-106 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "mon", "start": 530, "end": 580}, {"subject": "Auto Cad Lab (H1 \u00b7 VIB-217) / CS Lab (H2 \u00b7 NYB-107)", "day": "mon", "start": 580, "end": 680}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. OM Prakash)", "day": "mon", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. OM Prakash)", "day": "tue", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Dr. Satyajeet Sharma)", "day": "tue", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-H1 \u00b7 VIB-217 \u00b7 Pradeep Yadav)", "day": "tue", "start": 630, "end": 680}, {"subject": "CPLT Lab (H1 \u00b7 VIB-203) / Chemistry Lab (H2 \u00b7 VIB-019)", "day": "tue", "start": 680, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. OM Prakash)", "day": "wed", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-106 \u00b7 Dr. Satyajeet Sharma)", "day": "wed", "start": 580, "end": 630}, {"subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "wed", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-H)", "day": "wed", "start": 680, "end": 725}, {"subject": "CPLT Lab (H2 \u00b7 VIB-203) / CS Lab (H1 \u00b7 NYB-106)", "day": "thu", "start": 480, "end": 580}, {"subject": "EM-I Tutorial (EM-I Tut-H2 \u00b7 NYB-402 \u00b7 Abhishek)", "day": "thu", "start": 580, "end": 630}, {"subject": "Communication Skills (NYB-306 \u00b7 Dr. Anubhav)", "day": "thu", "start": 630, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section H \u00b7 NYB-506)", "day": "thu", "start": 680, "end": 770}, {"subject": "Auto Cad Lab (H2 \u00b7 KAB-406) / Chemistry Lab (H1 \u00b7 VIB-017)", "day": "fri", "start": 480, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section H \u00b7 NYB-506)", "day": "fri", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)", "day": "fri", "start": 680, "end": 725}]}, "I": {"name": "Section I", "title": "B.Tech First Year \u00b7 Section I", "classes": [{"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-207 \u00b7 Dr. Dinesh Kr. Yadav)", "day": "mon", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Richa)", "day": "mon", "start": 530, "end": 580}, {"subject": "CPLT Lab (I1 \u00b7 VIB-203) / CS Lab (I2 \u00b7 NYB-106)", "day": "mon", "start": 580, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section I \u00b7 NYB-506)", "day": "mon", "start": 680, "end": 770}, {"subject": "Chemistry Lab (I1 \u00b7 VIB-017) / Auto Cad Lab (I2 \u00b7 KAB-406)", "day": "tue", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. Dinesh Kr. Yadav)", "day": "tue", "start": 630, "end": 680}, {"subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Aruna Sharma)", "day": "tue", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-I1 \u00b7 NYB-203 \u00b7 Jitendra Sillu)", "day": "tue", "start": 725, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-204 \u00b7 Dr. Dinesh Kr. Yadav)", "day": "wed", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section I \u00b7 NYB-506)", "day": "wed", "start": 580, "end": 680}, {"subject": "Chemistry Lab (I2 \u00b7 VIB-017) / Auto Cad Lab (I1 \u00b7 KAB-406)", "day": "wed", "start": 680, "end": 770}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-202 \u00b7 Ms. Richa)", "day": "thu", "start": 480, "end": 530}, {"subject": "Communication Skills (NYB-202 \u00b7 Dr. Aditi)", "day": "thu", "start": 530, "end": 580}, {"subject": "Engineering Chemistry (NYB-207 \u00b7 Dr. Aruna Sharma)", "day": "thu", "start": 580, "end": 630}, {"subject": "Entrepreneurship Development (EDP-I)", "day": "thu", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Richa)", "day": "sat", "start": 530, "end": 580}, {"subject": "CPLT Lab (I2 \u00b7 KAB-507) / CS Lab (I1 \u00b7 NYB-106)", "day": "sat", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-204 \u00b7 Dr. Aruna Sharma)", "day": "sat", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-I2 \u00b7 NYB-102 \u00b7 Jitendra Sillu)", "day": "sat", "start": 725, "end": 770}]}, "J": {"name": "Section J", "title": "B.Tech First Year \u00b7 Section J", "classes": [{"subject": "Digital Data and AI Literacy Lab (Section J \u00b7 NYB-505)", "day": "mon", "start": 480, "end": 580}, {"subject": "Communication Skills (NYB-103 \u00b7 Dr. Priyanka Tiwari)", "day": "mon", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-J2 \u00b7 NYB-302 \u00b7 Piyush Gupta)", "day": "mon", "start": 630, "end": 680}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Ankita)", "day": "mon", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Rachana Saini)", "day": "tue", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Ankita)", "day": "tue", "start": 530, "end": 580}, {"subject": "CPLT Lab (J2 \u00b7 KAB-507) / EW Lab (J1 \u00b7 VIB-205 \u00b7 Mr. Ravi Sharma)", "day": "tue", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-207 \u00b7 Dr. Anita Nehra)", "day": "tue", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Ankita)", "day": "wed", "start": 530, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-314 \u00b7 Dr. Rachana Saini)", "day": "wed", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-J1 \u00b7 VIB-217 \u00b7 Pradeep Yadav)", "day": "wed", "start": 630, "end": 680}, {"subject": "EW Lab (J2 \u00b7 VIB-205 \u00b7 Dr. Ankit Tiwari) / CS Lab (J1 \u00b7 NYB-103)", "day": "wed", "start": 680, "end": 770}, {"subject": "Engineering Chemistry (NYB-203 \u00b7 Dr. Anita Nehra)", "day": "thu", "start": 480, "end": 530}, {"subject": "CPLT Lab (J1 \u00b7 VIB-204) / Chemistry Lab (J2 \u00b7 VIB-017)", "day": "thu", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-J)", "day": "thu", "start": 680, "end": 725}, {"subject": "Chemistry Lab (J1 \u00b7 VIB-019) / CS Lab (J2 \u00b7 NYB-107)", "day": "fri", "start": 480, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-207 \u00b7 Dr. Rachana Saini)", "day": "fri", "start": 580, "end": 630}, {"subject": "Engineering Chemistry (NYB-207 \u00b7 Dr. Anita Nehra)", "day": "fri", "start": 630, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section J \u00b7 NYB-501)", "day": "fri", "start": 680, "end": 770}]}, "K": {"name": "Section K (Applied Physics)", "title": "B.Tech First Year \u00b7 Section K", "classes": [{"subject": "Applied Physics Lab (K1 \u00b7 VIB-113) / EW Lab (K2 \u00b7 VIB-205 \u00b7 SH)", "day": "mon", "start": 480, "end": 580}, {"subject": "EM-I Tutorial (EM-I Tut-K1 \u00b7 VIB-217 \u00b7 Komal Lawat)", "day": "mon", "start": 580, "end": 630}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Mr. Ankur Agarwal)", "day": "mon", "start": 680, "end": 725}, {"subject": "Digital Data and AI Literacy Lab (Section K \u00b7 NYB-505)", "day": "tue", "start": 480, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Mr. Ankur Agarwal)", "day": "tue", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-203 \u00b7 Dr. Krishan Yadav)", "day": "tue", "start": 630, "end": 680}, {"subject": "Communication Skills (NYB-208 \u00b7 Dr. Geetika)", "day": "tue", "start": 680, "end": 725}, {"subject": "Applied Physics (NYB-208 \u00b7 Dr. Nishant Gaur)", "day": "tue", "start": 725, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Krishan Yadav)", "day": "wed", "start": 530, "end": 580}, {"subject": "CPLT Lab (K2 \u00b7 VIB-204) / CS Lab (K1 \u00b7 NYB-202)", "day": "wed", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-M)", "day": "wed", "start": 680, "end": 725}, {"subject": "Applied Physics (NYB-204 \u00b7 Dr. Nishant Gaur)", "day": "fri", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-204 \u00b7 Dr. Krishan Yadav)", "day": "fri", "start": 530, "end": 580}, {"subject": "Applied Physics Lab (K2 \u00b7 NYB-218) / EW Lab (K1 \u00b7 VIB-205 \u00b7 SH)", "day": "fri", "start": 580, "end": 680}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Mr. Ankur Agarwal)", "day": "fri", "start": 680, "end": 725}, {"subject": "CPLT Lab (K1 \u00b7 VIB-204) / CS Lab (K2 \u00b7 NYB-106)", "day": "sat", "start": 480, "end": 580}, {"subject": "Applied Physics (NYB-208 \u00b7 Dr. Nishant Gaur)", "day": "sat", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-K2 \u00b7 NYB-302 \u00b7 Dilkhush)", "day": "sat", "start": 630, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section K \u00b7 NYB-505)", "day": "sat", "start": 680, "end": 770}]}, "L": {"name": "Section L (Applied Physics)", "title": "B.Tech First Year \u00b7 Section L", "classes": [{"subject": "Communication Skills (NYB-303 \u00b7 Dr. Basheek)", "day": "tue", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-303 \u00b7 Ms. Richa)", "day": "tue", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section L \u00b7 NYB-505)", "day": "tue", "start": 580, "end": 680}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Ram Jash)", "day": "tue", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. Ram Jash)", "day": "wed", "start": 530, "end": 580}, {"subject": "Applied Physics (NYB-207 \u00b7 Dr. Priyanka Chholak)", "day": "wed", "start": 580, "end": 630}, {"subject": "CPLT Lab (L2 \u00b7 VIB-204) / Applied Physics Lab (L1 \u00b7 NYB-218)", "day": "wed", "start": 630, "end": 770}, {"subject": "Applied Physics (NYB-204 \u00b7 Dr. Priyanka Chholak)", "day": "thu", "start": 480, "end": 530}, {"subject": "CPLT Lab (L1 \u00b7 NYB-201) / Applied Physics Lab (L2 \u00b7 NYB-218)", "day": "thu", "start": 530, "end": 680}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Ms. Richa)", "day": "thu", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-L2 \u00b7 NYB-302 \u00b7 Utsav)", "day": "thu", "start": 725, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-207 \u00b7 Dr. Ram Jash)", "day": "fri", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Richa)", "day": "fri", "start": 530, "end": 580}, {"subject": "EW Lab (L1 \u00b7 VIB-306 \u00b7 Mr. Ravi Sharma) / CS Lab (L2 \u00b7 NYB-106)", "day": "fri", "start": 580, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section L \u00b7 NYB-505)", "day": "fri", "start": 680, "end": 770}, {"subject": "EW Lab (L2 \u00b7 Dr. Ankit Tiwari) / CS Lab (L1 \u00b7 NYB-107)", "day": "sat", "start": 480, "end": 580}, {"subject": "EM-I Tutorial (EM-I Tut-L1 \u00b7 NYB-403 \u00b7 Utsav)", "day": "sat", "start": 580, "end": 630}, {"subject": "Applied Physics (NYB-208 \u00b7 Dr. Priyanka Chholak)", "day": "sat", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-L)", "day": "sat", "start": 680, "end": 725}]}, "M": {"name": "Section M (Applied Physics)", "title": "B.Tech First Year \u00b7 Section M", "classes": [{"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. OM Prakash)", "day": "mon", "start": 480, "end": 530}, {"subject": "Communication Skills (NYB-208 \u00b7 Dr. Aditi)", "day": "mon", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 VIB-407 \u00b7 Ms. Neha Mishra)", "day": "mon", "start": 580, "end": 630}, {"subject": "Applied Physics (VIB-407 \u00b7 Dr. Priyanka Chholak)", "day": "mon", "start": 630, "end": 680}, {"subject": "CS Lab (M2 \u00b7 NYB-107) / EW Lab (M1 \u00b7 VIB-205 \u00b7 RS)", "day": "mon", "start": 680, "end": 770}, {"subject": "Applied Physics (NYB-306 \u00b7 Dr. Priyanka Chholak)", "day": "tue", "start": 480, "end": 530}, {"subject": "CPLT Lab (M2 \u00b7 KAB-407) / CS Lab (M1 \u00b7 NYB-107)", "day": "tue", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-M)", "day": "tue", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 VIB-407 \u00b7 Ms. Neha Mishra)", "day": "wed", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section M \u00b7 NYB-503)", "day": "wed", "start": 580, "end": 680}, {"subject": "Applied Physics Lab (M2 \u00b7 VIB-113) / CPLT Lab (M1 \u00b7 KAB-407)", "day": "wed", "start": 680, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. OM Prakash)", "day": "thu", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Ms. Neha Mishra)", "day": "thu", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-M2 \u00b7 NYB-303 \u00b7 Abhishek)", "day": "thu", "start": 630, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section M \u00b7 NYB-503)", "day": "thu", "start": 680, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. OM Prakash)", "day": "sat", "start": 530, "end": 580}, {"subject": "Applied Physics (NYB-301 \u00b7 Dr. Priyanka Chholak)", "day": "sat", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-M1 \u00b7 NYB-306 \u00b7 Abhishek)", "day": "sat", "start": 630, "end": 680}, {"subject": "Applied Physics Lab (M1 \u00b7 NYB-218) / EW Lab (M2 \u00b7 VIB-205 \u00b7 RS)", "day": "sat", "start": 680, "end": 770}]}, "N": {"name": "Section N", "title": "B.Tech First Year \u00b7 Section N", "classes": [{"subject": "Communication Skills (NYB-301 \u00b7 Dr. Alia)", "day": "mon", "start": 480, "end": 530}, {"subject": "Engineering Chemistry (NYB-107 \u00b7 Dr. Nidhi Bansal)", "day": "mon", "start": 530, "end": 580}, {"subject": "Chemistry Lab (N1 \u00b7 VIB-019) / CS Lab (N2 \u00b7 NYB-202)", "day": "mon", "start": 580, "end": 680}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-208 \u00b7 Dr. Dushyant Singh)", "day": "mon", "start": 680, "end": 725}, {"subject": "Engineering Chemistry (NYB-306 \u00b7 Dr. Nidhi Bansal)", "day": "tue", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-204 \u00b7 Dr. Dushyant Singh)", "day": "tue", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-204 \u00b7 Dr. Vinod Jangid)", "day": "tue", "start": 630, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section N \u00b7 NYB-505)", "day": "tue", "start": 680, "end": 770}, {"subject": "CPLT Lab (N1 \u00b7 VIB-204) / Chemistry Lab (N2 \u00b7 VIB-019)", "day": "wed", "start": 480, "end": 580}, {"subject": "EM-I Tutorial (EM-I Tut-N1 \u00b7 KAB-407 \u00b7 Utsav)", "day": "wed", "start": 580, "end": 630}, {"subject": "Entrepreneurship Development (EDP-N)", "day": "wed", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-N2 \u00b7 KAB-407 \u00b7 Utsav)", "day": "thu", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-203 \u00b7 Dr. Vinod Jangid)", "day": "thu", "start": 530, "end": 580}, {"subject": "EW Lab (N2 \u00b7 VIB-205 \u00b7 AG) / CS Lab (N1 \u00b7 NYB-106)", "day": "thu", "start": 580, "end": 680}, {"subject": "CPLT Lab (N2 \u00b7 KAB-406) / EW Lab (N1 \u00b7 VIB-205 \u00b7 AG)", "day": "thu", "start": 680, "end": 770}, {"subject": "Digital Data and AI Literacy Lab (Section N \u00b7 NYB-505)", "day": "fri", "start": 480, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Dr. Dushyant Singh)", "day": "fri", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. Vinod Jangid)", "day": "fri", "start": 630, "end": 680}, {"subject": "Engineering Chemistry (NYB-204 \u00b7 Dr. Nidhi Bansal)", "day": "fri", "start": 680, "end": 725}]}, "O": {"name": "Section O (Applied Physics)", "title": "B.Tech First Year \u00b7 Section O", "classes": [{"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Ms. Monika Yadav)", "day": "tue", "start": 530, "end": 580}, {"subject": "Communication Skills (NYB-202 \u00b7 Dr. Rakesh)", "day": "tue", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-O2 \u00b7 NYB-401 \u00b7 Ms. Monika Yadav) / EW Lab (O1 \u00b7 VIB-306 \u00b7 Ravi Prakash)", "day": "tue", "start": 680, "end": 770}, {"subject": "Applied Physics (NYB-501 \u00b7 Dr. Priyanka Chholak)", "day": "wed", "start": 480, "end": 530}, {"subject": "EM-I Tutorial (EM-I Tut-O1 \u00b7 NYB-201 \u00b7 Ms. Monika Yadav) / EW Lab (O2 \u00b7 VIB-306 \u00b7 Ravi Prakash)", "day": "wed", "start": 530, "end": 630}, {"subject": "Digital Data and AI Literacy Lab (Section O \u00b7 NYB-502)", "day": "wed", "start": 630, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-405 \u00b7 Ms. Monika Yadav)", "day": "thu", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-405 \u00b7 Ms. Smita Rai Agarwal)", "day": "thu", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section O \u00b7 NYB-501)", "day": "thu", "start": 580, "end": 680}, {"subject": "Applied Physics Lab (O1 \u00b7 VIB-113) / CS Lab (O2 \u00b7 NYB-201)", "day": "thu", "start": 680, "end": 770}, {"subject": "Applied Physics (NYB-203 \u00b7 Dr. Priyanka Chholak)", "day": "fri", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Ms. Smita Rai Agarwal)", "day": "fri", "start": 530, "end": 580}, {"subject": "CPLT Lab (O2 \u00b7 NYB-201) / CS Lab (O1 \u00b7 NYB-314)", "day": "fri", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-O)", "day": "fri", "start": 680, "end": 725}, {"subject": "Applied Physics (NYB-202 \u00b7 Dr. Priyanka Chholak)", "day": "sat", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-202 \u00b7 Ms. Smita Rai Agarwal)", "day": "sat", "start": 530, "end": 580}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-314 \u00b7 Ms. Monika Yadav)", "day": "sat", "start": 580, "end": 630}, {"subject": "CPLT Lab (O1 \u00b7 NYB-201) / Applied Physics Lab (O2 \u00b7 VIB-113)", "day": "sat", "start": 630, "end": 770}]}, "P": {"name": "Section P (Civil)", "title": "B.Tech First Year \u00b7 Section P (Civil)", "classes": [{"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Mr. Ankur Agarwal)", "day": "mon", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Dr. Pradip Kr. Gaur)", "day": "mon", "start": 530, "end": 580}, {"subject": "CPLT Lab (P1 \u00b7 VIB-204) / CS Lab (P2 \u00b7 NYB-203)", "day": "mon", "start": 580, "end": 680}, {"subject": "Digital Data and AI Literacy Lab (Section P \u00b7 NYB-410)", "day": "mon", "start": 680, "end": 770}, {"subject": "Chemistry Lab (P2 \u00b7 VIB-019) / CS Lab (P1 \u00b7 NYB-203)", "day": "tue", "start": 480, "end": 580}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-314 \u00b7 JK)", "day": "tue", "start": 580, "end": 630}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Mr. Ankur Agarwal)", "day": "tue", "start": 630, "end": 680}, {"subject": "Engineering Chemistry (NYB-303 \u00b7 Prof. Sonu Pareek)", "day": "tue", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-P2 \u00b7 NYB-306 \u00b7 Pradeep Yadav)", "day": "tue", "start": 725, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. Pradip Kr. Gaur)", "day": "wed", "start": 480, "end": 530}, {"subject": "Digital Data and AI Literacy Lab (Section P \u00b7 NYB-505)", "day": "wed", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-P)", "day": "wed", "start": 680, "end": 725}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 JK)", "day": "fri", "start": 480, "end": 530}, {"subject": "Engineering Chemistry (NYB-403 \u00b7 Prof. Sonu Pareek)", "day": "fri", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Mr. Ankur Agarwal)", "day": "fri", "start": 580, "end": 630}, {"subject": "Communication Skills (NYB-207 \u00b7 Dr. Rashi Mehta)", "day": "fri", "start": 680, "end": 725}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 JK)", "day": "sat", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Pradip Kr. Gaur)", "day": "sat", "start": 530, "end": 580}, {"subject": "CPLT Lab (P2 \u00b7 VIB-204) / Chemistry Lab (P1 \u00b7 VIB-019)", "day": "sat", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-207 \u00b7 Prof. Sonu Pareek)", "day": "sat", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-P1 \u00b7 NYB-306 \u00b7 Komal Lawat)", "day": "sat", "start": 725, "end": 770}]}, "Q": {"name": "Section Q (Mechanical+Civil)", "title": "B.Tech First Year \u00b7 Section Q (Mech+Civil)", "classes": [{"subject": "Chemistry Lab (Q2 \u00b7 VIB-019) / EM-I Tut (Q1 \u00b7 KAB-407 \u00b7 Komal Lawat)", "day": "mon", "start": 480, "end": 580}, {"subject": "Communication Skills (NYB-302 \u00b7 Mr. Abhishek)", "day": "mon", "start": 630, "end": 680}, {"subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. S.K Sharma)", "day": "mon", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Dr. G.S Paliwal)", "day": "tue", "start": 530, "end": 580}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)", "day": "tue", "start": 580, "end": 630}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Ms. Cheena)", "day": "tue", "start": 630, "end": 680}, {"subject": "CPLT Lab (Q1 \u00b7 VIB-204) / CS Lab (Q2 \u00b7 NYB-106)", "day": "tue", "start": 680, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. G.S Paliwal)", "day": "wed", "start": 480, "end": 530}, {"subject": "Digital Data and AI Literacy Lab (Section Q \u00b7 NYB-501)", "day": "wed", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. S.K Sharma)", "day": "wed", "start": 680, "end": 725}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)", "day": "thu", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. G.S Paliwal)", "day": "thu", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Ms. Cheena)", "day": "thu", "start": 580, "end": 630}, {"subject": "Chemistry Lab (Q1 \u00b7 VIB-019) / CPLT Lab (Q2 \u00b7 VIB-204)", "day": "thu", "start": 630, "end": 770}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-410 \u00b7 Ms. Cheena)", "day": "fri", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section Q \u00b7 NYB-505)", "day": "fri", "start": 580, "end": 680}, {"subject": "Entrepreneurship Development (EDP-Q)", "day": "fri", "start": 680, "end": 725}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)", "day": "sat", "start": 530, "end": 580}, {"subject": "CS Lab (Q1 \u00b7 NYB-107) / EM-I Tut (Q2 \u00b7 VIB-217 \u00b7 Jitendra Sillu)", "day": "sat", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. S.K Sharma)", "day": "sat", "start": 680, "end": 725}]}, "R": {"name": "Section R (ECE-Truechip)", "title": "B.Tech First Year \u00b7 Section R (ECE-Truechip)", "classes": [{"subject": "Engineering Chemistry (NYB-303 \u00b7 Dr. Niharika Shringi)", "day": "mon", "start": 480, "end": 530}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Vishwas Deep Joshi)", "day": "mon", "start": 530, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-303 \u00b7 Ms. Cheena)", "day": "mon", "start": 580, "end": 630}, {"subject": "EM-I Tutorial (EM-I Tut-R2 \u00b7 KAB-407 \u00b7 Dilkhush)", "day": "mon", "start": 630, "end": 680}, {"subject": "CPLT Lab (R2 \u00b7 VIB-204) / CS Lab (R1 \u00b7 NYB-204)", "day": "tue", "start": 480, "end": 580}, {"subject": "EM-I Tutorial (EM-I Tut-R1 \u00b7 VIB-217 \u00b7 Komal Lawat)", "day": "tue", "start": 580, "end": 630}, {"subject": "Engineering Chemistry (NYB-208 \u00b7 Dr. Niharika Shringi)", "day": "tue", "start": 630, "end": 680}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-306 \u00b7 Dr. Vishwas Deep Joshi)", "day": "tue", "start": 680, "end": 725}, {"subject": "Digital Data and AI Literacy Lab (Section R \u00b7 NYB-505)", "day": "wed", "start": 480, "end": 580}, {"subject": "Chemistry Lab (R1 \u00b7 VIB-019) / CS Lab (R2 \u00b7 NYB-203)", "day": "wed", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-203 \u00b7 Dr. Niharika Shringi)", "day": "wed", "start": 680, "end": 725}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Ms. Cheena)", "day": "wed", "start": 725, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Vishwas Deep Joshi)", "day": "fri", "start": 480, "end": 530}, {"subject": "CPLT Lab (R1 \u00b7 KAB-507) / Chemistry Lab (R2 \u00b7 VIB-019)", "day": "fri", "start": 580, "end": 680}, {"subject": "Communication Skills (NYB-203 \u00b7 Dr. Priyanka Tiwari)", "day": "fri", "start": 680, "end": 725}, {"subject": "Digital Data and AI Literacy Lab (Section R \u00b7 NYB-505)", "day": "sat", "start": 480, "end": 580}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Ms. Cheena)", "day": "sat", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-R)", "day": "sat", "start": 680, "end": 725}]}, "S": {"name": "Section S (ECE-Truechip)", "title": "B.Tech First Year \u00b7 Section S (ECE-Truechip)", "classes": [{"subject": "CPLT Lab (S2 \u00b7 VIB-204) / CS Lab (S1 \u00b7 NYB-202)", "day": "mon", "start": 480, "end": 580}, {"subject": "Communication Skills (NYB-306 \u00b7 Dr. Samina)", "day": "mon", "start": 580, "end": 630}, {"subject": "Digital Data and AI Literacy Lab (Section S \u00b7 NYB-505)", "day": "mon", "start": 680, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-401 \u00b7 Dr. Sapna Tyagi)", "day": "tue", "start": 530, "end": 580}, {"subject": "Chemistry Lab (S1 \u00b7 VIB-019) / CS Lab (S2 \u00b7 NYB-106)", "day": "tue", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-307 \u00b7 Prof. Sapna Sharma)", "day": "tue", "start": 680, "end": 725}, {"subject": "Digital Data and AI Literacy Lab (Section S \u00b7 NYB-505)", "day": "thu", "start": 480, "end": 580}, {"subject": "Engineering Chemistry (NYB-208 \u00b7 Prof. Sapna Sharma)", "day": "thu", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. Sapna Tyagi)", "day": "thu", "start": 630, "end": 680}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-208 \u00b7 Ms. Ankita)", "day": "thu", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-S1 \u00b7 NYB-203 \u00b7 Piyush Gupta)", "day": "thu", "start": 725, "end": 770}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Ms. Cheena)", "day": "fri", "start": 480, "end": 530}, {"subject": "CPLT Lab (S1 \u00b7 VIB-204) / Chemistry Lab (S2 \u00b7 VIB-017)", "day": "fri", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-208 \u00b7 Prof. Sapna Sharma)", "day": "fri", "start": 680, "end": 725}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Dr. Sapna Tyagi)", "day": "sat", "start": 480, "end": 530}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Ms. Cheena)", "day": "sat", "start": 530, "end": 580}, {"subject": "EM-I Tutorial (EM-I Tut-S2 \u00b7 VIB-217 \u00b7 Pradeep Yadav)", "day": "sat", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-S)", "day": "sat", "start": 680, "end": 725}]}, "T": {"name": "Section T (ECE-L&T)", "title": "B.Tech First Year \u00b7 Section T (ECE-L&T)", "classes": [{"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)", "day": "mon", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section T \u00b7 NYB-505)", "day": "mon", "start": 580, "end": 680}, {"subject": "CPLT Lab (T2 \u00b7 VIB-204) / Chemistry Lab (T1 \u00b7 VIB-019)", "day": "mon", "start": 680, "end": 770}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-307 \u00b7 Ms. Khusboo Garg)", "day": "tue", "start": 480, "end": 530}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)", "day": "tue", "start": 580, "end": 630}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)", "day": "tue", "start": 630, "end": 680}, {"subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. Sonu Pareek)", "day": "tue", "start": 680, "end": 725}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)", "day": "thu", "start": 480, "end": 530}, {"subject": "Communication Skills (NYB-204 \u00b7 Dr. Nidhi Bhatnagar)", "day": "thu", "start": 530, "end": 580}, {"subject": "Digital Data and AI Literacy Lab (Section T \u00b7 NYB-505)", "day": "thu", "start": 580, "end": 680}, {"subject": "Engineering Chemistry (NYB-204 \u00b7 Prof. Sonu Pareek)", "day": "thu", "start": 680, "end": 725}, {"subject": "EM-I Tutorial (EM-I Tut-T2 \u00b7 NYB-208 \u00b7 Ms. Monika Yadav)", "day": "thu", "start": 725, "end": 770}, {"subject": "CPLT Lab (T1 \u00b7 VIB-204) / CS Lab (T2 \u00b7 NYB-202)", "day": "fri", "start": 480, "end": 580}, {"subject": "EM-I Tutorial (EM-I Tut-T1 \u00b7 NYB-403 \u00b7 Ms. Monika Yadav)", "day": "fri", "start": 580, "end": 630}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-208 \u00b7 Ms. Khusboo Garg)", "day": "fri", "start": 630, "end": 680}, {"subject": "Chemistry Lab (T2 \u00b7 VIB-019 \u00b7 BJ) / CS Lab (T1 \u00b7 NYB-102)", "day": "fri", "start": 680, "end": 770}, {"subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-303 \u00b7 Ms. Monika Yadav)", "day": "sat", "start": 480, "end": 530}, {"subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)", "day": "sat", "start": 530, "end": 580}, {"subject": "Engineering Chemistry (NYB-303 \u00b7 Prof. Sonu Pareek)", "day": "sat", "start": 580, "end": 630}, {"subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-303 \u00b7 Ms. Khusboo Garg)", "day": "sat", "start": 630, "end": 680}, {"subject": "Entrepreneurship Development (EDP-T)", "day": "sat", "start": 680, "end": 725}]}};
+// Calibrated Sections Database (JECRC + MITS School of Biotechnology)
+export const JECRC_SECTIONS = {
+  "A": {
+    "name": "Section A",
+    "title": "B.Tech First Year \u00b7 Section A",
+    "classes": [
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Bhupendra Meena)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-303 \u00b7 Dr. Monika Jain)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (A2 \u00b7 VIB-203) / Auto Cad Lab (A1 \u00b7 KAB-406)",
+        "day": "mon",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section A \u00b7 NYB-506)",
+        "day": "tue",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Dr. Monika Jain)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-A)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Nidhi Bansal)",
+        "day": "wed",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Bhupendra Meena)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Chemistry Lab (A1 \u00b7 VIB-017) / Auto Cad Lab (A2 \u00b7 KAB-406)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Mathematics-I Tutorial (EM-I Tut-A2 \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Bhupendra Meena)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Nidhi Bansal)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Communication Skills Lab (CS Lab-A1 \u00b7 NYB-102) / Chemistry Lab (A2 \u00b7 VIB-017)",
+        "day": "thu",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "CPLT Lab (A1 \u00b7 VIB-203) / Communication Skills Lab (CS Lab-A2 \u00b7 NYB-103)",
+        "day": "fri",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I Tutorial (EM-I Tut-A1 \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Communication Skills (NYB-101 \u00b7 Dr. Vishnu)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Nidhi Bansal)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section A \u00b7 NYB-506)",
+        "day": "sat",
+        "start": 630,
+        "end": 725
+      }
+    ]
+  },
+  "B": {
+    "name": "Section B",
+    "title": "B.Tech First Year \u00b7 Section B",
+    "classes": [
+      {
+        "subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Prof. Seema Tinker)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Chemistry Lab (B1 \u00b7 VIB-017) / EM-I Tutorial (EM-I Tut-B2 \u00b7 NYB-101 \u00b7 Mr. Piyush G)",
+        "day": "mon",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Dr. Ankit Tiwari)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section B \u00b7 NYB-506)",
+        "day": "tue",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-B)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Dr. Ankit Tiwari)",
+        "day": "wed",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Communication Skills Lab (CS Lab-B2 \u00b7 NYB-314) / EM-I Tutorial (EM-I Tut-B1 \u00b7 NYB-204 \u00b7 Mr. Piyush G)",
+        "day": "wed",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Auto Cad Lab (B1 \u00b7 KAB-406) / Chemistry Lab (B2 \u00b7 VIB-017)",
+        "day": "thu",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Prof. Seema Tinker)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "CPLT Lab (B2 \u00b7 VIB-203) / Communication Skills Lab (CS Lab-B1 \u00b7 NYB-103)",
+        "day": "thu",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Communication Skills (NYB-101 \u00b7 Dr. Aditi)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 VIB-407 \u00b7 Dr. Ankit Tiwari)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section B \u00b7 NYB-506)",
+        "day": "fri",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (B1 \u00b7 VIB-203) / Auto Cad Lab (B2 \u00b7 KAB-406)",
+        "day": "sat",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Prof. Seema Tinker)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "C": {
+    "name": "Section C",
+    "title": "B.Tech First Year \u00b7 Section C",
+    "classes": [
+      {
+        "subject": "Auto Cad Lab (C2 \u00b7 KAB-406) / Communication Skills Lab (CS Lab-C1 \u00b7 NYB-103)",
+        "day": "mon",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Prof. Sapna Sharma)",
+        "day": "mon",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Shekhar)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I Tutorial (EM-I Tut-C1 \u00b7 NYB-301)",
+        "day": "mon",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (C1 \u00b7 VIB-203) / Chemistry Lab (C2 \u00b7 VIB-017)",
+        "day": "tue",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-C)",
+        "day": "tue",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Digital Data & AI Literacy Lab (Section C \u00b7 NYB-506)",
+        "day": "wed",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Communication Skills (Comm. Skills \u00b7 NYB-102 \u00b7 Dr. Nidhi Bhatnagar)",
+        "day": "wed",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Monika Jain)",
+        "day": "wed",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Prof. Sapna Sharma)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Shekhar)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Auto Cad Lab (C1 \u00b7 KAB-406) / CPLT Lab (C2 \u00b7 VIB-203)",
+        "day": "thu",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Prof. Sapna Sharma)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I Tutorial (EM-I Tut-C2 \u00b7 NYB-301)",
+        "day": "thu",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Chemistry Lab (C1 \u00b7 VIB-017) / CS Lab (C2 \u00b7 NYB-103)",
+        "day": "sat",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data & AI Literacy Lab (Section C \u00b7 NYB-506)",
+        "day": "sat",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Mr. Shekhar)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "D": {
+    "name": "Section D",
+    "title": "B.Tech First Year \u00b7 Section D",
+    "classes": [
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section D \u00b7 NYB-506)",
+        "day": "mon",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Pradip Kr. Gaur)",
+        "day": "mon",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Anita Nehra)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Mr. Ajay Kr. Mehta)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Dr. Pradip Kr. Gaur)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Auto Cad Lab (D2 \u00b7 KAB-406) / CS Lab (D1 \u00b7 NYB-102)",
+        "day": "tue",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "CPLT Lab (D1 \u00b7 VIB-203) / Chemistry Lab (D2 \u00b7 VIB-017)",
+        "day": "wed",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Anita Nehra)",
+        "day": "wed",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-D)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Mr. Ajay Kr. Mehta)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section D \u00b7 NYB-506)",
+        "day": "thu",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-D2 \u00b7 NYB-301 \u00b7 Mr. Abhishek)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-D1 \u00b7 NYB-306 \u00b7 Mr. Abhishek)",
+        "day": "thu",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Pradip Kr. Gaur)",
+        "day": "fri",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (D2 \u00b7 VIB-203) / Auto Cad Lab (D1 \u00b7 KAB-406)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Communication Skills (NYB-101 \u00b7 Dr. Vishakha Chouhan)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Anita Nehra)",
+        "day": "sat",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-101 \u00b7 Mr. Ajay Kr. Mehta)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Chemistry Lab (D1 \u00b7 VIB-017) / CS Lab (D2 \u00b7 NYB-103)",
+        "day": "sat",
+        "start": 630,
+        "end": 725
+      }
+    ]
+  },
+  "E": {
+    "name": "Section E",
+    "title": "B.Tech First Year \u00b7 Section E",
+    "classes": [
+      {
+        "subject": "CPLT Lab (E2 \u00b7 VIB-203) / Chemistry Lab (E1 \u00b7 VIB-017)",
+        "day": "mon",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Poonam Haryani)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Ms. Smita Rai Agarwal)",
+        "day": "mon",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-E1 \u00b7 NYB-103 \u00b7 Piyush Gupta)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Auto Cad Lab (E1 \u00b7 KAB-406) / CS Lab (E2 \u00b7 NYB-103)",
+        "day": "wed",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Smita Rai Agarwal)",
+        "day": "wed",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section E \u00b7 NYB-506)",
+        "day": "wed",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Poonam Haryani)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Vishwas Deep Joshi)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Communication Skills (NYB-102 \u00b7 Dr. Rashi Mehta)",
+        "day": "thu",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-E)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Smita Rai Agarwal)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Poonam Haryani)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Vishwas Deep Joshi)",
+        "day": "fri",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Auto Cad Lab (E2 \u00b7 KAB-406) / CPLT Lab (E1 \u00b7 VIB-203)",
+        "day": "fri",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section E \u00b7 NYB-506)",
+        "day": "sat",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Chemistry Lab (E2 \u00b7 VIB-017) / CS Lab (E1 \u00b7 NYB-102)",
+        "day": "sat",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. Vishwas Deep Joshi)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-E2 \u00b7 NYB-101 \u00b7 Abhishek)",
+        "day": "sat",
+        "start": 725,
+        "end": 770
+      }
+    ]
+  },
+  "F": {
+    "name": "Section F",
+    "title": "B.Tech First Year \u00b7 Section F",
+    "classes": [
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Abhishek Nimawat)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Chemistry Lab (F2 \u00b7 VIB-017) / Auto Cad Lab (F1 \u00b7 KAB-406)",
+        "day": "mon",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-F1 \u00b7 NYB-103 \u00b7 Dilkhush)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "CPLT Lab (F1 \u00b7 VIB-203) / CS Lab (F2 \u00b7 NYB-107)",
+        "day": "tue",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-102 \u00b7 Dr. Abhishek Nimawat)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section F \u00b7 NYB-506)",
+        "day": "tue",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-102 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "wed",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Ms. Divya Sharma)",
+        "day": "wed",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "CPLT Lab (F2 \u00b7 VIB-203) / Chemistry Lab (F1 \u00b7 VIB-019)",
+        "day": "wed",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. Abhishek Nimawat)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Ms. Divya Sharma)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "thu",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-F)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section F \u00b7 NYB-506)",
+        "day": "fri",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Communication Skills (NYB-102 \u00b7 Dr. Alia)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-F2 \u00b7 NYB-314 \u00b7 Rachna Yadav)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Divya Sharma)",
+        "day": "sat",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Auto Cad Lab (F2 \u00b7 KAB-406) / CS Lab (F1 \u00b7 NYB-107)",
+        "day": "sat",
+        "start": 630,
+        "end": 725
+      }
+    ]
+  },
+  "G": {
+    "name": "Section G",
+    "title": "B.Tech First Year \u00b7 Section G",
+    "classes": [
+      {
+        "subject": "Communication Skills (NYB-106 \u00b7 Dr. Vishnu)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-G2 \u00b7 VIB-217 \u00b7 Pooja Gupta)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section G \u00b7 NYB-506)",
+        "day": "mon",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-106 \u00b7 Dr. Niharika Shringi)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. G.S Paliwal)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-103 \u00b7 Mr. Sanjay Sharma)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Niharika Shringi)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Chemistry Lab (G2 \u00b7 VIB-017) / CS Lab (G1 \u00b7 NYB-103)",
+        "day": "tue",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-106 \u00b7 Mr. Sanjay Sharma)",
+        "day": "wed",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-G1 \u00b7 VIB-217 \u00b7 Pooja Gupta)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (G1 \u00b7 VIB-203) / CS Lab (G2 \u00b7 NYB-107)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-G)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-106 \u00b7 Dr. Niharika Shringi)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-106 \u00b7 Mr. Sanjay Sharma)",
+        "day": "fri",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. G.S Paliwal)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Auto Cad Lab (G2 \u00b7 VIB-217) / Chemistry Lab (G1 \u00b7 VIB-017)",
+        "day": "fri",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "CPLT Lab (G2 \u00b7 VIB-203) / Auto Cad Lab (G1 \u00b7 KAB-406)",
+        "day": "sat",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. G.S Paliwal)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section G \u00b7 NYB-501)",
+        "day": "sat",
+        "start": 630,
+        "end": 725
+      }
+    ]
+  },
+  "H": {
+    "name": "Section H",
+    "title": "B.Tech First Year \u00b7 Section H",
+    "classes": [
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-107 \u00b7 Dr. Satyajeet Sharma)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-106 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Auto Cad Lab (H1 \u00b7 VIB-217) / CS Lab (H2 \u00b7 NYB-107)",
+        "day": "mon",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. OM Prakash)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. OM Prakash)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Dr. Satyajeet Sharma)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-H1 \u00b7 VIB-217 \u00b7 Pradeep Yadav)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "CPLT Lab (H1 \u00b7 VIB-203) / Chemistry Lab (H2 \u00b7 VIB-019)",
+        "day": "tue",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-106 \u00b7 Dr. OM Prakash)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-106 \u00b7 Dr. Satyajeet Sharma)",
+        "day": "wed",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "wed",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-H)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "CPLT Lab (H2 \u00b7 VIB-203) / CS Lab (H1 \u00b7 NYB-106)",
+        "day": "thu",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-H2 \u00b7 NYB-402 \u00b7 Abhishek)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Communication Skills (NYB-306 \u00b7 Dr. Anubhav)",
+        "day": "thu",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section H \u00b7 NYB-506)",
+        "day": "thu",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Auto Cad Lab (H2 \u00b7 KAB-406) / Chemistry Lab (H1 \u00b7 VIB-017)",
+        "day": "fri",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section H \u00b7 NYB-506)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-103 \u00b7 Dr. Vishnu Kr. Khandelwal)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "I": {
+    "name": "Section I",
+    "title": "B.Tech First Year \u00b7 Section I",
+    "classes": [
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-207 \u00b7 Dr. Dinesh Kr. Yadav)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Richa)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (I1 \u00b7 VIB-203) / CS Lab (I2 \u00b7 NYB-106)",
+        "day": "mon",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section I \u00b7 NYB-506)",
+        "day": "mon",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Chemistry Lab (I1 \u00b7 VIB-017) / Auto Cad Lab (I2 \u00b7 KAB-406)",
+        "day": "tue",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. Dinesh Kr. Yadav)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-101 \u00b7 Dr. Aruna Sharma)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-I1 \u00b7 NYB-203 \u00b7 Jitendra Sillu)",
+        "day": "tue",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-204 \u00b7 Dr. Dinesh Kr. Yadav)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section I \u00b7 NYB-506)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Chemistry Lab (I2 \u00b7 VIB-017) / Auto Cad Lab (I1 \u00b7 KAB-406)",
+        "day": "wed",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-202 \u00b7 Ms. Richa)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Communication Skills (NYB-202 \u00b7 Dr. Aditi)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-207 \u00b7 Dr. Aruna Sharma)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-I)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Richa)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (I2 \u00b7 KAB-507) / CS Lab (I1 \u00b7 NYB-106)",
+        "day": "sat",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-204 \u00b7 Dr. Aruna Sharma)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-I2 \u00b7 NYB-102 \u00b7 Jitendra Sillu)",
+        "day": "sat",
+        "start": 725,
+        "end": 770
+      }
+    ]
+  },
+  "J": {
+    "name": "Section J",
+    "title": "B.Tech First Year \u00b7 Section J",
+    "classes": [
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section J \u00b7 NYB-505)",
+        "day": "mon",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Communication Skills (NYB-103 \u00b7 Dr. Priyanka Tiwari)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-J2 \u00b7 NYB-302 \u00b7 Piyush Gupta)",
+        "day": "mon",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Ankita)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Rachana Saini)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-102 \u00b7 Ms. Ankita)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (J2 \u00b7 KAB-507) / EW Lab (J1 \u00b7 VIB-205 \u00b7 Mr. Ravi Sharma)",
+        "day": "tue",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-207 \u00b7 Dr. Anita Nehra)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Ankita)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-314 \u00b7 Dr. Rachana Saini)",
+        "day": "wed",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-J1 \u00b7 VIB-217 \u00b7 Pradeep Yadav)",
+        "day": "wed",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "EW Lab (J2 \u00b7 VIB-205 \u00b7 Dr. Ankit Tiwari) / CS Lab (J1 \u00b7 NYB-103)",
+        "day": "wed",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-203 \u00b7 Dr. Anita Nehra)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "CPLT Lab (J1 \u00b7 VIB-204) / Chemistry Lab (J2 \u00b7 VIB-017)",
+        "day": "thu",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-J)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Chemistry Lab (J1 \u00b7 VIB-019) / CS Lab (J2 \u00b7 NYB-107)",
+        "day": "fri",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-207 \u00b7 Dr. Rachana Saini)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-207 \u00b7 Dr. Anita Nehra)",
+        "day": "fri",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section J \u00b7 NYB-501)",
+        "day": "fri",
+        "start": 680,
+        "end": 770
+      }
+    ]
+  },
+  "K": {
+    "name": "Section K (Applied Physics)",
+    "title": "B.Tech First Year \u00b7 Section K",
+    "classes": [
+      {
+        "subject": "Applied Physics Lab (K1 \u00b7 VIB-113) / EW Lab (K2 \u00b7 VIB-205 \u00b7 SH)",
+        "day": "mon",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-K1 \u00b7 VIB-217 \u00b7 Komal Lawat)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Mr. Ankur Agarwal)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section K \u00b7 NYB-505)",
+        "day": "tue",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Mr. Ankur Agarwal)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-203 \u00b7 Dr. Krishan Yadav)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Communication Skills (NYB-208 \u00b7 Dr. Geetika)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Applied Physics (NYB-208 \u00b7 Dr. Nishant Gaur)",
+        "day": "tue",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Krishan Yadav)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (K2 \u00b7 VIB-204) / CS Lab (K1 \u00b7 NYB-202)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-M)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Applied Physics (NYB-204 \u00b7 Dr. Nishant Gaur)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-204 \u00b7 Dr. Krishan Yadav)",
+        "day": "fri",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Applied Physics Lab (K2 \u00b7 NYB-218) / EW Lab (K1 \u00b7 VIB-205 \u00b7 SH)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Mr. Ankur Agarwal)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "CPLT Lab (K1 \u00b7 VIB-204) / CS Lab (K2 \u00b7 NYB-106)",
+        "day": "sat",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Applied Physics (NYB-208 \u00b7 Dr. Nishant Gaur)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-K2 \u00b7 NYB-302 \u00b7 Dilkhush)",
+        "day": "sat",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section K \u00b7 NYB-505)",
+        "day": "sat",
+        "start": 680,
+        "end": 770
+      }
+    ]
+  },
+  "L": {
+    "name": "Section L (Applied Physics)",
+    "title": "B.Tech First Year \u00b7 Section L",
+    "classes": [
+      {
+        "subject": "Communication Skills (NYB-303 \u00b7 Dr. Basheek)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-303 \u00b7 Ms. Richa)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section L \u00b7 NYB-505)",
+        "day": "tue",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Ram Jash)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. Ram Jash)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Applied Physics (NYB-207 \u00b7 Dr. Priyanka Chholak)",
+        "day": "wed",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "CPLT Lab (L2 \u00b7 VIB-204) / Applied Physics Lab (L1 \u00b7 NYB-218)",
+        "day": "wed",
+        "start": 630,
+        "end": 770
+      },
+      {
+        "subject": "Applied Physics (NYB-204 \u00b7 Dr. Priyanka Chholak)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "CPLT Lab (L1 \u00b7 NYB-201) / Applied Physics Lab (L2 \u00b7 NYB-218)",
+        "day": "thu",
+        "start": 530,
+        "end": 680
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Ms. Richa)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-L2 \u00b7 NYB-302 \u00b7 Utsav)",
+        "day": "thu",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-207 \u00b7 Dr. Ram Jash)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Ms. Richa)",
+        "day": "fri",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "EW Lab (L1 \u00b7 VIB-306 \u00b7 Mr. Ravi Sharma) / CS Lab (L2 \u00b7 NYB-106)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section L \u00b7 NYB-505)",
+        "day": "fri",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "EW Lab (L2 \u00b7 Dr. Ankit Tiwari) / CS Lab (L1 \u00b7 NYB-107)",
+        "day": "sat",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-L1 \u00b7 NYB-403 \u00b7 Utsav)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Applied Physics (NYB-208 \u00b7 Dr. Priyanka Chholak)",
+        "day": "sat",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-L)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "M": {
+    "name": "Section M (Applied Physics)",
+    "title": "B.Tech First Year \u00b7 Section M",
+    "classes": [
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. OM Prakash)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Communication Skills (NYB-208 \u00b7 Dr. Aditi)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 VIB-407 \u00b7 Ms. Neha Mishra)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Applied Physics (VIB-407 \u00b7 Dr. Priyanka Chholak)",
+        "day": "mon",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "CS Lab (M2 \u00b7 NYB-107) / EW Lab (M1 \u00b7 VIB-205 \u00b7 RS)",
+        "day": "mon",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Applied Physics (NYB-306 \u00b7 Dr. Priyanka Chholak)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "CPLT Lab (M2 \u00b7 KAB-407) / CS Lab (M1 \u00b7 NYB-107)",
+        "day": "tue",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-M)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 VIB-407 \u00b7 Ms. Neha Mishra)",
+        "day": "wed",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section M \u00b7 NYB-503)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Applied Physics Lab (M2 \u00b7 VIB-113) / CPLT Lab (M1 \u00b7 KAB-407)",
+        "day": "wed",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. OM Prakash)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Ms. Neha Mishra)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-M2 \u00b7 NYB-303 \u00b7 Abhishek)",
+        "day": "thu",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section M \u00b7 NYB-503)",
+        "day": "thu",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. OM Prakash)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Applied Physics (NYB-301 \u00b7 Dr. Priyanka Chholak)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-M1 \u00b7 NYB-306 \u00b7 Abhishek)",
+        "day": "sat",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Applied Physics Lab (M1 \u00b7 NYB-218) / EW Lab (M2 \u00b7 VIB-205 \u00b7 RS)",
+        "day": "sat",
+        "start": 680,
+        "end": 770
+      }
+    ]
+  },
+  "N": {
+    "name": "Section N",
+    "title": "B.Tech First Year \u00b7 Section N",
+    "classes": [
+      {
+        "subject": "Communication Skills (NYB-301 \u00b7 Dr. Alia)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-107 \u00b7 Dr. Nidhi Bansal)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Chemistry Lab (N1 \u00b7 VIB-019) / CS Lab (N2 \u00b7 NYB-202)",
+        "day": "mon",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-208 \u00b7 Dr. Dushyant Singh)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-306 \u00b7 Dr. Nidhi Bansal)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-204 \u00b7 Dr. Dushyant Singh)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-204 \u00b7 Dr. Vinod Jangid)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section N \u00b7 NYB-505)",
+        "day": "tue",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "CPLT Lab (N1 \u00b7 VIB-204) / Chemistry Lab (N2 \u00b7 VIB-019)",
+        "day": "wed",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-N1 \u00b7 KAB-407 \u00b7 Utsav)",
+        "day": "wed",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-N)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-N2 \u00b7 KAB-407 \u00b7 Utsav)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-203 \u00b7 Dr. Vinod Jangid)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "EW Lab (N2 \u00b7 VIB-205 \u00b7 AG) / CS Lab (N1 \u00b7 NYB-106)",
+        "day": "thu",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "CPLT Lab (N2 \u00b7 KAB-406) / EW Lab (N1 \u00b7 VIB-205 \u00b7 AG)",
+        "day": "thu",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section N \u00b7 NYB-505)",
+        "day": "fri",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Dr. Dushyant Singh)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-103 \u00b7 Dr. Vinod Jangid)",
+        "day": "fri",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-204 \u00b7 Dr. Nidhi Bansal)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "O": {
+    "name": "Section O (Applied Physics)",
+    "title": "B.Tech First Year \u00b7 Section O",
+    "classes": [
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Ms. Monika Yadav)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Communication Skills (NYB-202 \u00b7 Dr. Rakesh)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-O2 \u00b7 NYB-401 \u00b7 Ms. Monika Yadav) / EW Lab (O1 \u00b7 VIB-306 \u00b7 Ravi Prakash)",
+        "day": "tue",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Applied Physics (NYB-501 \u00b7 Dr. Priyanka Chholak)",
+        "day": "wed",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-O1 \u00b7 NYB-201 \u00b7 Ms. Monika Yadav) / EW Lab (O2 \u00b7 VIB-306 \u00b7 Ravi Prakash)",
+        "day": "wed",
+        "start": 530,
+        "end": 630
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section O \u00b7 NYB-502)",
+        "day": "wed",
+        "start": 630,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-405 \u00b7 Ms. Monika Yadav)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-405 \u00b7 Ms. Smita Rai Agarwal)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section O \u00b7 NYB-501)",
+        "day": "thu",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Applied Physics Lab (O1 \u00b7 VIB-113) / CS Lab (O2 \u00b7 NYB-201)",
+        "day": "thu",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Applied Physics (NYB-203 \u00b7 Dr. Priyanka Chholak)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Ms. Smita Rai Agarwal)",
+        "day": "fri",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (O2 \u00b7 NYB-201) / CS Lab (O1 \u00b7 NYB-314)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-O)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Applied Physics (NYB-202 \u00b7 Dr. Priyanka Chholak)",
+        "day": "sat",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-202 \u00b7 Ms. Smita Rai Agarwal)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-314 \u00b7 Ms. Monika Yadav)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "CPLT Lab (O1 \u00b7 NYB-201) / Applied Physics Lab (O2 \u00b7 VIB-113)",
+        "day": "sat",
+        "start": 630,
+        "end": 770
+      }
+    ]
+  },
+  "P": {
+    "name": "Section P (Civil)",
+    "title": "B.Tech First Year \u00b7 Section P (Civil)",
+    "classes": [
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Mr. Ankur Agarwal)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Dr. Pradip Kr. Gaur)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (P1 \u00b7 VIB-204) / CS Lab (P2 \u00b7 NYB-203)",
+        "day": "mon",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section P \u00b7 NYB-410)",
+        "day": "mon",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Chemistry Lab (P2 \u00b7 VIB-019) / CS Lab (P1 \u00b7 NYB-203)",
+        "day": "tue",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-314 \u00b7 JK)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-207 \u00b7 Mr. Ankur Agarwal)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-303 \u00b7 Prof. Sonu Pareek)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-P2 \u00b7 NYB-306 \u00b7 Pradeep Yadav)",
+        "day": "tue",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. Pradip Kr. Gaur)",
+        "day": "wed",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section P \u00b7 NYB-505)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-P)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 JK)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-403 \u00b7 Prof. Sonu Pareek)",
+        "day": "fri",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Mr. Ankur Agarwal)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Communication Skills (NYB-207 \u00b7 Dr. Rashi Mehta)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 JK)",
+        "day": "sat",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Pradip Kr. Gaur)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CPLT Lab (P2 \u00b7 VIB-204) / Chemistry Lab (P1 \u00b7 VIB-019)",
+        "day": "sat",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-207 \u00b7 Prof. Sonu Pareek)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-P1 \u00b7 NYB-306 \u00b7 Komal Lawat)",
+        "day": "sat",
+        "start": 725,
+        "end": 770
+      }
+    ]
+  },
+  "Q": {
+    "name": "Section Q (Mechanical+Civil)",
+    "title": "B.Tech First Year \u00b7 Section Q (Mech+Civil)",
+    "classes": [
+      {
+        "subject": "Chemistry Lab (Q2 \u00b7 VIB-019) / EM-I Tut (Q1 \u00b7 KAB-407 \u00b7 Komal Lawat)",
+        "day": "mon",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Communication Skills (NYB-302 \u00b7 Mr. Abhishek)",
+        "day": "mon",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. S.K Sharma)",
+        "day": "mon",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Dr. G.S Paliwal)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Ms. Cheena)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "CPLT Lab (Q1 \u00b7 VIB-204) / CS Lab (Q2 \u00b7 NYB-106)",
+        "day": "tue",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. G.S Paliwal)",
+        "day": "wed",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section Q \u00b7 NYB-501)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. S.K Sharma)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. G.S Paliwal)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Ms. Cheena)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Chemistry Lab (Q1 \u00b7 VIB-019) / CPLT Lab (Q2 \u00b7 VIB-204)",
+        "day": "thu",
+        "start": 630,
+        "end": 770
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-410 \u00b7 Ms. Cheena)",
+        "day": "fri",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section Q \u00b7 NYB-505)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-Q)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "CS Lab (Q1 \u00b7 NYB-107) / EM-I Tut (Q2 \u00b7 VIB-217 \u00b7 Jitendra Sillu)",
+        "day": "sat",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. S.K Sharma)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "R": {
+    "name": "Section R (ECE-Truechip)",
+    "title": "B.Tech First Year \u00b7 Section R (ECE-Truechip)",
+    "classes": [
+      {
+        "subject": "Engineering Chemistry (NYB-303 \u00b7 Dr. Niharika Shringi)",
+        "day": "mon",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Vishwas Deep Joshi)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-303 \u00b7 Ms. Cheena)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-R2 \u00b7 KAB-407 \u00b7 Dilkhush)",
+        "day": "mon",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "CPLT Lab (R2 \u00b7 VIB-204) / CS Lab (R1 \u00b7 NYB-204)",
+        "day": "tue",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-R1 \u00b7 VIB-217 \u00b7 Komal Lawat)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-208 \u00b7 Dr. Niharika Shringi)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-306 \u00b7 Dr. Vishwas Deep Joshi)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section R \u00b7 NYB-505)",
+        "day": "wed",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Chemistry Lab (R1 \u00b7 VIB-019) / CS Lab (R2 \u00b7 NYB-203)",
+        "day": "wed",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-203 \u00b7 Dr. Niharika Shringi)",
+        "day": "wed",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-203 \u00b7 Ms. Cheena)",
+        "day": "wed",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-301 \u00b7 Dr. Vishwas Deep Joshi)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "CPLT Lab (R1 \u00b7 KAB-507) / Chemistry Lab (R2 \u00b7 VIB-019)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Communication Skills (NYB-203 \u00b7 Dr. Priyanka Tiwari)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section R \u00b7 NYB-505)",
+        "day": "sat",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-301 \u00b7 Ms. Cheena)",
+        "day": "sat",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-R)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "S": {
+    "name": "Section S (ECE-Truechip)",
+    "title": "B.Tech First Year \u00b7 Section S (ECE-Truechip)",
+    "classes": [
+      {
+        "subject": "CPLT Lab (S2 \u00b7 VIB-204) / CS Lab (S1 \u00b7 NYB-202)",
+        "day": "mon",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Communication Skills (NYB-306 \u00b7 Dr. Samina)",
+        "day": "mon",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section S \u00b7 NYB-505)",
+        "day": "mon",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-401 \u00b7 Dr. Sapna Tyagi)",
+        "day": "tue",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Chemistry Lab (S1 \u00b7 VIB-019) / CS Lab (S2 \u00b7 NYB-106)",
+        "day": "tue",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-307 \u00b7 Prof. Sapna Sharma)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section S \u00b7 NYB-505)",
+        "day": "thu",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-208 \u00b7 Prof. Sapna Sharma)",
+        "day": "thu",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-208 \u00b7 Dr. Sapna Tyagi)",
+        "day": "thu",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-208 \u00b7 Ms. Ankita)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-S1 \u00b7 NYB-203 \u00b7 Piyush Gupta)",
+        "day": "thu",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Ms. Cheena)",
+        "day": "fri",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "CPLT Lab (S1 \u00b7 VIB-204) / Chemistry Lab (S2 \u00b7 VIB-017)",
+        "day": "fri",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-208 \u00b7 Prof. Sapna Sharma)",
+        "day": "fri",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-302 \u00b7 Dr. Sapna Tyagi)",
+        "day": "sat",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-302 \u00b7 Ms. Cheena)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-S2 \u00b7 VIB-217 \u00b7 Pradeep Yadav)",
+        "day": "sat",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-S)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "T": {
+    "name": "Section T (ECE-L&T)",
+    "title": "B.Tech First Year \u00b7 Section T (ECE-L&T)",
+    "classes": [
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)",
+        "day": "mon",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section T \u00b7 NYB-505)",
+        "day": "mon",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "CPLT Lab (T2 \u00b7 VIB-204) / Chemistry Lab (T1 \u00b7 VIB-019)",
+        "day": "mon",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-307 \u00b7 Ms. Khusboo Garg)",
+        "day": "tue",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)",
+        "day": "tue",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-101 \u00b7 Ms. Monika Yadav)",
+        "day": "tue",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-302 \u00b7 Prof. Sonu Pareek)",
+        "day": "tue",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)",
+        "day": "thu",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Communication Skills (NYB-204 \u00b7 Dr. Nidhi Bhatnagar)",
+        "day": "thu",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Digital Data and AI Literacy Lab (Section T \u00b7 NYB-505)",
+        "day": "thu",
+        "start": 580,
+        "end": 680
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-204 \u00b7 Prof. Sonu Pareek)",
+        "day": "thu",
+        "start": 680,
+        "end": 725
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-T2 \u00b7 NYB-208 \u00b7 Ms. Monika Yadav)",
+        "day": "thu",
+        "start": 725,
+        "end": 770
+      },
+      {
+        "subject": "CPLT Lab (T1 \u00b7 VIB-204) / CS Lab (T2 \u00b7 NYB-202)",
+        "day": "fri",
+        "start": 480,
+        "end": 580
+      },
+      {
+        "subject": "EM-I Tutorial (EM-I Tut-T1 \u00b7 NYB-403 \u00b7 Ms. Monika Yadav)",
+        "day": "fri",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-208 \u00b7 Ms. Khusboo Garg)",
+        "day": "fri",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Chemistry Lab (T2 \u00b7 VIB-019 \u00b7 BJ) / CS Lab (T1 \u00b7 NYB-102)",
+        "day": "fri",
+        "start": 680,
+        "end": 770
+      },
+      {
+        "subject": "Engineering Mathematics-I (EM-I \u00b7 NYB-303 \u00b7 Ms. Monika Yadav)",
+        "day": "sat",
+        "start": 480,
+        "end": 530
+      },
+      {
+        "subject": "Engineering and Graphic Design (EGD \u00b7 NYB-410 \u00b7 CG)",
+        "day": "sat",
+        "start": 530,
+        "end": 580
+      },
+      {
+        "subject": "Engineering Chemistry (NYB-303 \u00b7 Prof. Sonu Pareek)",
+        "day": "sat",
+        "start": 580,
+        "end": 630
+      },
+      {
+        "subject": "Computer Programming & Logical Thinking (CPLT \u00b7 NYB-303 \u00b7 Ms. Khusboo Garg)",
+        "day": "sat",
+        "start": 630,
+        "end": 680
+      },
+      {
+        "subject": "Entrepreneurship Development (EDP-T)",
+        "day": "sat",
+        "start": 680,
+        "end": 725
+      }
+    ]
+  },
+  "BSC-1A": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1A",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1A (LH-204, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-204, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "BSC-1B": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1B",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1B (LH-205, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-205, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "mon",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "mon",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Zoology Lab (B1) / Cell Biology & Genetics Lab (B2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (B2) / Cell Biology & Genetics Lab (B1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "wed",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "BSC-1C": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1C",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1C (LH-206, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-206, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (C1) / Cell Biology & Genetics Lab (C2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (C2) / Cell Biology & Genetics Lab (C1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "1A": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1A",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1A (LH-204, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-204, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "bsc-1a": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1A",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1A (LH-204, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-204, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "MITS-1A": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1A",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1A (LH-204, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-204, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "BIOTECH-1A": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1A",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1A (LH-204, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-204, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (A1) / Cell Biology & Genetics Lab (A2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-204 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-204 \u00b7 MJ)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-204 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-204 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-204)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-204 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "1B": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1B",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1B (LH-205, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-205, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "mon",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "mon",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Zoology Lab (B1) / Cell Biology & Genetics Lab (B2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (B2) / Cell Biology & Genetics Lab (B1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "wed",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "bsc-1b": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1B",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1B (LH-205, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-205, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "mon",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "mon",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Zoology Lab (B1) / Cell Biology & Genetics Lab (B2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (B2) / Cell Biology & Genetics Lab (B1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "wed",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "MITS-1B": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1B",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1B (LH-205, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-205, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "mon",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "mon",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Zoology Lab (B1) / Cell Biology & Genetics Lab (B2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (B2) / Cell Biology & Genetics Lab (B1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "wed",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "BIOTECH-1B": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1B",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1B (LH-205, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-205, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "mon",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "mon",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "mon",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "mon",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Zoology Lab (B1) / Cell Biology & Genetics Lab (B2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-205 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (B2) / Cell Biology & Genetics Lab (B1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "wed",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-205 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-205 \u00b7 MJ)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-205 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-205)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-205 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "1C": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1C",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1C (LH-206, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-206, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (C1) / Cell Biology & Genetics Lab (C2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (C2) / Cell Biology & Genetics Lab (C1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "bsc-1c": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1C",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1C (LH-206, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-206, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (C1) / Cell Biology & Genetics Lab (C2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (C2) / Cell Biology & Genetics Lab (C1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "MITS-1C": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1C",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1C (LH-206, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-206, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (C1) / Cell Biology & Genetics Lab (C2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (C2) / Cell Biology & Genetics Lab (C1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  },
+  "BIOTECH-1C": {
+    "name": "B.Sc. Biotechnology 1st Year \u00b7 Section 1C",
+    "title": "MITS School of Biotechnology \u00b7 BSC-1C (LH-206, BT LAB-2&3)",
+    "institution": "MITS School of Biotechnology, Bhubaneswar",
+    "department": "Department of Biotechnology",
+    "session": "ODD-2026",
+    "room": "LH-206, BT LAB-2&3",
+    "classes": [
+      {
+        "subject": "Zoology Lab (C1) / Cell Biology & Genetics Lab (C2) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 715,
+        "end": 805
+      },
+      {
+        "subject": "Practical Lab Continued (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Zoology Lab (C2) / Cell Biology & Genetics Lab (C1) (BT LAB-2&3 \u00b7 BS/AS/AM)",
+        "day": "mon",
+        "start": 885,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "tue",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "tue",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "tue",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "tue",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "wed",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "wed",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Cell Biology & Genetics (CBG \u00b7 LH-206 \u00b7 Dr. Subrat Kumar Kar)",
+        "day": "wed",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Computer Fundamentals (CF \u00b7 LH-206 \u00b7 MJ)",
+        "day": "thu",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "thu",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "thu",
+        "start": 930,
+        "end": 975
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 715,
+        "end": 760
+      },
+      {
+        "subject": "Environmental Studies & Disaster Management (EVS \u00b7 LH-206 \u00b7 Ms. Barsha Samantray)",
+        "day": "fri",
+        "start": 760,
+        "end": 805
+      },
+      {
+        "subject": "Biochemistry & Metabolism (BM \u00b7 LH-206 \u00b7 Dr. Ankur Singh)",
+        "day": "fri",
+        "start": 840,
+        "end": 885
+      },
+      {
+        "subject": "AEC Odia (Dr. Itaswari Kumara) / Hindi (LH-206)",
+        "day": "fri",
+        "start": 885,
+        "end": 930
+      },
+      {
+        "subject": "Minor Zoology (ZOO \u00b7 LH-206 \u00b7 Ms. Ananya Mardina)",
+        "day": "fri",
+        "start": 930,
+        "end": 975
+      }
+    ]
+  }
+};

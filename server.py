@@ -30,6 +30,14 @@ if os.path.isfile(sec_json_path):
 
 def detect_section(filename="", text=""):
     combined = f"{filename} {text}"
+    # MITS Biotechnology sections: BSC-1A, BSC-1B, BSC-1C or 1A, 1B, 1C
+    mits_m = re.search(r'\b(?:BSC[-_\s]*)?(1[A-C])\b', combined, re.I) or re.search(r'\bBSC[-_\s]*(1[A-C]|[A-C])\b', combined, re.I)
+    if mits_m:
+        sec_tag = mits_m.group(1).upper()
+        return f"BSC-{sec_tag}" if sec_tag.startswith("1") else f"BSC-1{sec_tag}"
+    if re.search(r'mits|biotech|cell biology|cbg|dr\.?\s*subrat', combined, re.I):
+        return "BSC-1A"
+
     m = re.search(r'\b(?:SEC|SECTION)[-_\s.:]*([A-T])\b', combined, re.I)
     if m:
         return m.group(1).upper()
