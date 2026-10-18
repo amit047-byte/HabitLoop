@@ -2423,13 +2423,22 @@
     }
 
     function App() {
-      const [stage, setStageInternal] = useState("loading");
+      const initialUser = typeof window !== "undefined" ? loadLocalJSON("data:currentUser", null) : null;
+      const initialHasOAuth = typeof window !== "undefined" && (
+        window.location.hash.includes("access_token") ||
+        window.location.hash.includes("id_token") ||
+        window.location.search.includes("code=")
+      );
+      const initialStage = initialHasOAuth ? "loading" : initialUser ? "dashboard" : "auth";
+      const initialLoggedIn = !initialHasOAuth && !!initialUser;
+
+      const [stage, setStageInternal] = useState(initialStage);
       const [dashboardTab, setDashboardTab] = useState("habits"); // Starts on HabitFlow tab so you can preview both immediately
-      const [bootstrapped, setBootstrapped] = useState(false);
-      const [loggedIn, setLoggedInState] = useState(false);
+      const [bootstrapped, setBootstrapped] = useState(!initialHasOAuth);
+      const [loggedIn, setLoggedInState] = useState(initialLoggedIn);
       const [authMode, setAuthMode] = useState("signin"); // "signin" or "signup"
 
-      const loggedInRef = useRef(false);
+      const loggedInRef = useRef(initialLoggedIn);
       const isSigningOutRef = useRef(false);
 
       const setLoggedIn = (val) => {
@@ -2735,16 +2744,68 @@
           };
         }
 
-        let oauthSafetyTimer = null;
-        if (hasOAuthToken) {
+        if (hasOAuthToken && supabase) {
           // OAuth callback in progress: show loader while exchange completes
           setStage("loading");
-          oauthSafetyTimer = setTimeout(() => {
-            if (isMounted && !loggedInRef.current) {
-              setStage((prev) => (prev === "loading" ? "auth" : prev));
-              setAuthLoading(false);
+
+          (async () => {
+            try {
+              // 1. Check for PKCE authorization code in URL query string (?code=...)
+              const urlParams = new URLSearchParams(window.location.search);
+              const authCode = urlParams.get("code");
+              if (authCode) {
+                try {
+                  const { data, error } = await supabase.auth.exchangeCodeForSession(authCode);
+                  if (data?.session?.user && isMounted) {
+                    setLoggedIn(true);
+                    setStage("dashboard");
+                    setAuthLoading(false);
+                    const cleanSearch = window.location.search.replace(/[?&]code=[^&]+/, "").replace(/^[?&]/, "");
+                    window.history.replaceState({}, document.title, window.location.pathname + (cleanSearch ? "?" + cleanSearch : ""));
+                    await syncUserCloudData(data.session.user);
+                    return;
+                  }
+                } catch (codeErr) {
+                  console.warn("exchangeCodeForSession warning:", codeErr);
+                }
+              }
+
+              // 2. Active session poll for hash tokens (#access_token=...)
+              for (let attempt = 0; attempt < 25; attempt++) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user && isMounted) {
+                  setLoggedIn(true);
+                  setStage("dashboard");
+                  setAuthLoading(false);
+                  if (typeof window !== "undefined" && window.location.hash) {
+                    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+                  }
+                  await syncUserCloudData(session.user);
+                  return;
+                }
+                await new Promise((r) => setTimeout(r, 100));
+              }
+
+              // 3. Fallback if OAuth exchange timed out:
+              if (isMounted && !loggedInRef.current) {
+                if (savedUser) {
+                  setLoggedIn(true);
+                  setStage("dashboard");
+                } else {
+                  setStage("auth");
+                  setAuthError("Google sign-in timed out or did not return credentials. Please try signing in again.");
+                }
+                setAuthLoading(false);
+              }
+            } catch (err) {
+              console.warn("Background OAuth verification error:", err);
+              if (isMounted && !loggedInRef.current) {
+                setStage("auth");
+                setAuthError("Authentication error occurred. Please try signing in again.");
+                setAuthLoading(false);
+              }
             }
-          }, 8000);
+          })();
         } else if (savedUser || autoLoginParam) {
           const u = savedUser || {
             name: "Amitabha Ghosh",
@@ -2801,14 +2862,10 @@
         // Instantly mark as bootstrapped!
         setBootstrapped(true);
 
-        // 2. Background Supabase session verification (non-blocking)
-        if (supabase) {
+        // 2. Background Supabase session verification for returning users
+        if (!hasOAuthToken && supabase) {
           (async () => {
             try {
-              if (hasOAuthToken) {
-                // If OAuth callback is in progress, let onAuthStateChange handle session exchange
-                return;
-              }
               const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 2000));
               const { data: { session } } = await Promise.race([supabase.auth.getSession(), timeoutPromise]);
               if (session && session.user && isMounted) {
@@ -2826,7 +2883,6 @@
         return () => {
           isMounted = false;
           clearTimeout(safetyTimer);
-          if (oauthSafetyTimer) clearTimeout(oauthSafetyTimer);
         };
       }, []);
 
@@ -4146,7 +4202,16 @@
             </div>
             <button
               type="button"
-              onClick={() => { setBootstrapped(true); setStage("auth"); }}
+              onClick={() => {
+                setBootstrapped(true);
+                const u = loadLocalJSON("data:currentUser", null);
+                if (u || loggedInRef.current) {
+                  setLoggedIn(true);
+                  setStage("dashboard");
+                } else {
+                  handleGuestLogin();
+                }
+              }}
               style={{
                 marginTop: 6,
                 background: "rgba(255,255,255,0.06)",
