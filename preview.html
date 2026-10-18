@@ -29,35 +29,357 @@
   </script>
 
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
     html, body, #root {
       margin: 0;
       padding: 0;
       min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
       background: #12141B;
       color: #EEF0F5;
       font-family: 'IBM Plex Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    .rp-shell { padding: 2rem 1.5rem; box-sizing: border-box; }
-    .rp-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .rp-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .rp-grid { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 24px; }
-    .rp-hour-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .rp-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; overflow-y: auto; z-index: 50; backdrop-filter: blur(3px); }
-    .hf-grid-table { width: 100%; border-collapse: collapse; }
-    .hf-grid-table th, .hf-grid-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #2A2E3B; }
-    .hf-grid-table th:first-child, .hf-grid-table td:first-child { text-align: left; }
+    .rp-shell {
+      padding: 2rem 1.5rem;
+      box-sizing: border-box;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+      overflow-x: hidden;
+    }
+    .rp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .rp-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .rp-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .rp-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      gap: 24px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .rp-grid > * {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .rp-table-card {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .rp-hour-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .rp-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 6vh 16px;
+      overflow-y: auto;
+      z-index: 50;
+      backdrop-filter: blur(4px);
+      -webkit-overflow-scrolling: touch;
+    }
+    .hf-grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 540px;
+    }
+    .hf-grid-table th, .hf-grid-table td {
+      padding: 10px 8px;
+      text-align: center;
+      border-bottom: 1px solid #2A2E3B;
+    }
+    .hf-grid-table th:first-child, .hf-grid-table td:first-child {
+      text-align: left;
+    }
+    .rp-table-scroll {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      border-radius: 8px;
+    }
+    .rp-table-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+    .rp-table-scroll::-webkit-scrollbar-thumb {
+      background: #2A2E3B;
+      border-radius: 4px;
+    }
+    .rp-action-capsule-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .rp-action-capsule {
+      background: #10131E;
+      border: 1px solid #1C2030;
+      border-radius: 9999px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+    .rp-view-switcher {
+      display: flex;
+      background: #10131E;
+      border: 1px solid #1C2030;
+      border-radius: 9px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .rp-view-switcher button {
+      white-space: nowrap;
+    }
+    .rp-weekday-scroll {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .rp-consistency-card {
+      background: #12151E;
+      border: 1px solid #202434;
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .rp-consistency-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+      width: 100%;
+    }
+    .rp-consistency-cell {
+      height: 23px;
+      border-radius: 4px;
+      width: 100%;
+    }
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.45; } 50% { transform: scale(1.15); opacity: 0.85; } }
-    @media (max-width: 760px) { .rp-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 560px) {
-      .rp-shell { padding: 1.1rem 0.9rem; }
-      .rp-modal-card { padding: 16px !important; }
-      .rp-pomodoro-digits { font-size: 52px !important; }
-      .rp-pomodoro-circle { width: 220px !important; height: 220px !important; }
+
+    /* Breakpoint 1: Medium Screens & Tablets (max-width: 960px) */
+    @media (max-width: 960px) {
+      .rp-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 20px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .rp-grid > * {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+      }
+      .rp-shell {
+        padding: 1.5rem 1.2rem;
+      }
+    }
+
+    /* Breakpoint 2: Small Tablets & Mobile Landscape (max-width: 768px) */
+    @media (max-width: 768px) {
+      .rp-action-capsule-wrapper {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding-bottom: 4px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+      }
+      .rp-action-capsule-wrapper::-webkit-scrollbar {
+        display: none !important;
+      }
+      .rp-action-capsule {
+        flex-wrap: nowrap !important;
+        border-radius: 9999px !important;
+        padding: 5px 8px !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+        width: max-content !important;
+      }
+      .rp-action-capsule button {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        padding: 6px 12px !important;
+        font-size: 12.5px !important;
+      }
+      .rp-schedule-controls {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .rp-weekday-scroll {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        flex-wrap: nowrap !important;
+        padding-bottom: 4px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .rp-weekday-scroll::-webkit-scrollbar {
+        display: none !important;
+      }
+      .rp-weekday-scroll button {
+        flex-shrink: 0 !important;
+      }
+    }
+
+    /* Breakpoint 3: Mobile Portrait Phones (max-width: 580px) */
+    @media (max-width: 580px) {
+      .rp-shell {
+        padding: 1rem 0.75rem !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+      }
+      .rp-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .rp-header-brand {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .rp-view-switcher {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .rp-view-switcher button {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        justify-content: center !important;
+        padding: 7px 4px !important;
+        font-size: 11.5px !important;
+        gap: 4px !important;
+        white-space: nowrap !important;
+      }
+      .rp-kpi-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+      }
+      .rp-table-card {
+        padding: 14px 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .rp-modal-card {
+        padding: 16px 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 12px !important;
+        margin: 0 !important;
+      }
+      .rp-overlay {
+        padding: 12px 8px !important;
+        align-items: center !important;
+      }
+      .rp-consistency-card {
+        padding: 14px 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .rp-consistency-grid {
+        grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+        width: 100% !important;
+      }
+      .rp-consistency-cell {
+        height: 19px !important;
+        border-radius: 3px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      .hf-grid-table th, .hf-grid-table td {
+        padding: 6px 4px !important;
+        font-size: 11px !important;
+      }
+      .hf-grid-table button {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 11px !important;
+      }
+      .rp-pomodoro-digits { font-size: 48px !important; }
+      .rp-pomodoro-circle { width: 200px !important; height: 200px !important; }
       .rp-hour-label { width: 100% !important; margin-bottom: 4px; }
       .rp-difficulty-row { flex-wrap: wrap !important; }
       .rp-difficulty-row > button { flex: 1 1 30% !important; }
+
+      /* Prevent iOS Safari 16px font-size auto-zoom */
+      input[type="text"], input[type="number"], input[type="time"], input[type="email"], input[type="password"], select, textarea {
+        font-size: 16px !important;
+      }
+    }
+
+    /* Breakpoint 4: Ultra Compact / Small Phones (max-width: 380px) */
+    @media (max-width: 380px) {
+      .rp-shell {
+        padding: 0.8rem 0.5rem !important;
+      }
+      .rp-consistency-grid {
+        gap: 3px !important;
+      }
+      .rp-consistency-cell {
+        height: 18px !important;
+      }
+      .rp-action-capsule button {
+        padding: 5px 9px !important;
+        font-size: 11.5px !important;
+      }
     }
   </style>
 </head>
@@ -1680,7 +2002,7 @@
       });
 
       return (
-        <div style={{
+        <div className="rp-consistency-card" style={{
           background: "#12151E",
           border: "1px solid #202434",
           borderRadius: 12,
@@ -1741,7 +2063,7 @@
           </div>
 
           {/* Weekday Column Headers (M T W T F S S) */}
-          <div style={{
+          <div className="rp-consistency-grid" style={{
             display: "grid",
             gridTemplateColumns: "repeat(7, 1fr)",
             gap: 7,
@@ -1785,10 +2107,11 @@
               matrixRows.map((row, rIdx) => {
                 const h = habits[rIdx];
                 return (
-                  <div key={h?.id || rIdx} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 7 }}>
+                  <div key={h?.id || rIdx} className="rp-consistency-grid" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 7 }}>
                     {row.map((cell, cIdx) => (
                       <div
                         key={cell.dayKey}
+                        className="rp-consistency-cell"
                         title={cell.label}
                         onClick={() => {
                           if (onToggleHabitDay) {
@@ -4371,10 +4694,10 @@
 
         pageBody = (
           <div className="rp-shell">
-            <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+            <div style={{ maxWidth: 1180, width: "100%", margin: "0 auto" }}>
               {/* Top Header Row */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 14 }}>
-                <div>
+              <div className="rp-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 14 }}>
+                <div className="rp-header-brand">
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Flame size={22} color={C.boulder} />
                     <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: "#EEF0F5" }}>
@@ -4406,7 +4729,7 @@
                 </div>
 
                 {/* Primary View Switcher Tabs (Top Right) */}
-                <div style={{ display: "flex", background: "#10131E", border: "1px solid #1C2030", borderRadius: 9, padding: 4, gap: 4 }}>
+                <div className="rp-view-switcher" style={{ display: "flex", background: "#10131E", border: "1px solid #1C2030", borderRadius: 9, padding: 4, gap: 4 }}>
                   <button
                     onClick={() => setDashboardTab("habits")}
                     style={{
@@ -4450,12 +4773,12 @@
               </div>
 
               {/* Action Bar Capsule (Centered Pill Container matching the screenshot) */}
-              <div style={{
+              <div className="rp-action-capsule-wrapper" style={{
                 display: "flex",
                 justifyContent: "center",
                 marginBottom: 20
               }}>
-                <div style={{
+                <div className="rp-action-capsule" style={{
                   background: "#10131E",
                   border: "1px solid #1C2030",
                   borderRadius: 9999,
@@ -4619,7 +4942,7 @@
               {dashboardTab === "habits" ? (
                 <div>
                   {/* 3 KPI Cards matching reference design */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 22 }}>
+                  <div className="rp-kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 22 }}>
                     {/* Card 1: Today's Habit Completion */}
                     <div style={{
                       background: "#111420",
@@ -4831,7 +5154,7 @@
 
                   <div className="rp-grid">
                     <div>
-                      <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 20, overflowX: "auto" }}>
+                      <div className="rp-table-card" style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, marginBottom: 20 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 10 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "#EEF0F5" }}>
@@ -4880,7 +5203,8 @@
                           </button>
                         </div>
 
-                        <table className="hf-grid-table">
+                        <div className="rp-table-scroll">
+                          <table className="hf-grid-table">
                           <thead>
                             <tr>
                               <th style={{ fontSize: 12, color: C.textMuted }}>Habit</th>
@@ -5008,6 +5332,7 @@
                             </tr>
                           </tfoot>
                         </table>
+                        </div>
                       </div>
                     </div>
 
@@ -5263,8 +5588,8 @@
                   )}
 
                   {/* Shrunk Single-Row Timetable Control Bar */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  <div className="rp-schedule-controls" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                    <div className="rp-weekday-scroll" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                       {DAY_ORDER.map((d) => (
                         <button
                           key={d}
@@ -6552,8 +6877,8 @@
                       </button>
                     </div>
 
-                    <div style={{ maxHeight: 260, overflowY: "auto", border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 14 }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+                    <div className="rp-table-scroll" style={{ maxHeight: 260, overflowY: "auto", overflowX: "auto", border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 14 }}>
+                      <table style={{ width: "100%", minWidth: 480, borderCollapse: "collapse", fontSize: 12.5 }}>
                         <thead>
                           <tr style={{ background: C.panelAlt, borderBottom: `1px solid ${C.border}`, color: C.textMuted }}>
                             <th style={{ padding: "8px 10px", textAlign: "left", width: 90 }}>Day</th>
