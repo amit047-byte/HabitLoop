@@ -2423,11 +2423,30 @@
     }
 
     function App() {
-      const [stage, setStage] = useState("loading");
+      const [stage, setStageInternal] = useState("loading");
       const [dashboardTab, setDashboardTab] = useState("habits"); // Starts on HabitFlow tab so you can preview both immediately
       const [bootstrapped, setBootstrapped] = useState(false);
-      const [loggedIn, setLoggedIn] = useState(false);
+      const [loggedIn, setLoggedInState] = useState(false);
       const [authMode, setAuthMode] = useState("signin"); // "signin" or "signup"
+
+      const loggedInRef = useRef(false);
+      const isSigningOutRef = useRef(false);
+
+      const setLoggedIn = (val) => {
+        loggedInRef.current = !!val;
+        setLoggedInState(!!val);
+      };
+
+      const setStage = (newStage) => {
+        setStageInternal((prev) => {
+          const resolved = typeof newStage === "function" ? newStage(prev) : newStage;
+          if (resolved === "auth" && loggedInRef.current && !isSigningOutRef.current) {
+            console.warn("Prevented illegal stage downgrade to auth while logged in.");
+            return prev === "auth" ? "dashboard" : prev;
+          }
+          return resolved;
+        });
+      };
 
       const [profile, setProfile] = useState({
         name: "Amitabha Ghosh",
@@ -2716,9 +2735,16 @@
           };
         }
 
+        let oauthSafetyTimer = null;
         if (hasOAuthToken) {
           // OAuth callback in progress: show loader while exchange completes
           setStage("loading");
+          oauthSafetyTimer = setTimeout(() => {
+            if (isMounted && !loggedInRef.current) {
+              setStage((prev) => (prev === "loading" ? "auth" : prev));
+              setAuthLoading(false);
+            }
+          }, 8000);
         } else if (savedUser || autoLoginParam) {
           const u = savedUser || {
             name: "Amitabha Ghosh",
@@ -2779,16 +2805,17 @@
         if (supabase) {
           (async () => {
             try {
-              const timeoutMs = hasOAuthToken ? 6000 : 1500;
-              const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), timeoutMs));
+              if (hasOAuthToken) {
+                // If OAuth callback is in progress, let onAuthStateChange handle session exchange
+                return;
+              }
+              const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 2000));
               const { data: { session } } = await Promise.race([supabase.auth.getSession(), timeoutPromise]);
               if (session && session.user && isMounted) {
-                await syncUserCloudData(session.user);
                 setLoggedIn(true);
                 setStage("dashboard");
                 setAuthLoading(false);
-              } else if (hasOAuthToken && isMounted) {
-                setStage("auth");
+                await syncUserCloudData(session.user);
               }
             } catch (err) {
               console.warn("Background Supabase session note:", err);
@@ -2799,6 +2826,7 @@
         return () => {
           isMounted = false;
           clearTimeout(safetyTimer);
+          if (oauthSafetyTimer) clearTimeout(oauthSafetyTimer);
         };
       }, []);
 
@@ -2806,7 +2834,6 @@
         if (!supabase) return;
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
-            await syncUserCloudData(session.user);
             setLoggedIn(true);
             setStage("dashboard");
             setAuthLoading(false);
@@ -2819,10 +2846,18 @@
                 window.history.replaceState({}, document.title, window.location.pathname + (clean ? "?" + clean : ""));
               }
             }
+            try {
+              await syncUserCloudData(session.user);
+            } catch (syncErr) {
+              console.warn("Background sync error on auth change:", syncErr);
+            }
           } else if (event === "SIGNED_OUT") {
-            setActiveCloudUser(null);
-            setLoggedIn(false);
-            setStage("auth");
+            if (isSigningOutRef.current) {
+              setActiveCloudUser(null);
+              setLoggedIn(false);
+              setStage("auth");
+              isSigningOutRef.current = false;
+            }
           }
         });
         return () => {
@@ -3480,10 +3515,14 @@
               return;
             }
             if (data?.user) {
-              await syncUserCloudData(data.user);
               setLoggedIn(true);
               setStage("dashboard");
               setAuthLoading(false);
+              try {
+                await syncUserCloudData(data.user);
+              } catch (syncErr) {
+                console.warn("Cloud sync note on sign in:", syncErr);
+              }
               return;
             }
           } catch (err) {
@@ -3551,10 +3590,14 @@
               return;
             }
             if (data?.session && data?.user) {
-              await syncUserCloudData(data.user);
               setLoggedIn(true);
               setStage("dashboard");
               setAuthLoading(false);
+              try {
+                await syncUserCloudData(data.user);
+              } catch (syncErr) {
+                console.warn("Cloud sync note on signup:", syncErr);
+              }
               return;
             } else if (data?.user) {
               setAuthSuccessMsg("Account registered successfully! Check your inbox to verify your email, or sign in now.");
@@ -3708,6 +3751,7 @@
       }
 
       function handleSignOut() {
+        isSigningOutRef.current = true;
         // 1. Instant local reset (<1ms UI response)
         setActiveCloudUser(null);
         setLoggedIn(false);
@@ -3760,6 +3804,10 @@
             /* non-fatal */
           }
         }
+
+        setTimeout(() => {
+          isSigningOutRef.current = false;
+        }, 1200);
       }
 
       function openProfilePage() {
