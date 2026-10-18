@@ -393,7 +393,7 @@
     import { createClient } from "@supabase/supabase-js";
     import {
       Command, X, AlertTriangle, Zap, RotateCcw, ArrowRight, Upload, Loader2,
-      Clock as ClockIcon, Bell, LogIn, ChevronRight, MoreVertical, Trash2, Brain,
+      Clock as ClockIcon, Bell, LogIn, LogOut, ChevronRight, MoreVertical, Trash2, Brain,
       Timer, Play, Pause, Pencil, Target, Circle, CheckCircle2, Plus, User,
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
@@ -2639,6 +2639,8 @@
             setLoggedIn(true);
           } else if (event === "SIGNED_OUT") {
             setActiveCloudUser(null);
+            setLoggedIn(false);
+            setStage("auth");
           }
         });
         return () => {
@@ -3491,22 +3493,46 @@
         saveJSON("data:currentUser", userObj);
       }
 
-      async function handleSignOut() {
-        if (supabase) {
-          try {
-            await supabase.auth.signOut();
-          } catch (e) {
-            console.warn("Supabase signOut error:", e);
-          }
-        }
+      function handleSignOut() {
+        // 1. Instant local reset (<1ms UI response)
         setActiveCloudUser(null);
-        deleteKey("data:currentUser");
         setLoggedIn(false);
         setStage("auth");
         setLoginIdentifier("");
         setLoginPassword("");
         setAuthError(null);
-        setAuthSuccessMsg(null);
+        setAuthSuccessMsg("Signed out successfully. You can sign in again or continue as guest.");
+        setShowAddTargetModal(false);
+        setShowEditTargetModal(false);
+        setShowScheduleUploadModal(false);
+        setShowScheduleUploadCard(false);
+        setShowAddHabitModal(false);
+        setModalOpen(false);
+
+        // 2. Clear all local storage session items immediately
+        try {
+          window.localStorage.removeItem("data:currentUser");
+          window.localStorage.removeItem("data:profile");
+          const keysToRemove = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const k = window.localStorage.key(i);
+            if (k && (k.startsWith("sb-") || k.includes("supabase.auth"))) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach((k) => window.localStorage.removeItem(k));
+        } catch (e) {
+          console.warn("Storage cleanup error:", e);
+        }
+
+        // 3. Clear Supabase local session (scope: 'local' prevents 403 network failures)
+        if (supabase) {
+          try {
+            supabase.auth.signOut({ scope: "local" }).catch(() => {});
+          } catch {
+            /* non-fatal */
+          }
+        }
       }
 
       function openProfilePage() {
@@ -4815,7 +4841,7 @@
                       gap: 6
                     }}
                   >
-                    <LogIn size={13} /> Sign Out (Switch Account)
+                    <LogOut size={13} /> Sign Out (Switch Account)
                   </button>
                   <button
                     type="button"
@@ -5182,7 +5208,7 @@
                       gap: 6
                     }}
                   >
-                    <LogIn size={13} /> Sign Out
+                    <LogOut size={13} /> Sign Out
                   </button>
                 </div>
               </div>
@@ -5259,46 +5285,73 @@
                   </div>
                 </div>
 
-                {/* Primary View Switcher Tabs (Top Right) */}
-                <div className="rp-view-switcher" style={{ display: "flex", background: "#10131E", border: "1px solid #1C2030", borderRadius: 9, padding: 4, gap: 4 }}>
+                {/* Primary View Switcher & Quick Sign Out (Top Right) */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <div className="rp-view-switcher" style={{ display: "flex", background: "#10131E", border: "1px solid #1C2030", borderRadius: 9, padding: 4, gap: 4 }}>
+                    <button
+                      onClick={() => setDashboardTab("habits")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 7,
+                        padding: "7px 14px",
+                        borderRadius: 7,
+                        border: dashboardTab === "habits" ? "1px solid rgba(60, 208, 155, 0.35)" : "1px solid transparent",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        background: dashboardTab === "habits" ? "rgba(60, 208, 155, 0.12)" : "transparent",
+                        color: dashboardTab === "habits" ? "#3CD09B" : C.textMuted,
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      <CheckCircle2 size={14} color={dashboardTab === "habits" ? "#3CD09B" : C.textMuted} />
+                      HabitFlow ({todayHabitsDone}/{habits.length})
+                    </button>
+                    <button
+                      onClick={() => setDashboardTab("schedule")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 7,
+                        padding: "7px 14px",
+                        borderRadius: 7,
+                        border: dashboardTab === "schedule" ? `1px solid ${C.boulder}` : "1px solid transparent",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        background: dashboardTab === "schedule" ? "rgba(255,138,92,0.12)" : "transparent",
+                        color: dashboardTab === "schedule" ? C.boulder : C.textMuted,
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      <Calendar size={14} /> Schedule & Ramp
+                    </button>
+                  </div>
+
                   <button
-                    onClick={() => setDashboardTab("habits")}
+                    type="button"
+                    onClick={handleSignOut}
+                    title="Sign Out of HabitLoop"
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 7,
-                      padding: "7px 14px",
-                      borderRadius: 7,
-                      border: dashboardTab === "habits" ? "1px solid rgba(60, 208, 155, 0.35)" : "1px solid transparent",
-                      fontSize: 13,
+                      gap: 6,
+                      background: "rgba(224, 82, 75, 0.08)",
+                      border: "1px solid rgba(224, 82, 75, 0.28)",
+                      color: "#FF8C8C",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      fontSize: 12.5,
                       fontWeight: 600,
                       cursor: "pointer",
-                      background: dashboardTab === "habits" ? "rgba(60, 208, 155, 0.12)" : "transparent",
-                      color: dashboardTab === "habits" ? "#3CD09B" : C.textMuted,
                       transition: "all 0.15s ease"
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.18)"; e.currentTarget.style.borderColor = C.crisis; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.08)"; e.currentTarget.style.borderColor = "rgba(224, 82, 75, 0.28)"; }}
                   >
-                    <CheckCircle2 size={14} color={dashboardTab === "habits" ? "#3CD09B" : C.textMuted} />
-                    HabitFlow ({todayHabitsDone}/{habits.length})
-                  </button>
-                  <button
-                    onClick={() => setDashboardTab("schedule")}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 7,
-                      padding: "7px 14px",
-                      borderRadius: 7,
-                      border: dashboardTab === "schedule" ? `1px solid ${C.boulder}` : "1px solid transparent",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      background: dashboardTab === "schedule" ? "rgba(255,138,92,0.12)" : "transparent",
-                      color: dashboardTab === "schedule" ? C.boulder : C.textMuted,
-                      transition: "all 0.15s ease"
-                    }}
-                  >
-                    <Calendar size={14} /> Schedule & Ramp
+                    <LogOut size={13} />
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </div>
@@ -5466,6 +5519,28 @@
                     }}
                   >
                     <Command size={13} /> Capture
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    title="Sign Out"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "rgba(224, 82, 75, 0.08)",
+                      border: "1px solid rgba(224, 82, 75, 0.28)",
+                      color: "#FF8C8C",
+                      borderRadius: 9999,
+                      padding: "6px 14px",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.18)"; e.currentTarget.style.borderColor = C.crisis; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.08)"; e.currentTarget.style.borderColor = "rgba(224, 82, 75, 0.28)"; }}
+                  >
+                    <LogOut size={13} /> Sign Out
                   </button>
                 </div>
               </div>
