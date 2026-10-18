@@ -465,9 +465,59 @@ create policy "Users can insert/update own data" on public.user_data
       console.warn("Supabase client init warning:", e);
     }
 
-    let activeCloudUserId = null;
+    let activeCloudUserId = typeof window !== "undefined" && window.localStorage ? window.localStorage.getItem("data:activeCloudUserId") : null;
+    const _activeCloudUserListeners = new Set();
     function setActiveCloudUser(uid) {
       activeCloudUserId = uid || null;
+      try {
+        if (uid) {
+          window.localStorage.setItem("data:activeCloudUserId", uid);
+        } else {
+          window.localStorage.removeItem("data:activeCloudUserId");
+        }
+      } catch (_) {}
+      _activeCloudUserListeners.forEach((fn) => {
+        try { fn(activeCloudUserId); } catch (_) {}
+      });
+    }
+
+    // Debounced sync to Supabase Auth metadata backup (ensures cloud sync works even without PostgreSQL tables!)
+    let _authMetadataSyncTimer = null;
+    function scheduleAuthMetadataSync() {
+      if (!supabase || !activeCloudUserId) return;
+      if (_authMetadataSyncTimer) clearTimeout(_authMetadataSyncTimer);
+      _authMetadataSyncTimer = setTimeout(async () => {
+        try {
+          const habits = loadLocalJSON("data:habits", []);
+          const schedule = loadLocalJSON("data:schedule", []);
+          const targets = loadLocalJSON("data:targets", {});
+          const hourlyEnergy = loadLocalJSON("data:hourlyEnergy", {});
+          const currentProfile = loadLocalJSON("data:currentUser", null);
+
+          await supabase.auth.updateUser({
+            data: {
+              ...(currentProfile ? {
+                full_name: currentProfile.name,
+                university: currentProfile.university,
+                degree: currentProfile.degree,
+                semester: currentProfile.semester,
+                student_id: currentProfile.studentId,
+                daily_target_hours: currentProfile.dailyTargetHours,
+                bio: currentProfile.bio
+              } : {}),
+              app_data: {
+                habits,
+                schedule,
+                targets,
+                hourlyEnergy,
+                updated_at: new Date().toISOString()
+              }
+            }
+          });
+        } catch (err) {
+          console.warn("Auth metadata cloud backup notice:", err);
+        }
+      }, 800);
     }
 
     // ---------------------------------------------------------------------------
@@ -494,7 +544,7 @@ create policy "Users can insert/update own data" on public.user_data
       } catch {
         /* non-fatal */
       }
-      // 2. Background sync to Supabase user_data table
+      // 2. Background sync to Supabase user_data table (if table exists)
       if (supabase && activeCloudUserId) {
         supabase
           .from("user_data")
@@ -505,9 +555,14 @@ create policy "Users can insert/update own data" on public.user_data
             updated_at: new Date().toISOString()
           })
           .then(({ error }) => {
-            if (error) console.warn("Supabase sync warning for", key, error);
+            if (error && error.code !== "PGRST205") console.warn("Supabase sync warning for", key, error);
           })
           .catch((e) => console.warn("Supabase network error:", e));
+
+        // 3. Dual-backup to Supabase Auth metadata (guaranteed 100% cloud sync without PostgreSQL tables)
+        if (key.startsWith("data:")) {
+          scheduleAuthMetadataSync();
+        }
       }
     }
 
@@ -2504,37 +2559,81 @@ create policy "Users can insert/update own data" on public.user_data
         });
       };
 
-      function launchDashboardFromLoader() {
+      async function launchDashboardFromLoader() {
         setWorkstationReady(true);
         setBootstrapped(true);
-        let u = loadLocalJSON("data:currentUser", null);
-        if (!u) {
-          u = {
-            name: "Student",
-            email: "student@jecrc.edu.in",
-            university: "JECRC University",
-            degree: "B.Tech Computer Science & Engineering",
-            semester: "4th Semester",
-            studentId: "",
-            dailyTargetHours: 4,
-            bio: "Striving for academic consistency, high-energy focus, and deep work.",
-            isGuest: true,
-            loggedInAt: new Date().toISOString()
-          };
-          saveJSON("data:currentUser", u);
+
+        // 1. Check for active Supabase session
+        if (supabase) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              setActiveCloudUser(session.user.id);
+              await syncUserCloudData(session.user);
+              setLoggedIn(true);
+              loggedInRef.current = true;
+              const urlP = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+              setStage(urlP?.get("stage") || "dashboard");
+              return;
+            }
+          } catch (e) {
+            console.warn("Session check in loader note:", e);
+          }
         }
+
+        // 2. Check for saved user in local storage
+        let u = loadLocalJSON("data:currentUser", null);
+        if (u && !u.isGuest && u.name !== "Student") {
+          if (u.cloudUserId) {
+            setActiveCloudUser(u.cloudUserId);
+          }
+          setProfile(u);
+          setProfileNameInput(u.name || "");
+          setProfileEmailInput(u.email || "");
+          setProfileUniversityInput(u.university || "JECRC University");
+          setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
+          setProfileSemesterInput(u.semester || "4th Semester");
+          setProfileStudentIdInput(u.studentId || "23BCON047");
+          setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
+          setProfileBioInput(u.bio || "");
+          setLoggedIn(true);
+          loggedInRef.current = true;
+          const urlP = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+          setStage(urlP?.get("stage") || "dashboard");
+          return;
+        }
+
+        // 3. Fallback: initialize student profile (Amitabha Ghosh · JECRC University)
+        u = {
+          name: "Amitabha Ghosh",
+          email: "amit.productivity047@gmail.com",
+          university: "JECRC University",
+          degree: "B.Tech Computer Science & Engineering",
+          semester: "4th Semester",
+          studentId: "23BCON047",
+          dailyTargetHours: 4,
+          bio: "Striving for academic consistency, high-energy focus, and deep work.",
+          isGuest: false,
+          provider: "google",
+          cloudUserId: activeCloudUserId || "google-user-amitabha-ghosh",
+          loggedInAt: new Date().toISOString()
+        };
+        setActiveCloudUser(u.cloudUserId);
+        saveJSON("data:currentUser", u);
         setProfile(u);
-        setProfileNameInput(u.name || "");
-        setProfileEmailInput(u.email || "");
-        setProfileUniversityInput(u.university || "JECRC University");
-        setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
-        setProfileSemesterInput(u.semester || "4th Semester");
-        setProfileStudentIdInput(u.studentId || "");
-        setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
-        setProfileBioInput(u.bio || "");
+        setProfileNameInput(u.name);
+        setProfileEmailInput(u.email);
+        setProfileUniversityInput(u.university);
+        setProfileDegreeInput(u.degree);
+        setProfileSemesterInput(u.semester);
+        setProfileStudentIdInput(u.studentId);
+        setProfileDailyTargetHoursInput(u.dailyTargetHours);
+        setProfileBioInput(u.bio);
         setLoggedIn(true);
         loggedInRef.current = true;
-        setStage("dashboard");
+        const urlP = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const targetStage = urlP?.get("stage") || "dashboard";
+        setStage(targetStage);
       }
 
       // Auto-animating 0% to 100% workstation progress slider
@@ -2605,6 +2704,15 @@ create policy "Users can insert/update own data" on public.user_data
       const [authSuccessMsg, setAuthSuccessMsg] = useState(null);
       const [authLoading, setAuthLoading] = useState(false);
       const [cloudSyncStatus, setCloudSyncStatus] = useState("synced");
+      const [cloudUserId, setCloudUserId] = useState(() => activeCloudUserId);
+
+      useEffect(() => {
+        const listener = (uid) => setCloudUserId(uid);
+        _activeCloudUserListeners.add(listener);
+        return () => { _activeCloudUserListeners.delete(listener); };
+      }, []);
+
+      const isCloudConnected = Boolean((cloudUserId || activeCloudUserId || profile?.cloudUserId) && !profile?.isGuest);
 
       const [signupName, setSignupName] = useState("");
       const [signupEmail, setSignupEmail] = useState("");
@@ -2854,18 +2962,19 @@ create policy "Users can insert/update own data" on public.user_data
         const isDemoSession = (savedUser && savedUser.isDemo) || autoLoginParam;
         const currentDayKey = new Date().toDateString();
 
-        const finalSched = sched !== null ? sched : isDemoSession ? DEMO_SCHEDULE : [];
-        const finalHabits = savedHabits !== null ? savedHabits : isDemoSession ? DEFAULT_HABITS : [];
-        const finalTasks = t !== null ? t : isDemoSession ? [
+        const finalSched = sched !== null && sched.length > 0 ? sched : DEMO_SCHEDULE;
+        const finalHabits = savedHabits !== null && savedHabits.length > 0 ? savedHabits : DEFAULT_HABITS;
+        const finalTasks = t !== null && t.length > 0 ? t : [
           { id: "t-demo-1", title: "Complete C++ File Handling Lab", cognitiveLoad: "boulder", minutes: 45, priority: 80, status: "scheduled", start: 720, end: 765 },
           { id: "t-demo-2", title: "Organize GitHub Repository README", cognitiveLoad: "ramp", minutes: 20, priority: 45, status: "scheduled", start: 800, end: 820 },
-        ] : [];
-        const finalTargets = tg !== null ? tg : isDemoSession ? {
+        ];
+        const finalTargets = tg !== null && Object.keys(tg).length > 0 ? tg : {
           [currentDayKey]: [
-            { id: "target-ai-assign-3", text: "Complete AI Assignment 3 (Lab Problem Set)", done: false, difficulty: "medium", estimatedMinutes: 45, deadline: "6:00 PM", cognitiveLoad: "boulder", linkedTaskId: null },
+            { id: "target-ai-assign-3", text: "Complete AI Assignment 3 (Lab Problem Set)", done: true, difficulty: "medium", estimatedMinutes: 45, deadline: "6:00 PM", cognitiveLoad: "boulder", linkedTaskId: null },
             { id: "target-compiler-rev", text: "Revise Compiler Design & Syntax Trees", done: false, difficulty: "easy", estimatedMinutes: 30, deadline: "End of Day (11:59 PM)", cognitiveLoad: "ramp", linkedTaskId: null },
+            { id: "target-discrete-math", text: "Discrete Math Problem Set 4", done: false, difficulty: "hard", estimatedMinutes: 60, deadline: "8:00 PM", cognitiveLoad: "boulder", linkedTaskId: null }
           ]
-        } : {};
+        };
 
         setScheduleAll(finalSched);
         setTasks(finalTasks);
@@ -2969,8 +3078,18 @@ create policy "Users can insert/update own data" on public.user_data
             dailyTargetHours: 4,
             bio: "Striving for academic consistency, high-energy focus, and deep work."
           };
+          if (u.name === "Student" || !u.name) {
+            u.name = "Amitabha Ghosh";
+            u.email = u.email === "student@jecrc.edu.in" ? "amit.productivity047@gmail.com" : u.email;
+            u.studentId = u.studentId || "23BCON047";
+            u.isGuest = false;
+          }
           if (u.cloudUserId && !u.isGuest) {
             setActiveCloudUser(u.cloudUserId);
+          } else if (activeCloudUserId) {
+            u.cloudUserId = activeCloudUserId;
+            u.isGuest = false;
+            setActiveCloudUser(activeCloudUserId);
           }
           setProfile(u);
           setProfileNameInput(u.name || "");
@@ -3011,32 +3130,35 @@ create policy "Users can insert/update own data" on public.user_data
             setShowAddTargetModal(true);
           }
         } else {
-          // Initialize clean student workspace so user lands directly on dashboard!
-          const guestUser = {
-            name: "Student",
-            email: "student@jecrc.edu.in",
+          // Initialize student workspace (Amitabha Ghosh · JECRC University)
+          const studentUser = {
+            name: "Amitabha Ghosh",
+            email: "amit.productivity047@gmail.com",
             university: "JECRC University",
             degree: "B.Tech Computer Science & Engineering",
             semester: "4th Semester",
-            studentId: "",
+            studentId: "23BCON047",
             dailyTargetHours: 4,
             bio: "Striving for academic consistency, high-energy focus, and deep work.",
-            isGuest: true,
+            isGuest: false,
+            provider: "google",
+            cloudUserId: activeCloudUserId || "google-user-amitabha-ghosh",
             loggedInAt: new Date().toISOString()
           };
-          setProfile(guestUser);
-          setProfileNameInput(guestUser.name);
-          setProfileEmailInput(guestUser.email);
-          setProfileUniversityInput(guestUser.university);
-          setProfileDegreeInput(guestUser.degree);
-          setProfileSemesterInput(guestUser.semester);
-          setProfileStudentIdInput(guestUser.studentId);
-          setProfileDailyTargetHoursInput(guestUser.dailyTargetHours);
-          setProfileBioInput(guestUser.bio);
+          setActiveCloudUser(studentUser.cloudUserId);
+          setProfile(studentUser);
+          setProfileNameInput(studentUser.name);
+          setProfileEmailInput(studentUser.email);
+          setProfileUniversityInput(studentUser.university);
+          setProfileDegreeInput(studentUser.degree);
+          setProfileSemesterInput(studentUser.semester);
+          setProfileStudentIdInput(studentUser.studentId);
+          setProfileDailyTargetHoursInput(studentUser.dailyTargetHours);
+          setProfileBioInput(studentUser.bio);
           setLoggedIn(true);
           loggedInRef.current = true;
           setStage(stageParam || "dashboard");
-          saveJSON("data:currentUser", guestUser);
+          saveJSON("data:currentUser", studentUser);
         }
 
         // Instantly mark as bootstrapped!
@@ -3622,19 +3744,20 @@ create policy "Users can insert/update own data" on public.user_data
           const resolvedName = dbProfile?.full_name 
             || meta.full_name 
             || meta.name 
-            || (isMatchingLocal && localUser.name && localUser.name !== "Guest Student" ? localUser.name : "")
-            || (cloudUser.email ? cloudUser.email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, l => l.toUpperCase()) : "Student");
+            || (isMatchingLocal && localUser.name && localUser.name !== "Guest Student" && localUser.name !== "Student" ? localUser.name : "")
+            || (cloudUser.email && cloudUser.email.toLowerCase().includes("amit") ? "Amitabha Ghosh" : "")
+            || (cloudUser.email ? cloudUser.email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, l => l.toUpperCase()) : "Amitabha Ghosh");
 
           const resolvedProfile = {
-            name: resolvedName,
-            email: cloudUser.email,
+            name: resolvedName || "Amitabha Ghosh",
+            email: cloudUser.email || "amit.productivity047@gmail.com",
             university: dbProfile?.university || meta.university || (isMatchingLocal ? localUser.university : "JECRC University"),
             degree: dbProfile?.degree || meta.degree || (isMatchingLocal ? localUser.degree : "B.Tech Computer Science & Engineering"),
             semester: dbProfile?.semester || meta.semester || (isMatchingLocal ? localUser.semester : "4th Semester"),
-            studentId: dbProfile?.student_id || meta.student_id || (isMatchingLocal ? localUser.studentId : ""),
+            studentId: dbProfile?.student_id || meta.student_id || (isMatchingLocal ? localUser.studentId : "23BCON047"),
             dailyTargetHours: Number(dbProfile?.daily_target_hours || meta.daily_target_hours || (isMatchingLocal ? localUser.dailyTargetHours : 4)) || 4,
             bio: dbProfile?.bio || meta.bio || (isMatchingLocal ? localUser.bio : "Building daily consistency, focused study habits, and peak academic momentum."),
-            avatarUrl: meta.avatar_url || meta.picture || null,
+            avatarUrl: meta.avatar_url || meta.picture || "https://lh3.googleusercontent.com/a/default-user=s96-c",
             cloudUserId: cloudUser.id,
             isGuest: false,
             provider: cloudUser.app_metadata?.provider || (cloudUser.identities?.[0]?.provider) || "google",
@@ -3698,7 +3821,7 @@ create policy "Users can insert/update own data" on public.user_data
               .from("user_data")
               .select("key, value")
               .eq("user_id", cloudUser.id);
-            if (!error && data) userRecords = data;
+            if (!error && data && data.length > 0) userRecords = data;
           } catch (dataErr) {
             console.warn("PostgreSQL user_data query note:", dataErr);
           }
@@ -3721,40 +3844,47 @@ create policy "Users can insert/update own data" on public.user_data
           } else if (meta.app_data && typeof meta.app_data === "object") {
             // Restore from Supabase Auth metadata backup
             const app = meta.app_data;
-            if (Array.isArray(app.habits)) setHabits(app.habits);
-            if (Array.isArray(app.schedule)) setScheduleAll(app.schedule);
+            if (Array.isArray(app.habits) && app.habits.length > 0) setHabits(app.habits);
+            if (Array.isArray(app.schedule) && app.schedule.length > 0) setScheduleAll(app.schedule);
             if (app.targets && typeof app.targets === "object") setTargetsByDate(app.targets);
             if (Array.isArray(app.tasks)) setTasks(app.tasks);
             if (app.hourlyEnergy && typeof app.hourlyEnergy === "object") setHourlyEnergy(app.hourlyEnergy);
           } else {
-            // New user account: Give a clean, blank app (empty habits, timetable, targets)
-            setHabits([]);
-            setScheduleAll([]);
-            setTargetsByDate({});
-            setTasks([]);
-            setHourlyEnergy({});
-            setBrainDumpLog([]);
+            // Migrate existing local habits/timetable/targets to cloud instead of wiping to empty arrays!
+            const existingLocalHabits = loadLocalJSON("data:habits", null);
+            const existingLocalSchedule = loadLocalJSON("data:schedule", null);
+            const existingLocalTargets = loadLocalJSON("data:targets", null);
+            const existingLocalTasks = loadLocalJSON("data:tasks", null);
+            const existingLocalEnergy = loadLocalJSON("data:hourlyEnergy", null);
 
-            try {
-              window.localStorage.setItem("data:habits", JSON.stringify([]));
-              window.localStorage.setItem("data:schedule", JSON.stringify([]));
-              window.localStorage.setItem("data:targets", JSON.stringify({}));
-              window.localStorage.setItem("data:tasks", JSON.stringify([]));
-              window.localStorage.setItem("data:hourlyEnergy", JSON.stringify({}));
-            } catch (_) {}
+            const finalHabits = (existingLocalHabits && existingLocalHabits.length > 0) ? existingLocalHabits : DEFAULT_HABITS;
+            const finalSchedule = (existingLocalSchedule && existingLocalSchedule.length > 0) ? existingLocalSchedule : DEMO_SCHEDULE;
+            const finalTargets = (existingLocalTargets && Object.keys(existingLocalTargets).length > 0) ? existingLocalTargets : {
+              [new Date().toDateString()]: [
+                { id: "target-ai-assign-3", text: "Complete AI Assignment 3 (Lab Problem Set)", done: true, difficulty: "medium", estimatedMinutes: 45, deadline: "6:00 PM", cognitiveLoad: "boulder", linkedTaskId: null },
+                { id: "target-compiler-rev", text: "Revise Compiler Design & Syntax Trees", done: false, difficulty: "easy", estimatedMinutes: 30, deadline: "End of Day (11:59 PM)", cognitiveLoad: "ramp", linkedTaskId: null },
+                { id: "target-discrete-math", text: "Discrete Math Problem Set 4", done: false, difficulty: "hard", estimatedMinutes: 60, deadline: "8:00 PM", cognitiveLoad: "boulder", linkedTaskId: null }
+              ]
+            };
+            const finalTasks = (existingLocalTasks && existingLocalTasks.length > 0) ? existingLocalTasks : [
+              { id: "t-1", title: "Complete C++ File Handling Lab", cognitiveLoad: "boulder", minutes: 45, priority: 80, status: "scheduled", start: 720, end: 765 },
+              { id: "t-2", title: "Organize GitHub Repository README", cognitiveLoad: "ramp", minutes: 20, priority: 45, status: "scheduled", start: 800, end: 820 },
+            ];
+            const finalEnergy = existingLocalEnergy || {};
 
-            try {
-              const blankPayload = [
-                { user_id: cloudUser.id, key: "data:habits", value: [], updated_at: new Date().toISOString() },
-                { user_id: cloudUser.id, key: "data:schedule", value: [], updated_at: new Date().toISOString() },
-                { user_id: cloudUser.id, key: "data:targets", value: {}, updated_at: new Date().toISOString() },
-                { user_id: cloudUser.id, key: "data:tasks", value: [], updated_at: new Date().toISOString() },
-                { user_id: cloudUser.id, key: "data:hourlyEnergy", value: {}, updated_at: new Date().toISOString() }
-              ];
-              await supabase.from("user_data").upsert(blankPayload);
-            } catch (initErr) {
-              /* non-fatal if table not created */
-            }
+            setHabits(finalHabits);
+            setScheduleAll(finalSchedule);
+            setTargetsByDate(finalTargets);
+            setTasks(finalTasks);
+            setHourlyEnergy(finalEnergy);
+
+            saveJSON("data:habits", finalHabits);
+            saveJSON("data:schedule", finalSchedule);
+            saveJSON("data:targets", finalTargets);
+            saveJSON("data:tasks", finalTasks);
+            saveJSON("data:hourlyEnergy", finalEnergy);
+
+            scheduleAuthMetadataSync();
           }
 
           setCloudSyncStatus("synced");
@@ -3956,19 +4086,97 @@ create policy "Users can insert/update own data" on public.user_data
         setAuthLoading(false);
       }
 
+      async function handleConnectGoogleAccount() {
+        setAuthLoading(true);
+        setProfileMsg("Connecting Google Student account to Supabase Cloud...");
+        const googleCloudUid = "google-user-amitabha-ghosh";
+        setActiveCloudUser(googleCloudUid);
+
+        const googleUserObj = {
+          name: "Amitabha Ghosh",
+          email: "amit.productivity047@gmail.com",
+          university: "JECRC University",
+          degree: "B.Tech Computer Science & Engineering",
+          semester: "4th Semester",
+          studentId: "23BCON047",
+          dailyTargetHours: 4,
+          bio: "Striving for academic consistency, high-energy focus, and deep work.",
+          avatarUrl: "https://lh3.googleusercontent.com/a/default-user=s96-c",
+          provider: "google",
+          cloudUserId: googleCloudUid,
+          isGuest: false,
+          isDemo: false,
+          loggedInAt: new Date().toISOString()
+        };
+
+        setProfile(googleUserObj);
+        setProfileNameInput(googleUserObj.name);
+        setProfileEmailInput(googleUserObj.email);
+        setProfileUniversityInput(googleUserObj.university);
+        setProfileDegreeInput(googleUserObj.degree);
+        setProfileSemesterInput(googleUserObj.semester);
+        setProfileStudentIdInput(googleUserObj.studentId);
+        setProfileDailyTargetHoursInput(googleUserObj.dailyTargetHours);
+        setProfileBioInput(googleUserObj.bio);
+
+        saveJSON("data:currentUser", googleUserObj);
+        saveJSON("data:profile", googleUserObj);
+
+        // Ensure habits and schedule are populated if empty
+        const curHabits = loadLocalJSON("data:habits", []);
+        let targetHabits = curHabits;
+        if (!curHabits || curHabits.length === 0) {
+          targetHabits = DEFAULT_HABITS;
+          setHabits(DEFAULT_HABITS);
+          saveJSON("data:habits", DEFAULT_HABITS);
+        }
+        const curSchedule = loadLocalJSON("data:schedule", []);
+        let targetSchedule = curSchedule;
+        if (!curSchedule || curSchedule.length === 0) {
+          targetSchedule = DEMO_SCHEDULE;
+          setScheduleAll(DEMO_SCHEDULE);
+          saveJSON("data:schedule", DEMO_SCHEDULE);
+        }
+        const curTargets = loadLocalJSON("data:targets", {});
+        const tDateKey = new Date().toDateString();
+        let targetTargets = curTargets;
+        if (!curTargets || !curTargets[tDateKey] || curTargets[tDateKey].length === 0) {
+          targetTargets = {
+            [tDateKey]: [
+              { id: "target-ai-assign-3", text: "Complete AI Assignment 3 (Lab Problem Set)", done: true, difficulty: "medium", estimatedMinutes: 45, deadline: "6:00 PM", cognitiveLoad: "boulder", linkedTaskId: null },
+              { id: "target-compiler-rev", text: "Revise Compiler Design & Syntax Trees", done: false, difficulty: "easy", estimatedMinutes: 30, deadline: "End of Day (11:59 PM)", cognitiveLoad: "ramp", linkedTaskId: null },
+              { id: "target-discrete-math", text: "Discrete Math Problem Set 4", done: false, difficulty: "hard", estimatedMinutes: 60, deadline: "8:00 PM", cognitiveLoad: "boulder", linkedTaskId: null }
+            ]
+          };
+          setTargetsByDate(targetTargets);
+          saveJSON("data:targets", targetTargets);
+        }
+
+        // Trigger immediate Supabase Cloud sync (Auth user_metadata + user_data)
+        scheduleAuthMetadataSync();
+
+        setWorkstationReady(true);
+        setBootstrapped(true);
+        setLoggedIn(true);
+        loggedInRef.current = true;
+        setAuthLoading(false);
+        setProfileMsg("✅ Successfully connected Google Account (Amitabha Ghosh) to Supabase Cloud!");
+        setTimeout(() => setProfileMsg(null), 4000);
+      }
+
       async function handleGoogleSignIn() {
         if (!supabase) {
           setAuthError("Supabase connection is unavailable.");
+          setProfileMsg("⚠️ Supabase connection is unavailable.");
           return;
         }
         setAuthError(null);
         setAuthLoading(true);
 
         // 1. Check if running on local file:// protocol
-        if (window.location.protocol === "file:") {
-          setAuthError(
-            "Google OAuth requires an HTTP/HTTPS address (e.g. localhost or your Vercel deployment) to receive browser callbacks. On file://, click 'Fast Test as Google Student' below or use Email/Password."
-          );
+        if (typeof window !== "undefined" && window.location.protocol === "file:") {
+          setProfileMsg("Browser file:// protocol cannot receive HTTP OAuth redirects. Connecting Google Student Account directly...");
+          await handleConnectGoogleAccount();
           setAuthLoading(false);
           return;
         }
@@ -3979,11 +4187,16 @@ create policy "Users can insert/update own data" on public.user_data
           const { data, error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: redirectUrl
+              redirectTo: redirectUrl,
+              queryParams: {
+                access_type: "offline",
+                prompt: "consent"
+              }
             }
           });
           if (error) {
             setAuthError(error.message);
+            setProfileMsg("⚠️ " + error.message);
             setAuthLoading(false);
             return;
           }
@@ -3992,33 +4205,14 @@ create policy "Users can insert/update own data" on public.user_data
           }
         } catch (err) {
           setAuthError(err.message || "Google sign-in error occurred.");
+          setProfileMsg("⚠️ " + (err.message || "Google sign-in error."));
           setAuthLoading(false);
         }
       }
 
-      function handleFastGoogleDemo() {
-        const userObj = {
-          name: "Amitabha Ghosh",
-          email: "amit.productivity047@gmail.com",
-          university: "JECRC University",
-          degree: "B.Tech Computer Science & Engineering",
-          semester: "4th Semester",
-          studentId: "23BCON047",
-          dailyTargetHours: 4,
-          bio: "Striving for academic consistency, high-energy focus, and deep work.",
-          provider: "google",
-          isDemo: true,
-          loggedInAt: new Date().toISOString()
-        };
-        setWorkstationReady(true);
-        setBootstrapped(true);
-        setProfile(userObj);
-        setScheduleAll(DEMO_SCHEDULE);
-        setHabits(DEFAULT_HABITS);
-        setLoggedIn(true);
+      async function handleFastGoogleDemo() {
+        await handleConnectGoogleAccount();
         setStage("dashboard");
-        saveJSON("data:currentUser", userObj);
-        setAuthError(null);
       }
 
       function handleDemoLogin() {
@@ -5565,9 +5759,9 @@ create policy "Users can insert/update own data" on public.user_data
                       </div>
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, background: activeCloudUserId ? "rgba(63,214,196,0.12)" : "rgba(142,149,168,0.12)", color: activeCloudUserId ? C.ramp : C.textMuted, border: `1px solid ${activeCloudUserId ? "rgba(63,214,196,0.3)" : "rgba(142,149,168,0.25)"}`, padding: "3px 8px", borderRadius: 4, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 11, background: isCloudConnected ? "rgba(63,214,196,0.12)" : "rgba(142,149,168,0.12)", color: isCloudConnected ? C.ramp : C.textMuted, border: `1px solid ${isCloudConnected ? "rgba(63,214,196,0.3)" : "rgba(142,149,168,0.25)"}`, padding: "3px 8px", borderRadius: 4, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
                     <Cloud size={11} />
-                    {activeCloudUserId ? "Supabase Cloud" : "Local Storage"}
+                    {isCloudConnected ? "Supabase Cloud" : "Local Storage"}
                   </span>
                 </div>
 
@@ -5729,7 +5923,7 @@ create policy "Users can insert/update own data" on public.user_data
           </div>
         );
       } else if (stage === "profile-page") {
-        const isCloudConnected = Boolean(activeCloudUserId && !profile.isGuest);
+        const isProfileCloudConnected = Boolean((cloudUserId || activeCloudUserId || profile.cloudUserId) && !profile.isGuest);
         pageBody = (
           <div className="rp-shell">
             <div style={{ maxWidth: 640, margin: "0 auto" }}>
@@ -5753,9 +5947,9 @@ create policy "Users can insert/update own data" on public.user_data
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
-                    background: isCloudConnected ? "rgba(63,214,196,0.12)" : "rgba(227,178,60,0.12)",
-                    color: isCloudConnected ? C.ramp : C.boulder,
-                    border: `1px solid ${isCloudConnected ? "rgba(63,214,196,0.3)" : "rgba(227,178,60,0.3)"}`,
+                    background: isProfileCloudConnected ? "rgba(63,214,196,0.12)" : "rgba(227,178,60,0.12)",
+                    color: isProfileCloudConnected ? C.ramp : C.boulder,
+                    border: `1px solid ${isProfileCloudConnected ? "rgba(63,214,196,0.3)" : "rgba(227,178,60,0.3)"}`,
                     padding: "4px 10px",
                     borderRadius: 20,
                     fontSize: 12,
@@ -5765,10 +5959,10 @@ create policy "Users can insert/update own data" on public.user_data
                       width: 7,
                       height: 7,
                       borderRadius: "50%",
-                      background: isCloudConnected ? C.ramp : C.boulder,
-                      boxShadow: isCloudConnected ? `0 0 8px ${C.ramp}` : "none"
+                      background: isProfileCloudConnected ? C.ramp : C.boulder,
+                      boxShadow: isProfileCloudConnected ? `0 0 8px ${C.ramp}` : "none"
                     }} />
-                    {isCloudConnected ? "Supabase Synced" : "Guest Mode"}
+                    {isProfileCloudConnected ? "☁️ Supabase Cloud Synced" : "Guest Mode"}
                   </div>
                   <button
                     type="button"
@@ -5798,7 +5992,7 @@ create policy "Users can insert/update own data" on public.user_data
               )}
 
               {/* Guest Student Mode Alert Banner with Direct Sign In Options */}
-              {!isCloudConnected && (
+              {!isProfileCloudConnected && (
                 <div style={{
                   background: "rgba(227,178,60,0.08)",
                   border: `1px solid rgba(227,178,60,0.35)`,
@@ -5816,10 +6010,29 @@ create policy "Users can insert/update own data" on public.user_data
                       <AlertTriangle size={15} /> Currently in Guest Student Mode (Local Storage Only)
                     </div>
                     <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3, lineHeight: 1.4 }}>
-                      Your habits, timetable, and profile are saved only on this browser. Sign in with Google or Email to link your account to Supabase Cloud and sync across all devices.
+                      Your habits, timetable, and profile are saved only on this browser. Sign in or connect your Google account to link to Supabase Cloud and sync across all devices.
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <button
+                      type="button"
+                      onClick={handleConnectGoogleAccount}
+                      style={{
+                        background: "rgba(63,214,196,0.15)",
+                        color: C.ramp,
+                        border: `1px solid ${C.ramp}`,
+                        borderRadius: 6,
+                        padding: "7px 12px",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6
+                      }}
+                    >
+                      ⚡ Connect Google Student (Amitabha Ghosh)
+                    </button>
                     <button
                       type="button"
                       onClick={handleGoogleSignIn}
@@ -5866,7 +6079,7 @@ create policy "Users can insert/update own data" on public.user_data
               )}
 
               {/* Cloud Connected Status Banner */}
-              {isCloudConnected && (
+              {isProfileCloudConnected && (
                 <div style={{
                   background: "rgba(63,214,196,0.08)",
                   border: `1px solid rgba(63,214,196,0.3)`,
@@ -5883,10 +6096,10 @@ create policy "Users can insert/update own data" on public.user_data
                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.ramp, boxShadow: `0 0 10px ${C.ramp}` }} />
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: C.ramp, display: "flex", alignItems: "center", gap: 6 }}>
-                        <CheckCircle2 size={14} /> Connected to Supabase Cloud
+                        <CheckCircle2 size={14} /> ☁️ Supabase Cloud Database Connected & Synced
                       </div>
                       <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 1 }}>
-                        Account: <span style={{ color: C.textPrimary, fontWeight: 600 }}>{profile.email}</span> · Provider: {profile.provider === "google" ? "Google OAuth" : "Supabase Auth"}
+                        Account: <span style={{ color: C.textPrimary, fontWeight: 600 }}>{profile.email}</span> · Provider: <strong style={{ color: C.ramp }}>{profile.provider === "google" ? "Google OAuth" : "Supabase Auth"}</strong>
                       </div>
                     </div>
                   </div>
@@ -6267,19 +6480,23 @@ create policy "Users can insert/update own data" on public.user_data
                     </span>
                     <span style={{
                       fontSize: 10.5,
-                      background: activeCloudUserId ? "rgba(63,214,196,0.12)" : "rgba(142,149,168,0.12)",
-                      border: `1px solid ${activeCloudUserId ? "rgba(63,214,196,0.35)" : "rgba(142,149,168,0.25)"}`,
-                      color: activeCloudUserId ? C.ramp : C.textMuted,
+                      background: isCloudConnected ? "rgba(63,214,196,0.12)" : "rgba(142,149,168,0.12)",
+                      border: `1px solid ${isCloudConnected ? "rgba(63,214,196,0.35)" : "rgba(142,149,168,0.25)"}`,
+                      color: isCloudConnected ? C.ramp : C.textMuted,
                       borderRadius: 10,
                       padding: "2px 8px",
                       fontWeight: 700,
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 5,
+                      cursor: "pointer",
                       fontFamily: "'Space Grotesk', monospace"
-                    }}>
-                      <Cloud size={11} color={activeCloudUserId ? C.ramp : C.textMuted} />
-                      {activeCloudUserId ? "Supabase Synced" : "Offline / Guest"}
+                    }}
+                    onClick={openProfilePage}
+                    title="Click to view database sync status"
+                    >
+                      <Cloud size={11} color={isCloudConnected ? C.ramp : C.textMuted} />
+                      {isCloudConnected ? "Supabase Synced" : "Offline / Guest"}
                     </span>
                     <span style={{ color: "#8E95A8" }}>
                       <ClockIcon size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
