@@ -2722,7 +2722,7 @@ create policy "Users can insert/update own data" on public.user_data
 
         const urlParams = new URLSearchParams(window.location.search);
         const isMobileUpload = urlParams.get("mobile_upload") === "1";
-        const autoLoginParam = urlParams.get("autologin") === "1";
+        const autoLoginParam = urlParams.get("autologin") === "1" || urlParams.get("autologin") === "true" || urlParams.get("autoLogin") === "true";
         const stageParam = urlParams.get("stage");
         const tabParam = urlParams.get("tab");
         const modalParam = urlParams.get("modal");
