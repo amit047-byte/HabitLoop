@@ -428,31 +428,18 @@
     // ---------------------------------------------------------------------------
     // PERSISTENCE — Hybrid Offline-First (LocalStorage + Supabase PostgreSQL)
     // ---------------------------------------------------------------------------
-    async function loadJSON(key, fallback) {
-      // 1. If user is authenticated in Supabase, load live from Supabase user_data table
-      if (supabase && activeCloudUserId) {
-        try {
-          const { data, error } = await supabase
-            .from("user_data")
-            .select("value")
-            .eq("user_id", activeCloudUserId)
-            .eq("key", key)
-            .maybeSingle();
-          if (!error && data && data.value !== undefined && data.value !== null) {
-            try { window.localStorage.setItem(key, JSON.stringify(data.value)); } catch (_) {}
-            return data.value;
-          }
-        } catch (e) {
-          console.warn("Supabase load error for key", key, e);
-        }
-      }
-      // 2. Fallback to browser localStorage
+    function loadLocalJSON(key, fallback) {
       try {
         const raw = window.localStorage.getItem(key);
         return raw != null ? JSON.parse(raw) : fallback;
       } catch {
         return fallback;
       }
+    }
+
+    async function loadJSON(key, fallback) {
+      // Instant synchronous read from localStorage for 0ms startup time
+      return loadLocalJSON(key, fallback);
     }
 
     async function saveJSON(key, value) {
@@ -2472,181 +2459,176 @@
 
       const [waterReminderOpen, setWaterReminderOpen] = useState(false);
 
-      // ---- Bootstrap ----
+      // ---- Bootstrap (Instant 0ms Startup) ----
       useEffect(() => {
-        (async () => {
-          let cloudSessionUser = null;
-          if (supabase) {
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session && session.user) {
-                cloudSessionUser = session.user;
-                setActiveCloudUser(session.user.id);
-              }
-            } catch (e) {
-              console.warn("Supabase initial session fetch error:", e);
-            }
-          }
+        let isMounted = true;
 
-          const [
-            sched,
-            t,
-            he,
-            bd,
-            tg,
-            savedHabits,
-            savedModel,
-            savedEngine,
-            savedUser,
-            savedDebriefTime,
-            savedAutoDebrief,
-          ] = await Promise.all([
-            loadJSON("data:schedule", DEMO_SCHEDULE),
-            loadJSON("data:tasks", tasks),
-            loadJSON("data:hourlyEnergy", hourlyEnergy),
-            loadJSON("data:brainDumpLog", []),
-            loadJSON("data:targets", {}),
-            loadJSON("data:habits", DEFAULT_HABITS),
-            loadJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL),
-            loadJSON("data:ocrEngine", "paddleocr"),
-            loadJSON("data:currentUser", null),
-            loadJSON("data:debriefTime", DEFAULT_DEBRIEF_TIME),
-            loadJSON("data:autoDebriefEnabled", true),
-          ]);
-
-          let finalModel = savedModel;
-          if (!savedModel || savedModel.version !== "4.0-paddleocr-vl-1.6") {
-            finalModel = DEFAULT_TIMETABLE_MODEL;
-            saveJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL);
-          }
-
-          let finalSched = sched;
-          if (!sched || sched.length === 0) {
-            finalSched = DEMO_SCHEDULE;
-            saveJSON("data:schedule", DEMO_SCHEDULE);
-          }
-
-          setScheduleAll(finalSched);
-          setTasks(t);
-          setHourlyEnergy(he);
-          setBrainDumpLog(bd);
-          const currentDayKey = new Date().toDateString();
-          const initialTargets = tg && Object.keys(tg).length > 0 ? tg : {
-            [currentDayKey]: [
-              {
-                id: "target-ai-assign-3",
-                text: "Complete AI Assignment 3 (Lab Problem Set)",
-                done: false,
-                difficulty: "medium",
-                estimatedMinutes: 45,
-                deadline: "6:00 PM",
-                cognitiveLoad: "boulder",
-                linkedTaskId: null,
-              },
-              {
-                id: "target-compiler-rev",
-                text: "Revise Compiler Design & Syntax Trees",
-                done: false,
-                difficulty: "easy",
-                estimatedMinutes: 30,
-                deadline: "End of Day (11:59 PM)",
-                cognitiveLoad: "ramp",
-                linkedTaskId: null,
-              },
-            ],
-          };
-          setTargetsByDate(initialTargets);
-          setHabits(savedHabits);
-          setOcrModel(finalModel);
-          if (savedEngine) setOcrEngine(savedEngine);
-
-          if (savedDebriefTime && typeof savedDebriefTime.hour === "number") {
-            setDebriefTime(savedDebriefTime);
-          }
-          if (savedAutoDebrief !== undefined) {
-            setAutoDebriefEnabled(savedAutoDebrief);
-          }
-
-          const urlParams = new URLSearchParams(window.location.search);
-          const isMobileUpload = urlParams.get("mobile_upload") === "1";
-          const autoLoginParam = urlParams.get("autologin") === "1";
-          const stageParam = urlParams.get("stage");
-          const tabParam = urlParams.get("tab");
-          const modalParam = urlParams.get("modal");
-
-          if (isMobileUpload) {
-            setStage("mobile-upload");
+        // Fallback safety timeout: ensure loading screen NEVER hangs
+        const safetyTimer = setTimeout(() => {
+          if (isMounted) {
             setBootstrapped(true);
-            return;
           }
+        }, 200);
 
-          const effectiveUser = savedUser || (cloudSessionUser ? {
-            name: cloudSessionUser.user_metadata?.full_name || cloudSessionUser.email?.split("@")[0] || "Student",
-            email: cloudSessionUser.email,
-            university: cloudSessionUser.user_metadata?.university || "JECRC University",
+        // 1. Instant local load (0ms from memory/localStorage)
+        const sched = loadLocalJSON("data:schedule", DEMO_SCHEDULE);
+        const t = loadLocalJSON("data:tasks", tasks);
+        const he = loadLocalJSON("data:hourlyEnergy", hourlyEnergy);
+        const bd = loadLocalJSON("data:brainDumpLog", []);
+        const tg = loadLocalJSON("data:targets", {});
+        const savedHabits = loadLocalJSON("data:habits", DEFAULT_HABITS);
+        const savedModel = loadLocalJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL);
+        const savedEngine = loadLocalJSON("data:ocrEngine", "paddleocr");
+        const savedUser = loadLocalJSON("data:currentUser", null);
+        const savedDebriefTime = loadLocalJSON("data:debriefTime", DEFAULT_DEBRIEF_TIME);
+        const savedAutoDebrief = loadLocalJSON("data:autoDebriefEnabled", true);
+
+        let finalModel = savedModel;
+        if (!savedModel || savedModel.version !== "4.0-paddleocr-vl-1.6") {
+          finalModel = DEFAULT_TIMETABLE_MODEL;
+          saveJSON("data:trainedOcrModel", DEFAULT_TIMETABLE_MODEL);
+        }
+
+        let finalSched = sched;
+        if (!sched || sched.length === 0) {
+          finalSched = DEMO_SCHEDULE;
+          saveJSON("data:schedule", DEMO_SCHEDULE);
+        }
+
+        setScheduleAll(finalSched);
+        setTasks(t);
+        setHourlyEnergy(he);
+        setBrainDumpLog(bd);
+        const currentDayKey = new Date().toDateString();
+        const initialTargets = tg && Object.keys(tg).length > 0 ? tg : {
+          [currentDayKey]: [
+            {
+              id: "target-ai-assign-3",
+              text: "Complete AI Assignment 3 (Lab Problem Set)",
+              done: false,
+              difficulty: "medium",
+              estimatedMinutes: 45,
+              deadline: "6:00 PM",
+              cognitiveLoad: "boulder",
+              linkedTaskId: null,
+            },
+            {
+              id: "target-compiler-rev",
+              text: "Revise Compiler Design & Syntax Trees",
+              done: false,
+              difficulty: "easy",
+              estimatedMinutes: 30,
+              deadline: "End of Day (11:59 PM)",
+              cognitiveLoad: "ramp",
+              linkedTaskId: null,
+            },
+          ],
+        };
+        setTargetsByDate(initialTargets);
+        setHabits(savedHabits);
+        setOcrModel(finalModel);
+        if (savedEngine) setOcrEngine(savedEngine);
+
+        if (savedDebriefTime && typeof savedDebriefTime.hour === "number") {
+          setDebriefTime(savedDebriefTime);
+        }
+        if (savedAutoDebrief !== undefined) {
+          setAutoDebriefEnabled(savedAutoDebrief);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMobileUpload = urlParams.get("mobile_upload") === "1";
+        const autoLoginParam = urlParams.get("autologin") === "1";
+        const stageParam = urlParams.get("stage");
+        const tabParam = urlParams.get("tab");
+        const modalParam = urlParams.get("modal");
+
+        if (isMobileUpload) {
+          setStage("mobile-upload");
+          setBootstrapped(true);
+          return () => {
+            isMounted = false;
+            clearTimeout(safetyTimer);
+          };
+        }
+
+        if (savedUser || autoLoginParam) {
+          const u = savedUser || {
+            name: "Amitabha Ghosh",
+            email: "amit.productivity047@gmail.com",
+            university: "JECRC University",
             degree: "B.Tech Computer Science & Engineering",
             semester: "4th Semester",
             studentId: "23BCON047",
             dailyTargetHours: 4,
-            bio: "Striving for academic consistency, high-energy focus, and deep work.",
-            cloudUserId: cloudSessionUser.id
-          } : null);
+            bio: "Striving for academic consistency, high-energy focus, and deep work."
+          };
+          setProfile(u);
+          setProfileNameInput(u.name || "");
+          setProfileEmailInput(u.email || "");
+          setProfileUniversityInput(u.university || "JECRC University");
+          setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
+          setProfileSemesterInput(u.semester || "4th Semester");
+          setProfileStudentIdInput(u.studentId || "23BCON047");
+          setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
+          setProfileBioInput(u.bio || "");
+          setLoggedIn(true);
+          setStage(stageParam || "dashboard");
+          if (tabParam) setDashboardTab(tabParam);
 
-          if (effectiveUser || autoLoginParam) {
-            const u = effectiveUser || {
-              name: "Amitabha Ghosh",
-              email: "amit.productivity047@gmail.com",
-              university: "JECRC University",
-              degree: "B.Tech Computer Science & Engineering",
-              semester: "4th Semester",
-              studentId: "23BCON047",
-              dailyTargetHours: 4,
-              bio: "Striving for academic consistency, high-energy focus, and deep work."
-            };
-            setProfile(u);
-            setProfileNameInput(u.name || "");
-            setProfileEmailInput(u.email || "");
-            setProfileUniversityInput(u.university || "JECRC University");
-            setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
-            setProfileSemesterInput(u.semester || "4th Semester");
-            setProfileStudentIdInput(u.studentId || "23BCON047");
-            setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
-            setProfileBioInput(u.bio || "");
-            setLoggedIn(true);
-            setStage(stageParam || "dashboard");
-            if (tabParam) setDashboardTab(tabParam);
-
-            if (modalParam === "schedule-upload") {
-              setShowScheduleUploadModal(true);
-            } else if (modalParam === "schedule-review") {
-              setShowScheduleUploadModal(true);
-              setScheduleUploadImg("sample_timetable.png");
-              setScheduleUploadFileName("timetable_sample.png");
-              setScannedEditableClasses(runModelOnSampleData(DEFAULT_TIMETABLE_MODEL));
-              setIsReviewingScanned(true);
-            } else if (modalParam === "edit-target") {
-              setEditingTargetId("sample-target-1");
-              setEditTargetText("Complete AI Assignment 3 (Lab Problem Set)");
-              setEditTargetDifficulty("medium");
-              setEditTargetMinutes(45);
-              setEditTargetDeadlineType("custom");
-              setEditTargetDeadlineCustom("18:00");
-              setShowEditTargetModal(true);
-            } else if (modalParam === "add-target") {
-              setTargetFormText("Study Operating Systems Chapter 4");
-              setTargetFormDifficulty("hard");
-              setTargetFormMinutes(60);
-              setTargetFormDeadlineType("custom");
-              setTargetFormDeadlineCustom("18:00");
-              setShowAddTargetModal(true);
-            }
-          } else {
-            setLoggedIn(false);
-            setStage("auth");
+          if (modalParam === "schedule-upload") {
+            setShowScheduleUploadModal(true);
+          } else if (modalParam === "schedule-review") {
+            setShowScheduleUploadModal(true);
+            setScheduleUploadImg("sample_timetable.png");
+            setScheduleUploadFileName("timetable_sample.png");
+            setScannedEditableClasses(runModelOnSampleData(DEFAULT_TIMETABLE_MODEL));
+            setIsReviewingScanned(true);
+          } else if (modalParam === "edit-target") {
+            setEditingTargetId("sample-target-1");
+            setEditTargetText("Complete AI Assignment 3 (Lab Problem Set)");
+            setEditTargetDifficulty("medium");
+            setEditTargetMinutes(45);
+            setEditTargetDeadlineType("custom");
+            setEditTargetDeadlineCustom("18:00");
+            setShowEditTargetModal(true);
+          } else if (modalParam === "add-target") {
+            setTargetFormText("Study Operating Systems Chapter 4");
+            setTargetFormDifficulty("hard");
+            setTargetFormMinutes(60);
+            setTargetFormDeadlineType("custom");
+            setTargetFormDeadlineCustom("18:00");
+            setShowAddTargetModal(true);
           }
+        } else {
+          setLoggedIn(false);
+          setStage("auth");
+        }
 
-          setBootstrapped(true);
-        })();
+        // Instantly mark as bootstrapped!
+        setBootstrapped(true);
+
+        // 2. Background Supabase session verification (non-blocking)
+        if (supabase) {
+          (async () => {
+            try {
+              const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 1200));
+              const { data: { session } } = await Promise.race([supabase.auth.getSession(), timeoutPromise]);
+              if (session && session.user && isMounted) {
+                await syncUserCloudData(session.user);
+                setLoggedIn(true);
+                setStage((prev) => (prev === "auth" || prev === "loading" ? "dashboard" : prev));
+              }
+            } catch (err) {
+              console.warn("Background Supabase session note:", err);
+            }
+          })();
+        }
+
+        return () => {
+          isMounted = false;
+          clearTimeout(safetyTimer);
+        };
       }, []);
 
       useEffect(() => {
@@ -3861,6 +3843,26 @@
             <div style={{ fontSize: 13, color: C.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
               <Loader2 size={14} className="spin" /> Loading your academic workstation…
             </div>
+            <button
+              type="button"
+              onClick={() => { setBootstrapped(true); setStage("auth"); }}
+              style={{
+                marginTop: 6,
+                background: "rgba(255,255,255,0.06)",
+                border: `1px solid ${C.border}`,
+                color: C.textMuted,
+                borderRadius: 6,
+                padding: "6px 14px",
+                fontSize: 12,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5
+              }}
+            >
+              <span>Enter Workspace</span>
+              <ArrowRight size={12} />
+            </button>
           </div>
         );
       }
@@ -4042,7 +4044,37 @@
       if (!loggedIn || stage === "auth") {
         return (
           <div className="rp-shell" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "30px 16px" }}>
-            <div style={{ maxWidth: 460, width: "100%", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: "28px 26px", boxShadow: "0 20px 50px rgba(0,0,0,0.55)" }}>
+            <div style={{ maxWidth: 460, width: "100%", background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: "28px 26px", boxShadow: "0 20px 50px rgba(0,0,0,0.55)", position: "relative" }}>
+              {/* Skip button at top right corner of auth card */}
+              <button
+                type="button"
+                onClick={handleGuestLogin}
+                style={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 6,
+                  padding: "4px 9px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: C.textMuted,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  transition: "all 0.15s ease",
+                  zIndex: 10
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#FFFFFF"; e.currentTarget.style.borderColor = C.ramp; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = C.textMuted; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                title="Skip sign-in and explore as guest"
+              >
+                <span>Skip</span>
+                <ArrowRight size={11} />
+              </button>
+
               {/* App Brand Header */}
               <div style={{ textAlign: "center", marginBottom: 22 }}>
                 <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: 12, background: "rgba(255,138,92,0.15)", border: `1px solid ${C.boulder}`, alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
@@ -4252,51 +4284,36 @@
                     )}
                   </button>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "6px 0" }}>
                     <div style={{ flex: 1, height: 1, background: C.border }} />
-                    <span style={{ fontSize: 11, color: C.textMuted }}>OR FAST START</span>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>OR CONTINUE AS GUEST</span>
                     <div style={{ flex: 1, height: 1, background: C.border }} />
                   </div>
 
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <button
-                      type="button"
-                      onClick={handleDemoLogin}
-                      style={{
-                        flex: 1,
-                        background: "rgba(255,138,92,0.12)",
-                        border: `1px solid ${C.boulder}`,
-                        color: C.boulder,
-                        borderRadius: 6,
-                        padding: "9px 8px",
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 6,
-                      }}
-                    >
-                      <Sparkles size={13} color={C.boulder} /> Demo Student
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleGuestLogin}
-                      style={{
-                        flex: 1,
-                        background: C.panelAlt,
-                        border: `1px solid ${C.border}`,
-                        color: C.textMuted,
-                        borderRadius: 6,
-                        padding: "9px 8px",
-                        fontSize: 12.5,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Continue as Guest
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGuestLogin}
+                    style={{
+                      width: "100%",
+                      background: C.panelAlt,
+                      border: `1px solid ${C.border}`,
+                      color: C.textMuted,
+                      borderRadius: 6,
+                      padding: "10px 0",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = C.textPrimary; e.currentTarget.style.borderColor = C.textMuted; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = C.textMuted; e.currentTarget.style.borderColor = C.border; }}
+                  >
+                    Continue as Guest (No Password Required)
+                  </button>
                 </form>
               ) : (
                 <form onSubmit={handleSignUp} style={{ display: "flex", flexDirection: "column", gap: 13 }}>
