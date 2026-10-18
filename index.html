@@ -17,13 +17,14 @@
   <!-- Calibrated Academic Timetable Database -->
   <script src="jecrc_sections.js"></script>
 
-  <!-- Import Map for React 18 & Lucide Icons -->
+  <!-- Import Map for React 18 & Lucide Icons & Supabase -->
   <script type="importmap">
     {
       "imports": {
         "react": "https://esm.sh/react@18.3.1",
         "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-        "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react"
+        "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.4"
       }
     }
   </script>
@@ -389,6 +390,7 @@
   <script type="text/babel" data-type="module">
     import React, { useState, useEffect, useRef } from "react";
     import { createRoot } from "react-dom/client";
+    import { createClient } from "@supabase/supabase-js";
     import {
       Command, X, AlertTriangle, Zap, RotateCcw, ArrowRight, Upload, Loader2,
       Clock as ClockIcon, Bell, LogIn, ChevronRight, MoreVertical, Trash2, Brain,
@@ -396,13 +398,55 @@
       Droplet, ClipboardList, Settings, QrCode, Camera, Moon, Sunrise, Flame,
       BarChart2, CheckSquare, Sparkles, Key, Calendar, Sliders, Cpu, Layers,
       Download, RefreshCw, FileText, Check, Folder, Smartphone, Copy, ExternalLink,
-      Shield, Activity
+      Shield, Activity, Cloud
     } from "lucide-react";
 
     // ---------------------------------------------------------------------------
-    // PERSISTENCE — Standard browser localStorage wrapper
+    // SUPABASE CLOUD BACKEND INITIALIZATION
+    // Project: https://pzfvmnsbhqkrtxietlle.supabase.co
+    // ---------------------------------------------------------------------------
+    const SUPABASE_URL = "https://pzfvmnsbhqkrtxietlle.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_4iIvihs0-Rkc7ShRRNW-Vg_oSDb9ESc";
+    let supabase = null;
+    try {
+      supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      });
+    } catch (e) {
+      console.warn("Supabase client init warning:", e);
+    }
+
+    let activeCloudUserId = null;
+    function setActiveCloudUser(uid) {
+      activeCloudUserId = uid || null;
+    }
+
+    // ---------------------------------------------------------------------------
+    // PERSISTENCE — Hybrid Offline-First (LocalStorage + Supabase PostgreSQL)
     // ---------------------------------------------------------------------------
     async function loadJSON(key, fallback) {
+      // 1. If user is authenticated in Supabase, load live from Supabase user_data table
+      if (supabase && activeCloudUserId) {
+        try {
+          const { data, error } = await supabase
+            .from("user_data")
+            .select("value")
+            .eq("user_id", activeCloudUserId)
+            .eq("key", key)
+            .maybeSingle();
+          if (!error && data && data.value !== undefined && data.value !== null) {
+            try { window.localStorage.setItem(key, JSON.stringify(data.value)); } catch (_) {}
+            return data.value;
+          }
+        } catch (e) {
+          console.warn("Supabase load error for key", key, e);
+        }
+      }
+      // 2. Fallback to browser localStorage
       try {
         const raw = window.localStorage.getItem(key);
         return raw != null ? JSON.parse(raw) : fallback;
@@ -410,18 +454,45 @@
         return fallback;
       }
     }
+
     async function saveJSON(key, value) {
+      // 1. Instant local persistence for 0ms UI lag
       try {
         window.localStorage.setItem(key, JSON.stringify(value));
       } catch {
         /* non-fatal */
       }
+      // 2. Background sync to Supabase user_data table
+      if (supabase && activeCloudUserId) {
+        supabase
+          .from("user_data")
+          .upsert({
+            user_id: activeCloudUserId,
+            key: key,
+            value: value,
+            updated_at: new Date().toISOString()
+          })
+          .then(({ error }) => {
+            if (error) console.warn("Supabase sync warning for", key, error);
+          })
+          .catch((e) => console.warn("Supabase network error:", e));
+      }
     }
+
     async function deleteKey(key) {
       try {
         window.localStorage.removeItem(key);
       } catch {
         /* non-fatal */
+      }
+      if (supabase && activeCloudUserId) {
+        supabase
+          .from("user_data")
+          .delete()
+          .eq("user_id", activeCloudUserId)
+          .eq("key", key)
+          .then(() => {})
+          .catch(() => {});
       }
     }
 
@@ -2227,6 +2298,9 @@
       const [loginPassword, setLoginPassword] = useState("");
       const [rememberMe, setRememberMe] = useState(true);
       const [authError, setAuthError] = useState(null);
+      const [authSuccessMsg, setAuthSuccessMsg] = useState(null);
+      const [authLoading, setAuthLoading] = useState(false);
+      const [cloudSyncStatus, setCloudSyncStatus] = useState("synced");
 
       const [signupName, setSignupName] = useState("");
       const [signupEmail, setSignupEmail] = useState("");
@@ -2401,6 +2475,19 @@
       // ---- Bootstrap ----
       useEffect(() => {
         (async () => {
+          let cloudSessionUser = null;
+          if (supabase) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session && session.user) {
+                cloudSessionUser = session.user;
+                setActiveCloudUser(session.user.id);
+              }
+            } catch (e) {
+              console.warn("Supabase initial session fetch error:", e);
+            }
+          }
+
           const [
             sched,
             t,
@@ -2493,8 +2580,20 @@
             return;
           }
 
-          if (savedUser || autoLoginParam) {
-            const u = savedUser || {
+          const effectiveUser = savedUser || (cloudSessionUser ? {
+            name: cloudSessionUser.user_metadata?.full_name || cloudSessionUser.email?.split("@")[0] || "Student",
+            email: cloudSessionUser.email,
+            university: cloudSessionUser.user_metadata?.university || "JECRC University",
+            degree: "B.Tech Computer Science & Engineering",
+            semester: "4th Semester",
+            studentId: "23BCON047",
+            dailyTargetHours: 4,
+            bio: "Striving for academic consistency, high-energy focus, and deep work.",
+            cloudUserId: cloudSessionUser.id
+          } : null);
+
+          if (effectiveUser || autoLoginParam) {
+            const u = effectiveUser || {
               name: "Amitabha Ghosh",
               email: "amit.productivity047@gmail.com",
               university: "JECRC University",
@@ -2548,6 +2647,21 @@
 
           setBootstrapped(true);
         })();
+      }, []);
+
+      useEffect(() => {
+        if (!supabase) return;
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          if (event === "SIGNED_IN" && session?.user) {
+            await syncUserCloudData(session.user);
+            setLoggedIn(true);
+          } else if (event === "SIGNED_OUT") {
+            setActiveCloudUser(null);
+          }
+        });
+        return () => {
+          subscription?.unsubscribe();
+        };
       }, []);
 
       const todayKey = getWeekdayKey(now);
@@ -3041,8 +3155,112 @@
         }
       }
 
+      // ---- Cloud Data Sync & Migration Handlers ----
+      async function syncUserCloudData(cloudUser) {
+        if (!cloudUser || !supabase) return;
+        setActiveCloudUser(cloudUser.id);
+        setCloudSyncStatus("syncing");
+
+        try {
+          // 1. Fetch or initialize profile record
+          const { data: dbProfile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", cloudUser.id)
+            .maybeSingle();
+
+          const resolvedProfile = {
+            name: dbProfile?.full_name || cloudUser.user_metadata?.full_name || cloudUser.email?.split("@")[0] || "Student",
+            email: cloudUser.email,
+            university: dbProfile?.university || cloudUser.user_metadata?.university || "JECRC University",
+            degree: dbProfile?.degree || "B.Tech Computer Science & Engineering",
+            semester: dbProfile?.semester || "4th Semester",
+            studentId: dbProfile?.student_id || "23BCON047",
+            dailyTargetHours: dbProfile?.daily_target_hours || 4,
+            bio: dbProfile?.bio || "Striving for academic consistency, high-energy focus, and deep work.",
+            cloudUserId: cloudUser.id,
+            loggedInAt: new Date().toISOString()
+          };
+
+          if (!dbProfile) {
+            try {
+              await supabase.from("profiles").upsert({
+                id: cloudUser.id,
+                full_name: resolvedProfile.name,
+                email: resolvedProfile.email,
+                university: resolvedProfile.university,
+                degree: resolvedProfile.degree,
+                semester: resolvedProfile.semester,
+                student_id: resolvedProfile.studentId,
+                daily_target_hours: resolvedProfile.dailyTargetHours,
+                bio: resolvedProfile.bio,
+                updated_at: new Date().toISOString()
+              });
+            } catch (pErr) {
+              console.warn("Profile table upsert note:", pErr);
+            }
+          }
+
+          setProfile(resolvedProfile);
+          saveJSON("data:currentUser", resolvedProfile);
+
+          // 2. Fetch existing cloud user_data
+          const { data: userRecords, error: dataErr } = await supabase
+            .from("user_data")
+            .select("key, value")
+            .eq("user_id", cloudUser.id);
+
+          if (!dataErr && userRecords && userRecords.length > 0) {
+            userRecords.forEach((record) => {
+              try { window.localStorage.setItem(record.key, JSON.stringify(record.value)); } catch (_) {}
+              if (record.key === "data:habits" && Array.isArray(record.value)) {
+                setHabits(record.value);
+              } else if (record.key === "data:schedule" && Array.isArray(record.value)) {
+                setScheduleAll(record.value);
+              } else if (record.key === "data:targets" && record.value && typeof record.value === "object") {
+                setTargetsByDate(record.value);
+              } else if (record.key === "data:hourlyEnergy" && record.value && typeof record.value === "object") {
+                setHourlyEnergy(record.value);
+              }
+            });
+          } else {
+            // New user account: Migrate current local state to cloud
+            await migrateLocalDataToCloud(cloudUser.id);
+          }
+
+          setCloudSyncStatus("synced");
+        } catch (err) {
+          console.warn("Error in syncUserCloudData:", err);
+          setCloudSyncStatus("error");
+        }
+      }
+
+      async function migrateLocalDataToCloud(uid) {
+        if (!supabase || !uid) return;
+        try {
+          const keysToMigrate = [
+            { key: "data:habits", value: habits },
+            { key: "data:schedule", value: scheduleAll },
+            { key: "data:targets", value: targetsByDate },
+            { key: "data:hourlyEnergy", value: hourlyEnergy }
+          ];
+
+          const upsertPayload = keysToMigrate.map(item => ({
+            user_id: uid,
+            key: item.key,
+            value: item.value,
+            updated_at: new Date().toISOString()
+          }));
+
+          await supabase.from("user_data").upsert(upsertPayload);
+          console.log("Successfully migrated local data to Supabase cloud for user:", uid);
+        } catch (err) {
+          console.warn("Cloud data migration note:", err);
+        }
+      }
+
       // ---- Auth Handlers ----
-      function handleSignIn(e) {
+      async function handleSignIn(e) {
         if (e) e.preventDefault();
         const id = loginIdentifier.trim();
         const pwd = loginPassword.trim();
@@ -3051,11 +3269,43 @@
           return;
         }
         setAuthError(null);
+        setAuthSuccessMsg(null);
+        setAuthLoading(true);
+
+        const email = id.includes("@") ? id : `${id}@jecrc.edu.in`;
+
+        if (supabase) {
+          try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: email,
+              password: pwd
+            });
+            if (error) {
+              setAuthError(error.message);
+              setAuthLoading(false);
+              return;
+            }
+            if (data?.user) {
+              await syncUserCloudData(data.user);
+              setLoggedIn(true);
+              setStage("dashboard");
+              setAuthLoading(false);
+              return;
+            }
+          } catch (err) {
+            console.warn("Supabase auth error:", err);
+            setAuthError(err.message || "Failed to sign in. Please verify your credentials.");
+            setAuthLoading(false);
+            return;
+          }
+        }
+
+        // Offline / Demo fallback
         const namePart = id.includes("@") ? id.split("@")[0] : id;
         const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1);
         const userObj = {
           name: profile.name && profile.name !== "Student" ? profile.name : capitalized,
-          email: id.includes("@") ? id : `${id}@jecrc.edu.in`,
+          email: email,
           university: profile.university || "JECRC University",
           degree: profile.degree || "B.Tech Computer Science & Engineering",
           semester: profile.semester || "4th Semester",
@@ -3069,17 +3319,65 @@
         if (rememberMe) {
           saveJSON("data:currentUser", userObj);
         }
+        setAuthLoading(false);
       }
 
-      function handleSignUp(e) {
+      async function handleSignUp(e) {
         if (e) e.preventDefault();
         const name = signupName.trim();
         const email = signupEmail.trim();
+        const pwd = signupPassword.trim();
         if (!name || !email) {
-          setAuthError("Please provide both your name and email address.");
+          setAuthError("Please provide both your full name and email address.");
+          return;
+        }
+        if (!pwd || pwd.length < 6) {
+          setAuthError("Password must be at least 6 characters long.");
           return;
         }
         setAuthError(null);
+        setAuthSuccessMsg(null);
+        setAuthLoading(true);
+
+        if (supabase) {
+          try {
+            const { data, error } = await supabase.auth.signUp({
+              email: email,
+              password: pwd,
+              options: {
+                data: {
+                  full_name: name,
+                  university: signupUniversity.trim() || "JECRC University"
+                }
+              }
+            });
+            if (error) {
+              setAuthError(error.message);
+              setAuthLoading(false);
+              return;
+            }
+            if (data?.session && data?.user) {
+              await syncUserCloudData(data.user);
+              setLoggedIn(true);
+              setStage("dashboard");
+              setAuthLoading(false);
+              return;
+            } else if (data?.user) {
+              setAuthSuccessMsg("Account registered successfully! Check your inbox to verify your email, or sign in now.");
+              setAuthMode("signin");
+              setLoginIdentifier(email);
+              setAuthLoading(false);
+              return;
+            }
+          } catch (err) {
+            console.warn("Supabase signup error:", err);
+            setAuthError(err.message || "Failed to create account.");
+            setAuthLoading(false);
+            return;
+          }
+        }
+
+        // Fallback local account creation
         const userObj = {
           name,
           email,
@@ -3095,6 +3393,31 @@
         setStage("dashboard");
         if (rememberMe) {
           saveJSON("data:currentUser", userObj);
+        }
+        setAuthLoading(false);
+      }
+
+      async function handleGoogleSignIn() {
+        if (!supabase) {
+          setAuthError("Supabase connection is unavailable.");
+          return;
+        }
+        setAuthError(null);
+        setAuthLoading(true);
+        try {
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+              redirectTo: window.location.origin + window.location.pathname
+            }
+          });
+          if (error) {
+            setAuthError(error.message);
+            setAuthLoading(false);
+          }
+        } catch (err) {
+          setAuthError(err.message || "Google sign-in error occurred.");
+          setAuthLoading(false);
         }
       }
 
@@ -3134,13 +3457,22 @@
         saveJSON("data:currentUser", userObj);
       }
 
-      function handleSignOut() {
+      async function handleSignOut() {
+        if (supabase) {
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {
+            console.warn("Supabase signOut error:", e);
+          }
+        }
+        setActiveCloudUser(null);
         deleteKey("data:currentUser");
         setLoggedIn(false);
         setStage("auth");
         setLoginIdentifier("");
         setLoginPassword("");
         setAuthError(null);
+        setAuthSuccessMsg(null);
       }
 
       function openProfilePage() {
@@ -3171,6 +3503,19 @@
         setProfile(updated);
         saveJSON("data:currentUser", updated);
         saveJSON("data:profile", updated);
+        if (supabase && activeCloudUserId) {
+          supabase.from("profiles").upsert({
+            id: activeCloudUserId,
+            full_name: updated.name,
+            university: updated.university,
+            degree: updated.degree,
+            semester: updated.semester,
+            student_id: updated.studentId,
+            daily_target_hours: updated.dailyTargetHours,
+            bio: updated.bio,
+            updated_at: new Date().toISOString()
+          }).then(() => {}).catch(e => console.warn("Cloud profile save error:", e));
+        }
         setProfileMsg("Profile updated and saved successfully!");
         setTimeout(() => setProfileMsg(null), 3500);
       }
@@ -3706,6 +4051,52 @@
                 </div>
               )}
 
+              {authSuccessMsg && (
+                <div style={{ marginBottom: 14, background: "rgba(60,208,155,0.12)", border: "1px solid rgba(60,208,155,0.35)", borderRadius: 6, padding: "9px 12px", fontSize: 12.5, color: "#3CD09B", display: "flex", alignItems: "center", gap: 8 }}>
+                  <Check size={15} color="#3CD09B" />
+                  <span>{authSuccessMsg}</span>
+                </div>
+              )}
+
+              {/* 1-Click Google OAuth */}
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={authLoading}
+                style={{
+                  width: "100%",
+                  background: "#FFFFFF",
+                  border: "1px solid #CBD5E1",
+                  borderRadius: 6,
+                  padding: "9px 0",
+                  color: "#1E293B",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: authLoading ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                  transition: "all 0.15s ease",
+                  marginBottom: 14
+                }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>Continue with Google</span>
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <div style={{ flex: 1, height: 1, background: C.border }} />
+                <span style={{ fontSize: 11, color: C.textMuted }}>OR WITH EMAIL</span>
+                <div style={{ flex: 1, height: 1, background: C.border }} />
+              </div>
+
               {authMode === "signin" ? (
                 <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div>
@@ -3727,7 +4118,7 @@
                       <label style={{ fontSize: 12, fontWeight: 600, color: C.textMuted }}>
                         Password
                       </label>
-                      <span style={{ fontSize: 11, color: C.textMuted }}>Any password for demo</span>
+                      <span style={{ fontSize: 11, color: C.textMuted }}>Supabase Auth</span>
                     </div>
                     <input
                       type="password"
@@ -3751,6 +4142,7 @@
 
                   <button
                     type="submit"
+                    disabled={authLoading}
                     style={{
                       width: "100%",
                       background: C.ramp,
@@ -3760,11 +4152,22 @@
                       color: "#07201D",
                       fontSize: 14,
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: authLoading ? "not-allowed" : "pointer",
                       marginTop: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8
                     }}
                   >
-                    Sign In to HabitLoop
+                    {authLoading ? (
+                      <>
+                        <Loader2 size={16} className="spin" />
+                        <span>Signing in...</span>
+                      </>
+                    ) : (
+                      "Sign In to HabitLoop"
+                    )}
                   </button>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0" }}>
@@ -3863,7 +4266,7 @@
                       type="password"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
-                      placeholder="••••••••••••"
+                      placeholder="•••••••••••• (min 6 characters)"
                       style={{ width: "100%", background: C.panelAlt, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.textPrimary, fontSize: 13.5, boxSizing: "border-box" }}
                     />
                   </div>
@@ -3879,6 +4282,7 @@
 
                   <button
                     type="submit"
+                    disabled={authLoading}
                     style={{
                       width: "100%",
                       background: C.boulder,
@@ -3888,17 +4292,28 @@
                       color: "#2A1206",
                       fontSize: 14,
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: authLoading ? "not-allowed" : "pointer",
                       marginTop: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8
                     }}
                   >
-                    Create Account & Get Started
+                    {authLoading ? (
+                      <>
+                        <Loader2 size={16} className="spin" />
+                        <span>Creating account...</span>
+                      </>
+                    ) : (
+                      "Create Account & Sync to Cloud"
+                    )}
                   </button>
                 </form>
               )}
 
               <div style={{ marginTop: 18, textAlign: "center", fontSize: 11.5, color: C.textMuted, lineHeight: 1.5 }}>
-                🔒 <strong>Stored Locally:</strong> Your session persists automatically in your browser so you will not need to sign in every time.
+                ☁️ <strong>Supabase Cloud Connected:</strong> Your habits, timetable, and target goals automatically synchronize across your phone and laptop in real-time.
               </div>
             </div>
           </div>
@@ -4254,8 +4669,9 @@
                       </div>
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, background: "rgba(63,214,196,0.12)", color: C.ramp, border: `1px solid rgba(63,214,196,0.3)`, padding: "3px 8px", borderRadius: 4, fontWeight: 600 }}>
-                    Active Session
+                  <span style={{ fontSize: 11, background: activeCloudUserId ? "rgba(63,214,196,0.12)" : "rgba(142,149,168,0.12)", color: activeCloudUserId ? C.ramp : C.textMuted, border: `1px solid ${activeCloudUserId ? "rgba(63,214,196,0.3)" : "rgba(142,149,168,0.25)"}`, padding: "3px 8px", borderRadius: 4, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <Cloud size={11} />
+                    {activeCloudUserId ? "Supabase Cloud" : "Local Storage"}
                   </span>
                 </div>
 
@@ -4647,7 +5063,7 @@
               <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>Account Session</div>
-                  <div style={{ fontSize: 11.5, color: C.textMuted }}>Currently signed in as {profile.email}</div>
+                  <div style={{ fontSize: 11.5, color: C.textMuted }}>Currently signed in as {profile.email} · {activeCloudUserId ? "☁️ Supabase Cloud Synced" : "💾 Local Storage"}</div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -4704,7 +5120,7 @@
                       HabitFlow × Ramp
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span style={{
                       fontSize: 10.5,
                       background: "rgba(60,208,155,0.12)",
@@ -4720,6 +5136,22 @@
                     }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3CD09B", display: "inline-block" }} />
                       LIVE
+                    </span>
+                    <span style={{
+                      fontSize: 10.5,
+                      background: activeCloudUserId ? "rgba(63,214,196,0.12)" : "rgba(142,149,168,0.12)",
+                      border: `1px solid ${activeCloudUserId ? "rgba(63,214,196,0.35)" : "rgba(142,149,168,0.25)"}`,
+                      color: activeCloudUserId ? C.ramp : C.textMuted,
+                      borderRadius: 10,
+                      padding: "2px 8px",
+                      fontWeight: 700,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontFamily: "'Space Grotesk', monospace"
+                    }}>
+                      <Cloud size={11} color={activeCloudUserId ? C.ramp : C.textMuted} />
+                      {activeCloudUserId ? "Supabase Synced" : "Offline / Guest"}
                     </span>
                     <span style={{ color: "#8E95A8" }}>
                       <ClockIcon size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
