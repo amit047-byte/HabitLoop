@@ -2559,81 +2559,66 @@ create policy "Users can insert/update own data" on public.user_data
         });
       };
 
-      async function launchDashboardFromLoader() {
+      function launchDashboardFromLoader() {
+        // 1. INSTANT SYNCHRONOUS TRANSITION TO DASHBOARD (<0ms)
         setWorkstationReady(true);
         setBootstrapped(true);
-
-        // 1. Check for active Supabase session
-        if (supabase) {
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              setActiveCloudUser(session.user.id);
-              await syncUserCloudData(session.user);
-              setLoggedIn(true);
-              loggedInRef.current = true;
-              const urlP = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-              setStage(urlP?.get("stage") || "dashboard");
-              return;
-            }
-          } catch (e) {
-            console.warn("Session check in loader note:", e);
-          }
-        }
-
-        // 2. Check for saved user in local storage
-        let u = loadLocalJSON("data:currentUser", null);
-        if (u && !u.isGuest && u.name !== "Student") {
-          if (u.cloudUserId) {
-            setActiveCloudUser(u.cloudUserId);
-          }
-          setProfile(u);
-          setProfileNameInput(u.name || "");
-          setProfileEmailInput(u.email || "");
-          setProfileUniversityInput(u.university || "JECRC University");
-          setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
-          setProfileSemesterInput(u.semester || "4th Semester");
-          setProfileStudentIdInput(u.studentId || "23BCON047");
-          setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
-          setProfileBioInput(u.bio || "");
-          setLoggedIn(true);
-          loggedInRef.current = true;
-          const urlP = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-          setStage(urlP?.get("stage") || "dashboard");
-          return;
-        }
-
-        // 3. Fallback: initialize student profile (Amitabha Ghosh · JECRC University)
-        u = {
-          name: "Amitabha Ghosh",
-          email: "amit.productivity047@gmail.com",
-          university: "JECRC University",
-          degree: "B.Tech Computer Science & Engineering",
-          semester: "4th Semester",
-          studentId: "23BCON047",
-          dailyTargetHours: 4,
-          bio: "Striving for academic consistency, high-energy focus, and deep work.",
-          isGuest: false,
-          provider: "google",
-          cloudUserId: activeCloudUserId || "google-user-amitabha-ghosh",
-          loggedInAt: new Date().toISOString()
-        };
-        setActiveCloudUser(u.cloudUserId);
-        saveJSON("data:currentUser", u);
-        setProfile(u);
-        setProfileNameInput(u.name);
-        setProfileEmailInput(u.email);
-        setProfileUniversityInput(u.university);
-        setProfileDegreeInput(u.degree);
-        setProfileSemesterInput(u.semester);
-        setProfileStudentIdInput(u.studentId);
-        setProfileDailyTargetHoursInput(u.dailyTargetHours);
-        setProfileBioInput(u.bio);
         setLoggedIn(true);
         loggedInRef.current = true;
+
+        // Resolve current or default student profile synchronously
+        let u = loadLocalJSON("data:currentUser", null);
+        if (!u || u.isGuest || u.name === "Student") {
+          u = {
+            name: "Amitabha Ghosh",
+            email: "amit.productivity047@gmail.com",
+            university: "JECRC University",
+            degree: "B.Tech Computer Science & Engineering",
+            semester: "4th Semester",
+            studentId: "23BCON047",
+            dailyTargetHours: 4,
+            bio: "Striving for academic consistency, high-energy focus, and deep work.",
+            isGuest: false,
+            provider: "google",
+            cloudUserId: activeCloudUserId || "google-user-amitabha-ghosh",
+            loggedInAt: new Date().toISOString()
+          };
+          saveJSON("data:currentUser", u);
+        }
+
+        if (u.cloudUserId) {
+          setActiveCloudUser(u.cloudUserId);
+        }
+
+        setProfile(u);
+        setProfileNameInput(u.name || "Amitabha Ghosh");
+        setProfileEmailInput(u.email || "amit.productivity047@gmail.com");
+        setProfileUniversityInput(u.university || "JECRC University");
+        setProfileDegreeInput(u.degree || "B.Tech Computer Science & Engineering");
+        setProfileSemesterInput(u.semester || "4th Semester");
+        setProfileStudentIdInput(u.studentId || "23BCON047");
+        setProfileDailyTargetHoursInput(u.dailyTargetHours || 4);
+        setProfileBioInput(u.bio || "");
+
+        // Immediately switch stage to dashboard without waiting for network!
         const urlP = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
         const targetStage = urlP?.get("stage") || "dashboard";
         setStage(targetStage);
+
+        // 2. Background Cloud Sync (Runs asynchronously without blocking UI)
+        if (supabase) {
+          (async () => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                setActiveCloudUser(session.user.id);
+                await syncUserCloudData(session.user);
+              }
+            } catch (e) {
+              console.warn("Background session sync in loader note:", e);
+            }
+          })();
+        }
       }
 
       // Auto-animating 0% to 100% workstation progress slider
@@ -2678,11 +2663,9 @@ create policy "Users can insert/update own data" on public.user_data
 
           if (cur >= 100) {
             clearInterval(timer);
-            setTimeout(() => {
-              launchDashboardFromLoader();
-            }, 200);
+            launchDashboardFromLoader();
           }
-        }, 40);
+        }, 30);
 
         return () => clearInterval(timer);
       }, [workstationReady]);
