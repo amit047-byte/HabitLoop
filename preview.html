@@ -3404,11 +3404,43 @@
         }
         setAuthError(null);
         setAuthLoading(true);
+
+        // 1. Check if running on local file:// protocol
+        if (window.location.protocol === "file:") {
+          setAuthError(
+            "Google OAuth requires an HTTP/HTTPS address (e.g. localhost or your Vercel deployment) to receive browser callbacks. On file://, click 'Fast Test as Google Student' below or use Email/Password."
+          );
+          setAuthLoading(false);
+          return;
+        }
+
+        // 2. Pre-check if Google OAuth provider is enabled in Supabase project
         try {
+          const checkResp = await fetch(
+            "https://pzfvmnsbhqkrtxietlle.supabase.co/auth/v1/authorize?provider=google",
+            { method: "GET" }
+          );
+          if (checkResp.status === 400) {
+            const errJson = await checkResp.json().catch(() => null);
+            if (errJson && errJson.msg && errJson.msg.toLowerCase().includes("not enabled")) {
+              setAuthError(
+                "Google OAuth provider is not enabled yet in your Supabase project. In Supabase Dashboard -> Authentication -> Providers -> Google, toggle it ON with your Google Client ID & Secret."
+              );
+              setAuthLoading(false);
+              return;
+            }
+          }
+        } catch (checkErr) {
+          console.warn("Provider pre-check note:", checkErr);
+        }
+
+        // 3. Initiate Supabase OAuth flow
+        try {
+          const redirectUrl = window.location.origin + window.location.pathname;
           const { data, error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: window.location.origin + window.location.pathname
+              redirectTo: redirectUrl
             }
           });
           if (error) {
@@ -3419,6 +3451,26 @@
           setAuthError(err.message || "Google sign-in error occurred.");
           setAuthLoading(false);
         }
+      }
+
+      function handleFastGoogleDemo() {
+        const userObj = {
+          name: "Amitabha Ghosh",
+          email: "amit.productivity047@gmail.com",
+          university: "JECRC University",
+          degree: "B.Tech Computer Science & Engineering",
+          semester: "4th Semester",
+          studentId: "23BCON047",
+          dailyTargetHours: 4,
+          bio: "Striving for academic consistency, high-energy focus, and deep work.",
+          provider: "google",
+          loggedInAt: new Date().toISOString()
+        };
+        setProfile(userObj);
+        setLoggedIn(true);
+        setStage("dashboard");
+        saveJSON("data:currentUser", userObj);
+        setAuthError(null);
       }
 
       function handleDemoLogin() {
@@ -4045,9 +4097,39 @@
               </div>
 
               {authError && (
-                <div style={{ marginBottom: 14, background: "rgba(224,82,75,0.12)", border: `1px solid ${C.crisis}`, borderRadius: 6, padding: "9px 12px", fontSize: 12.5, color: "#FF8C8C", display: "flex", alignItems: "center", gap: 8 }}>
-                  <AlertTriangle size={15} color={C.crisis} />
-                  <span>{authError}</span>
+                <div style={{ marginBottom: 14, background: "rgba(224,82,75,0.12)", border: `1px solid ${C.crisis}`, borderRadius: 6, padding: "10px 12px", fontSize: 12.5, color: "#FF8C8C", display: "flex", flexDirection: "column", gap: 7 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                    <AlertTriangle size={15} color={C.crisis} style={{ marginTop: 2, flexShrink: 0 }} />
+                    <span style={{ lineHeight: 1.45 }}>{authError}</span>
+                  </div>
+                  {(authError.includes("Google OAuth") || authError.includes("file://")) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap", paddingLeft: 23 }}>
+                      <a
+                        href="https://supabase.com/dashboard/project/pzfvmnsbhqkrtxietlle/auth/providers"
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: C.ramp, fontSize: 11.5, textDecoration: "underline", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        Enable Google in Supabase <ExternalLink size={11} />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={handleFastGoogleDemo}
+                        style={{
+                          background: "rgba(63,214,196,0.18)",
+                          border: `1px solid ${C.ramp}`,
+                          color: C.ramp,
+                          borderRadius: 4,
+                          padding: "3px 8px",
+                          fontSize: 11,
+                          cursor: "pointer",
+                          fontWeight: 700
+                        }}
+                      >
+                        ⚡ Fast Test as Google Student
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
