@@ -2760,7 +2760,9 @@ create policy "Users can insert/update own data" on public.user_data
       const [scannedClassesPreview, setScannedClassesPreview] = useState([]);
       const [isDraggingFile, setIsDraggingFile] = useState(false);
       const [showScheduleUploadCard, setShowScheduleUploadCard] = useState(false);
-      const [showScheduleUploadModal, setShowScheduleUploadModal] = useState(false);
+      const [showScheduleUploadModal, setShowScheduleUploadModal] = useState(
+        typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("modal") === "schedule-upload" || new URLSearchParams(window.location.search).get("modal") === "upload")
+      );
       const scheduleInlineFileInputRef = useRef(null);
       const scheduleCameraInputRef = useRef(null);
 
@@ -6488,7 +6490,7 @@ create policy "Users can insert/update own data" on public.user_data
                   </div>
                 </div>
 
-                {/* Primary View Switcher & Quick Sign Out (Top Right) */}
+                {/* Primary View Switcher (Top Right) */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <div className="rp-view-switcher" style={{ display: "flex", background: "#10131E", border: "1px solid #1C2030", borderRadius: 9, padding: 4, gap: 4 }}>
                     <button
@@ -6531,31 +6533,6 @@ create policy "Users can insert/update own data" on public.user_data
                       <Calendar size={14} /> Schedule & Ramp
                     </button>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    title="Sign Out of HabitLoop"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "rgba(224, 82, 75, 0.08)",
-                      border: "1px solid rgba(224, 82, 75, 0.28)",
-                      color: "#FF8C8C",
-                      borderRadius: 8,
-                      padding: "8px 12px",
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease"
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.18)"; e.currentTarget.style.borderColor = C.crisis; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.08)"; e.currentTarget.style.borderColor = "rgba(224, 82, 75, 0.28)"; }}
-                  >
-                    <LogOut size={13} />
-                    <span>Sign Out</span>
-                  </button>
                 </div>
               </div>
 
@@ -6722,28 +6699,6 @@ create policy "Users can insert/update own data" on public.user_data
                     }}
                   >
                     <Command size={13} /> Capture
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    title="Sign Out"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "rgba(224, 82, 75, 0.08)",
-                      border: "1px solid rgba(224, 82, 75, 0.28)",
-                      color: "#FF8C8C",
-                      borderRadius: 9999,
-                      padding: "6px 14px",
-                      fontSize: 13,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease"
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.18)"; e.currentTarget.style.borderColor = C.crisis; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(224, 82, 75, 0.08)"; e.currentTarget.style.borderColor = "rgba(224, 82, 75, 0.28)"; }}
-                  >
-                    <LogOut size={13} /> Sign Out
                   </button>
                 </div>
               </div>
@@ -8788,105 +8743,6 @@ create policy "Users can insert/update own data" on public.user_data
                   </div>
                   <div style={{ fontSize: 11.5, color: C.textMuted, marginTop: 3 }}>
                     Supports PNG, JPG, JPEG, WebP. High resolution images yield highest OCR accuracy.
-                  </div>
-                </div>
-
-                {/* Trained Model Fast-Picks */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                    <Sparkles size={12} color={C.ramp} />
-                    <span>Trained Vision Recognition Presets:</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduleUploadImg("mits_biotech_timetable.jpg");
-                        setScheduleUploadFileName("mits_biotech_bsc_1a.jpg");
-                        setPaddleJobStatus("Ready to scan MITS Biotechnology (BSC-1A)");
-                      }}
-                      style={{
-                        background: "rgba(63,214,196,0.1)",
-                        border: `1px solid ${C.ramp}`,
-                        color: C.ramp,
-                        borderRadius: 6,
-                        padding: "6px 11px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5
-                      }}
-                    >
-                      <span>🧬 MITS Biotech (BSC-1A)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduleUploadImg("mits_biotech_timetable.jpg");
-                        setScheduleUploadFileName("mits_biotech_bsc_1b.jpg");
-                        setPaddleJobStatus("Ready to scan MITS Biotechnology (BSC-1B)");
-                      }}
-                      style={{
-                        background: "rgba(63,214,196,0.1)",
-                        border: `1px solid ${C.ramp}`,
-                        color: C.ramp,
-                        borderRadius: 6,
-                        padding: "6px 11px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5
-                      }}
-                    >
-                      <span>🧬 MITS Biotech (BSC-1B)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduleUploadImg("mits_biotech_timetable.jpg");
-                        setScheduleUploadFileName("mits_biotech_bsc_1c.jpg");
-                        setPaddleJobStatus("Ready to scan MITS Biotechnology (BSC-1C)");
-                      }}
-                      style={{
-                        background: "rgba(63,214,196,0.1)",
-                        border: `1px solid ${C.ramp}`,
-                        color: C.ramp,
-                        borderRadius: 6,
-                        padding: "6px 11px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5
-                      }}
-                    >
-                      <span>🧬 MITS Biotech (BSC-1C)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduleUploadImg("jecrc_section_c_timetable.jpg");
-                        setScheduleUploadFileName("jecrc_section_c_timetable.jpg");
-                        setPaddleJobStatus("Ready to scan JECRC (B.Tech Sec-C)");
-                      }}
-                      style={{
-                        background: C.panelAlt,
-                        border: `1px solid ${C.border}`,
-                        color: C.textMuted,
-                        borderRadius: 6,
-                        padding: "6px 11px",
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: "pointer"
-                      }}
-                    >
-                      <span>🏛️ JECRC (Sec-C)</span>
-                    </button>
                   </div>
                 </div>
                 {scheduleUploadImg && (
